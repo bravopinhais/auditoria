@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoria de Chamados | Movidesk QA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                        },
+                        movi: {
+                            50: '#fff7ed',
+                            500: '#f97316',
+                            600: '#ea580c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .modal-container { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; max-width: 100% !important; height: auto !important; box-shadow: none !important; border: none !important; }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- TOP BAR -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30 no-print border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand / Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-tr from-sky-600 to-movi-500 text-white p-2.5 rounded-xl font-bold text-xl shadow-lg flex items-center justify-center">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-lg tracking-tight text-white">QA Desk</span>
+                            <span class="text-xs px-2 py-0.5 bg-movi-500/20 text-movi-500 border border-movi-500/30 rounded-full font-semibold">Movidesk API</span>
+                        </div>
+                        <p class="text-xs text-slate-400 hidden sm:block">Plataforma Avançada de Auditoria & Qualidade de Suporte</p>
+                    </div>
+                </div>
+
+                <!-- Main Navigation Tabs -->
+                <nav class="flex space-x-1 sm:space-x-2">
+                    <button onclick="switchTab('movidesk')" id="tab-movidesk" class="nav-btn active flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-sky-400 bg-slate-800 border border-slate-700">
+                        <i class="fa-solid fa-plug text-movi-500 sm:mr-2"></i> <span class="hidden sm:inline">API Movidesk</span>
+                    </button>
+                    <button onclick="switchTab('audit')" id="tab-audit" class="nav-btn flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i class="fa-solid fa-clipboard-check text-sky-400 sm:mr-2"></i> <span class="hidden sm:inline">Nova Auditoria</span>
+                    </button>
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-btn flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i class="fa-solid fa-chart-pie text-emerald-400 sm:mr-2"></i> <span class="hidden sm:inline">Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('records')" id="tab-records" class="nav-btn flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+                        <i class="fa-solid fa-box-archive text-purple-400 sm:mr-2"></i> <span class="hidden sm:inline">Histórico</span>
+                    </button>
+                </nav>
+
+                <!-- Quick Status Indicator -->
+                <div class="hidden md:flex items-center space-x-3">
+                    <div id="api-status-pill" class="flex items-center gap-2 px-2.5 py-1 rounded-full text-xs bg-slate-800 border border-slate-700 text-slate-400">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="api-status-text" class="font-medium">API Não Testada</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= TAB 1: INTEGRACAO MOVIDESK & BUSCA ================= -->
+        <section id="view-movidesk" class="space-y-6">
+            
+            <!-- Connection Setup Box -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-200 mb-6 gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-key text-movi-500"></i> Configuração da Integração Movidesk
+                        </h2>
+                        <p class="text-xs text-slate-500">Conecte com a chave de API oficial para carregar chamados diretamente para auditoria.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="testMovideskConnection()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-network-wired text-sky-400"></i> Testar Conexão API
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Token de Acesso à API Movidesk *</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="password" id="movidesk-token" placeholder="Insira o seu token (ex: 8f7e6d5c-4b3a-2100-9876-fedcba543210)" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-10 py-2.5 focus:ring-2 focus:ring-sky-500 outline-none">
+                            <button onclick="toggleTokenVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                                <i id="token-eye-icon" class="fa-solid fa-eye text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Modo de Operação</label>
+                        <select id="movidesk-mode" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-sky-500 outline-none font-medium">
+                            <option value="auto">Produção (API Oficial Movidesk)</option>
+                            <option value="mock" selected>Mock Data (Modo Simulação/Fallback)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Info Box Guide -->
+                <div class="mt-4 bg-sky-50/70 border border-sky-200 rounded-xl p-3.5 text-xs text-sky-900 flex items-start gap-3">
+                    <i class="fa-solid fa-circle-info text-sky-600 text-base mt-0.5"></i>
+                    <div class="space-y-1">
+                        <strong class="font-bold">Como obter o Token no Movidesk?</strong>
+                        <p class="text-sky-800">Acesse o seu portal Movidesk como Administrador &rarr; <strong>Configurações &rarr; Integrações &rarr; API do Movidesk</strong> e copie a sua chave única de acesso. <em class="text-sky-700 font-normal">(Obs: Caso sua requisição seja bloqueada por política de CORS do navegador, a aplicação usará automaticamente o Mock Data simulado com estrutura original do Movidesk)</em>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Fetch Tickets Box -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass-chart text-sky-600"></i> Localizar Chamados para Auditoria
+                </h3>
+
+                <!-- Filter Controls -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Buscar por ID do Chamado</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="search-ticket-id" placeholder="Ex: 10452" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                            <button onclick="fetchSingleTicket()" class="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition shadow-sm">
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Status do Chamado</label>
+                        <select id="search-status" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                            <option value="Encerrado">Encerrado / Resolvido</option>
+                            <option value="Em Atendimento">Em Atendimento</option>
+                            <option value="Todos">Todos os Status</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Data Inicial</label>
+                        <input type="date" id="search-date-start" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Data Final</label>
+                        <input type="date" id="search-date-end" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+                    <button onclick="fetchMovideskTicketsList()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-cloud-arrow-down text-movi-500"></i> Buscar Lista de Chamados
+                    </button>
+                </div>
+
+                <!-- Results Table -->
+                <div class="mt-6 border border-slate-200 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider"><i class="fa-solid fa-list text-slate-500 mr-1"></i> Chamados Retornados</span>
+                        <span id="ticket-count-badge" class="text-[11px] bg-slate-200 text-slate-700 font-semibold px-2 py-0.5 rounded-full">0 chamados</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100/70 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                                    <th class="p-3">ID</th>
+                                    <th class="p-3">Assunto / Título</th>
+                                    <th class="p-3">Cliente / Organização</th>
+                                    <th class="p-3">Agente Responsável</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Data Abertura</th>
+                                    <th class="p-3 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="movidesk-tickets-tbody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="7" class="p-6 text-center text-slate-400">
+                                        Clique no botão acima para buscar ou importar um ticket diretamente.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: FORMULÁRIO DE AUDITORIA ================= -->
+        <section id="view-audit" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <!-- Header Form -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-200 mb-6 gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-bold text-slate-900">Formulário de Auditoria de Qualidade</h2>
+                            <span id="imported-ticket-badge" class="hidden text-xs bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                <i class="fa-solid fa-check"></i> Dados do Movidesk Carregados
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500">Avalie os critérios técnicos, comportamentais e procedimentais do atendimento.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="switchTab('movidesk')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass"></i> Escolher Outro Ticket
+                        </button>
+                    </div>
+                </div>
+
+                <form id="auditForm" onsubmit="saveAuditSubmit(event)" class="space-y-8">
+                    
+                    <!-- SECTION 1: DADOS DO TICKET IMPORTADO -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <h3 class="text-xs font-bold text-sky-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-folder-open text-sky-600"></i> 1. Informações do Chamado Auditado
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">ID Chamado (Movidesk) *</label>
+                                <input type="text" id="audit-ticket-id" required placeholder="Ex: 10452" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 font-bold text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Agente / Atendente *</label>
+                                <input type="text" id="audit-agent-name" required placeholder="Ex: Ana Souza" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente / Empresa *</label>
+                                <input type="text" id="audit-client-name" required placeholder="Ex: TechCorp LTDA" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Solicitante</label>
+                                <input type="text" id="audit-requester" placeholder="Ex: Carlos Oliveira" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Canal de Atendimento *</label>
+                                <select id="audit-channel" required class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-sky-500 outline-none">
+                                    <option value="Chat/Portal">Portal / Chat</option>
+                                    <option value="E-mail">E-mail</option>
+                                    <option value="Telefone">Telefone / Voz</option>
+                                    <option value="WhatsApp">WhatsApp</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Categoria do Problema</label>
+                                <input type="text" id="audit-category" placeholder="Ex: Suporte N2 / ERP" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Data da Auditoria *</label>
+                                <input type="date" id="audit-date" required class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Auditor Responsável *</label>
+                                <input type="text" id="audit-auditor-name" required value="Analista de QA" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Ticket Subject & Actions Summary -->
+                        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Assunto do Chamado</label>
+                                <input type="text" id="audit-subject" placeholder="Assunto ou título principal do ticket" class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Resumo do Histórico / Ações do Atendimento</label>
+                                <textarea id="audit-history-summary" rows="1" placeholder="Histórico resumido carregado do Movidesk..." class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: CHECKLIST DE CRITÉRIOS DA AUDITORIA -->
+                    <div>
+                        <h3 class="text-xs font-bold text-sky-800 uppercase tracking-wider mb-3 flex items-center justify-between">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-list-check text-sky-600"></i> 2. Avaliação de Critérios da Qualidade</span>
+                            <span class="text-[11px] font-normal text-slate-500 italic">N/A = Não pontua / desconsidera da média</span>
+                        </h3>
+
+                        <div id="criteria-form-container" class="space-y-6">
+                            <!-- Injected by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: FATOS ZEROS (FATAL ERRORS) -->
+                    <div class="bg-red-50/80 border border-red-200 rounded-xl p-4 space-y-3">
+                        <div class="flex items-center gap-2 text-red-800 font-bold text-xs uppercase tracking-wider">
+                            <i class="fa-solid fa-ban text-red-600 text-sm"></i> 3. Fatos Zeros / Tolerância Zero (Eliminatórios)
+                        </div>
+                        <p class="text-xs text-red-700">Se qualquer uma das infrações gravíssimas abaixo for cometida, a nota final do atendimento será ZERADA (0.0%).</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                            <label class="flex items-start gap-2 bg-white p-3 rounded-lg border border-red-200 cursor-pointer hover:bg-red-100/30 transition">
+                                <input type="checkbox" id="fz-lgpd" onchange="calculateScore()" class="mt-0.5 rounded text-red-600 focus:ring-red-500">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800 block">Vazamento LGPD / Segurança</span>
+                                    <span class="text-[10px] text-slate-500">Passou dados confidenciais sem validação prévia.</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-2 bg-white p-3 rounded-lg border border-red-200 cursor-pointer hover:bg-red-100/30 transition">
+                                <input type="checkbox" id="fz-respeito" onchange="calculateScore()" class="mt-0.5 rounded text-red-600 focus:ring-red-500">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800 block">Conduta Antiprofissional</span>
+                                    <span class="text-[10px] text-slate-500">Uso de tom desrespeitoso, ironia ou encerramento abrupto.</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-2 bg-white p-3 rounded-lg border border-red-200 cursor-pointer hover:bg-red-100/30 transition">
+                                <input type="checkbox" id="fz-procedimento" onchange="calculateScore()" class="mt-0.5 rounded text-red-600 focus:ring-red-500">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800 block">Procedimento Indevido Gravíssimo</span>
+                                    <span class="text-[10px] text-slate-500">Ação incorreta que gerou queda ou perda de dados no cliente.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4: FEEDBACK E PLANO DE AÇÃO -->
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold text-sky-800 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-sky-600"></i> 4. Feedback Estruturado & Desenvolvimento
+                        </h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-emerald-800 mb-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-thumbs-up"></i> Pontos Fortes (Elogios)
+                                </label>
+                                <textarea id="feedback-pos" rows="3" placeholder="Ex: Excelente clareza na explicação do procedimento e empatia..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-amber-800 mb-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Oportunidades de Melhoria
+                                </label>
+                                <textarea id="feedback-imp" rows="3" placeholder="Ex: Atenção ao preenchimento da categoria correta do chamado..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-sky-800 mb-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-bullseye"></i> Plano de Ação / Recomendação
+                                </label>
+                                <textarea id="feedback-plan" rows="3" placeholder="Ex: Realizar leitura da KB-304 referente ao fluxo de reembolso..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STICKY BOTTOM SCORE & ACTION BAR -->
+                    <div class="bg-slate-900 text-white p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+                        <div class="flex items-center gap-4">
+                            <div>
+                                <span class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block">Nota Final da Auditoria</span>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="calculated-score-num" class="text-4xl font-black text-sky-400">100.0%</span>
+                                    <span id="calculated-score-badge" class="px-2.5 py-1 text-xs rounded-md font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Excelente</span>
+                                </div>
+                            </div>
+                            <div id="alert-zero-tolerance" class="hidden bg-red-600/30 border border-red-500/50 text-red-200 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
+                                <i class="fa-solid fa-circle-exclamation text-red-400 text-lg"></i>
+                                <span><strong>FATO ZERO DETECTADO:</strong> A nota final foi zerada devido a uma infração eliminatória.</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                            <button type="button" onclick="resetAuditForm()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
+                                Limpar
+                            </button>
+                            <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-sky-600 to-movi-600 hover:opacity-95 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i> Salvar Auditoria
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: DASHBOARD ANALÍTICO ================= -->
+        <section id="view-dashboard" class="hidden space-y-6">
+            <!-- Filter Bar Dashboard -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-filter text-sky-600"></i> Filtros:
+                    </span>
+                    <select id="dash-filter-agent" onchange="renderDashboard()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-sky-500 outline-none font-medium">
+                        <option value="all">Todos os Agentes</option>
+                    </select>
+                    <select id="dash-filter-period" onchange="renderDashboard()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-sky-500 outline-none font-medium">
+                        <option value="all">Todo o Período</option>
+                        <option value="30">Últimos 30 Dias</option>
+                        <option value="7">Últimos 7 Dias</option>
+                    </select>
+                </div>
+                <div class="text-xs text-slate-400">
+                    Dados atualizados em tempo real do histórico de auditorias.
+                </div>
+            </div>
+
+            <!-- KPI Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- KPI 1: Nota Média -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nota Média Geral</p>
+                            <h3 id="kpi-avg-score" class="text-3xl font-extrabold text-slate-900 mt-1">0.0%</h3>
+                        </div>
+                        <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
+                            <i class="fa-solid fa-star text-lg"></i>
+                        </div>
+                    </div>
+                    <p id="kpi-avg-target" class="mt-3 text-xs font-medium text-emerald-600">Meta: 85.0%</p>
+                </div>
+
+                <!-- KPI 2: Total Auditado -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Auditado</p>
+                            <h3 id="kpi-total-audits" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
+                        </div>
+                        <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                            <i class="fa-solid fa-folder-check text-lg"></i>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-xs text-slate-500">Chamados analisados</p>
+                </div>
+
+                <!-- KPI 3: Conformidade -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conformidade</p>
+                            <h3 id="kpi-compliance-rate" class="text-3xl font-extrabold text-slate-900 mt-1">0%</h3>
+                        </div>
+                        <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                            <i class="fa-solid fa-circle-check text-lg"></i>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-xs text-slate-500">Aprovados (&ge;75%)</p>
+                </div>
+
+                <!-- KPI 4: Fatos Zeros -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fatos Zeros</p>
+                            <h3 id="kpi-fatal-errors" class="text-3xl font-extrabold text-red-600 mt-1">0</h3>
+                        </div>
+                        <div class="p-2.5 bg-red-50 text-red-600 rounded-xl">
+                            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-xs text-red-500 font-medium">Falhas eliminatórias</p>
+                </div>
+
+                <!-- KPI 5: Destaques -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Agente Destaque</p>
+                    <h3 id="kpi-top-agent" class="text-sm font-extrabold text-slate-800 mt-2 truncate">--</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Maior nota média</p>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1: Performance por Agente -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-4 flex items-center justify-between">
+                        <span><i class="fa-solid fa-user-check text-sky-600 mr-1.5"></i> Desempenho por Agente</span>
+                        <span class="text-[10px] text-slate-400 font-normal">Média em %</span>
+                    </h4>
+                    <div class="relative h-64 w-full">
+                        <canvas id="chartAgents"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Média por Categoria de Critério (Radar) -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-4">
+                        <i class="fa-solid fa-chart-radar text-purple-600 mr-1.5"></i> Média por Categoria de Critério
+                    </h4>
+                    <div class="relative h-64 w-full">
+                        <canvas id="chartCategories"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Evolução Temporal -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-4">
+                        <i class="fa-solid fa-chart-line text-emerald-600 mr-1.5"></i> Evolução Temporal das Auditorias
+                    </h4>
+                    <div class="relative h-64 w-full">
+                        <canvas id="chartTimeline"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: HISTÓRICO & LAUDOS ================= -->
+        <section id="view-records" class="hidden space-y-4">
+            <!-- Header Table Controls -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 items-center justify-between">
+                <div class="relative w-full md:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="records-search" onkeyup="renderRecordsTable()" placeholder="Buscar por Ticket, Agente ou Cliente..." class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-sky-500 outline-none">
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <button onclick="exportCSV()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-csv"></i> Exportar CSV
+                    </button>
+                    <button onclick="exportJSONBackup()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i> Backup JSON
+                    </button>
+                    <label class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-slate-300">
+                        <i class="fa-solid fa-upload"></i> Restaurar
+                        <input type="file" id="import-json-file" accept=".json" onchange="importJSONBackup(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Table Records -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                                <th class="p-3.5">Data</th>
+                                <th class="p-3.5">ID Movidesk</th>
+                                <th class="p-3.5">Agente</th>
+                                <th class="p-3.5">Cliente</th>
+                                <th class="p-3.5">Canal</th>
+                                <th class="p-3.5">FCR</th>
+                                <th class="p-3.5">Status / Nota</th>
+                                <th class="p-3.5 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="records-tbody" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="records-empty" class="hidden p-8 text-center text-slate-400">
+                    <i class="fa-solid fa-folder-open text-4xl mb-2 text-slate-300"></i>
+                    <p>Nenhuma auditoria cadastrada ou encontrada na busca.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DE EXIBIÇÃO DO LAUDO DE AUDITORIA (FORMATO IMPRESSÃO A4/PDF) -->
+    <div id="auditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] modal-container">
+            
+            <!-- Modal Actions Bar (No Print) -->
+            <div class="p-4 bg-slate-900 text-white flex justify-between items-center no-print">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-contract text-movi-500 text-base"></i>
+                    <h3 class="font-bold text-sm">Laudo de Avaliação de Qualidade</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-print"></i> Imprimir / PDF
+                    </button>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Print Area Document -->
+            <div id="modalPrintArea" class="p-8 overflow-y-auto space-y-6 text-slate-800 bg-white">
+                
+                <!-- Document Header -->
+                <div class="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-black text-2xl text-slate-900 tracking-tight">RELATÓRIO DE AUDITORIA</span>
+                            <span class="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 border rounded font-bold">MOVIDESK QA</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Garantia de Qualidade & Padronização do Suporte Técnico</p>
+                    </div>
+                    <div class="text-right">
+                        <span id="modal-status-badge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider inline-block">
+                            EXCELENTE
+                        </span>
+                        <p id="modal-audit-date" class="text-xs text-slate-400 mt-1">Auditado em: --/--/----</p>
+                    </div>
+                </div>
+
+                <!-- Info Grid Box -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase text-[10px]">Chamado Movidesk</span>
+                        <strong id="modal-ticket-id" class="text-sm text-slate-900">#--</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase text-[10px]">Agente Avaliado</span>
+                        <strong id="modal-agent-name" class="text-sm text-slate-900">--</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase text-[10px]">Cliente / Organização</span>
+                        <strong id="modal-client-name" class="text-sm text-slate-900">--</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold uppercase text-[10px]">Auditor Responsável</span>
+                        <strong id="modal-auditor-name" class="text-sm text-slate-900">--</strong>
+                    </div>
+                </div>
+
+                <!-- Final Score Card -->
+                <div class="flex items-center justify-between bg-slate-900 text-white p-4 rounded-xl">
+                    <div>
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Pontuação Final Alcançada</p>
+                        <p id="modal-subject" class="text-xs text-slate-300 mt-0.5 font-medium truncate max-w-md">Assunto do ticket...</p>
+                    </div>
+                    <div class="text-right">
+                        <span id="modal-score-val" class="text-3xl font-black text-sky-400">100.0%</span>
+                    </div>
+                </div>
+
+                <!-- Evaluated Criteria Table -->
+                <div>
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 border-b pb-2 mb-3">Detalhamento dos Critérios Avaliados</h4>
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                                <th class="p-2">Item / Critério</th>
+                                <th class="p-2 text-center">Peso</th>
+                                <th class="p-2 text-center">Avaliação</th>
+                                <th class="p-2 text-right">Pontos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-criteria-tbody" class="divide-y divide-slate-100">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Feedbacks Box -->
+                <div class="space-y-3 pt-2">
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 border-b pb-1">Parecer Técnico da Qualidade</h4>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div class="bg-emerald-50/60 border border-emerald-200 p-3 rounded-xl">
+                            <strong class="text-emerald-800 block mb-1 font-bold"><i class="fa-solid fa-thumbs-up"></i> Pontos Fortes:</strong>
+                            <p id="modal-feedback-pos" class="text-slate-700 whitespace-pre-line">Sem observações.</p>
+                        </div>
+                        <div class="bg-amber-50/60 border border-amber-200 p-3 rounded-xl">
+                            <strong class="text-amber-800 block mb-1 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Oportunidades de Melhoria:</strong>
+                            <p id="modal-feedback-imp" class="text-slate-700 whitespace-pre-line">Sem observações.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-sky-50/60 border border-sky-200 p-3 rounded-xl text-xs">
+                        <strong class="text-sky-800 block mb-1 font-bold"><i class="fa-solid fa-bullseye"></i> Plano de Ação Recomendado:</strong>
+                        <p id="modal-feedback-plan" class="text-slate-700 whitespace-pre-line">Nenhuma ação necessária.</p>
+                    </div>
+                </div>
+
+                <!-- Signatures Grid -->
+                <div class="pt-8 grid grid-cols-2 gap-8 text-center text-xs text-slate-500">
+                    <div class="border-t border-slate-300 pt-2">
+                        <p class="font-semibold text-slate-800">Assinatura do Auditor de QA</p>
+                        <p class="text-[10px]">Qualidade & Monitoria</p>
+                    </div>
+                    <div class="border-t border-slate-300 pt-2">
+                        <p class="font-semibold text-slate-800">Ciente do Agente Avaliado</p>
+                        <p class="text-[10px]">Data: ____/____/________</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal Actions -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 text-right no-print">
+                <button onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // ================= ESTRUTURA DE CRITÉRIOS DE AVALIAÇÃO DE QUALIDADE =================
+        const CRITERIA_CATEGORIES = [
+            {
+                title: "1. Atendimento e Cordialidade",
+                icon: "fa-comments",
+                items: [
+                    { id: "c_saudacao", label: "Saudação e Empatia Inicial", desc: "Apresentação adequada e postura cortês com o cliente.", weight: 10 },
+                    { id: "c_linguagem", label: "Linguagem e Clareza Técnica", desc: "Uso da gramática correta e tom de voz profissional.", weight: 10 }
+                ]
+            },
+            {
+                title: "2. Diagnóstico e Procedimento Técnico",
+                icon: "fa-microscope",
+                items: [
+                    { id: "c_sondagem", label: "Sondagem e Entendimento do Problema", desc: "Perguntas de investigação eficientes para identificar a causa.", weight: 15 },
+                    { id: "c_procedimento", label: "Aderência aos Procedimentos / KB", desc: "Seguiu o fluxo oficial de atendimento e base de conhecimento.", weight: 20 }
+                ]
+            },
+            {
+                title: "3. Resolução e Eficiência (SLA)",
+                icon: "fa-circle-check",
+                items: [
+                    { id: "c_fcr", label: "Resolução no 1º Contato (FCR)", desc: "Resolveu o problema sem transferências/reaberturas desnecessárias.", weight: 20, isFCR: true },
+                    { id: "c_solucao", label: "Efetividade da Solução Oferecida", desc: "Solução entregue resolveu permanentemente a demanda do cliente.", weight: 15 }
+                ]
+            },
+            {
+                title: "4. Documentação e Registros do Chamado",
+                icon: "fa-file-signature",
+                items: [
+                    { id: "c_registro", label: "Registro Detalhado do Histórico no Movidesk", desc: "Documentou de forma clara as ações tomadas e resposta ao cliente.", weight: 10 }
+                ]
+            }
+        ];
+
+        // ================= MOCK DATA FALLBACK DO MOVIDESK =================
+        const MOVIDESK_MOCK_TICKETS = [
+            {
+                id: "10452",
+                protocol: "20261023101",
+                subject: "Erro ao emitir Nota Fiscal Eletrônica - Rejeição 539",
+                status: "Encerrado",
+                createdDate: "2026-10-20T09:15:00",
+                resolvedInFirstCall: true,
+                category: "Financeiro / Fiscal",
+                urgency: "Alta",
+                serviceFirstLevel: "Suporte N1",
+                owner: { id: "88", name: "Ana Souza" },
+                clients: [{ id: "401", name: "Empresa Alfa Varejo LTDA", personType: 2 }],
+                createdIn: "Chat/Portal",
+                actions: [
+                    { description: "Cliente relata erro de duplicidade de NFe. Realizada limpeza do cachê do emissor e retransmissão efetuada com sucesso.", createdIn: "2026-10-20T09:30:00" }
+                ]
+            },
+            {
+                id: "10488",
+                protocol: "20261021202",
+                subject: "Lentidão ao carregar relatório de vendas mensal",
+                status: "Encerrado",
+                createdDate: "2026-10-21T14:22:00",
+                resolvedInFirstCall: false,
+                category: "Banco de Dados",
+                urgency: "Média",
+                serviceFirstLevel: "Suporte N2",
+                owner: { id: "92", name: "Carlos Eduardo" },
+                clients: [{ id: "405", name: "TechLog Soluções", personType: 2 }],
+                createdIn: "E-mail",
+                actions: [
+                    { description: "Identificado índice corrompido no banco. Reindexação agendada e executada pela equipe de DB.", createdIn: "2026-10-21T16:00:00" }
+                ]
+            },
+            {
+                id: "10512",
+                protocol: "20261022303",
+                subject: "Dúvida na integração via Webhook com ERP externo",
+                status: "Em Atendimento",
+                createdDate: "2026-10-22T11:05:00",
+                resolvedInFirstCall: true,
+                category: "API / Integração",
+                urgency: "Baixa",
+                serviceFirstLevel: "Suporte N2",
+                owner: { id: "95", name: "Mariana Souza" },
+                clients: [{ id: "412", name: "Global Cloud Corp", personType: 2 }],
+                createdIn: "Portal/Chat",
+                actions: [
+                    { description: "Enviada documentação Swagger e exemplo em cURL para validação do cliente.", createdIn: "2026-10-22T11:40:00" }
+                ]
+            }
+        ];
+
+        // DEMO AUDITS SEED DATA
+        const SAMPLE_AUDITS_DATA = [
+            {
+                id: "AUD-901",
+                ticketId: "10452",
+                agentName: "Ana Souza",
+                clientName: "Empresa Alfa Varejo LTDA",
+                requester: "Roberto Lima",
+                channel: "Chat/Portal",
+                category: "Financeiro / Fiscal",
+                date: "2026-10-21",
+                auditorName: "Juliana QA",
+                subject: "Erro ao emitir Nota Fiscal Eletrônica - Rejeição 539",
+                historySummary: "Cliente relata erro de duplicidade. Limpeza de cachê executada.",
+                score: 100,
+                statusLabel: "Excelente",
+                hasZeroTolerance: false,
+                isFCR: true,
+                evaluations: {
+                    c_saudacao: "conforme",
+                    c_linguagem: "conforme",
+                    c_sondagem: "conforme",
+                    c_procedimento: "conforme",
+                    c_fcr: "conforme",
+                    c_solucao: "conforme",
+                    c_registro: "conforme"
+                },
+                feedbackPos: "Atendimento impecável! Resposta ágil e solução definitiva no primeiro contato.",
+                feedbackImp: "Nenhuma inconsistência anotada.",
+                feedbackPlan: "Manter o excelente padrão demonstrado."
+            },
+            {
+                id: "AUD-902",
+                ticketId: "10488",
+                agentName: "Carlos Eduardo",
+                clientName: "TechLog Soluções",
+                requester: "Fernanda Santos",
+                channel: "E-mail",
+                category: "Banco de Dados",
+                date: "2026-10-22",
+                auditorName: "Juliana QA",
+                subject: "Lentidão ao carregar relatório de vendas mensal",
+                historySummary: "Identificado índice corrompido no banco.",
+                score: 72.5,
+                statusLabel: "Insuficiente",
+                hasZeroTolerance: false,
+                isFCR: false,
+                evaluations: {
+                    c_saudacao: "conforme",
+                    c_linguagem: "conforme",
+                    c_sondagem: "parcial",
+                    c_procedimento: "parcial",
+                    c_fcr: "nao",
+                    c_solucao: "conforme",
+                    c_registro: "nao"
+                },
+                feedbackPos: "Boa linguagem técnica na resposta por e-mail.",
+                feedbackImp: "Faltou registrar a causa raiz detalhada no histórico interno do ticket e encaminhou para N2 sem os testes preliminares.",
+                feedbackPlan: "Treinamento referente às diretrizes de encaminhamento N1 -> N2."
+            }
+        ];
+
+        // APP STATE
+        let auditsList = [];
+        let chartAgentsInstance = null;
+        let chartCategoriesInstance = null;
+        let chartTimelineInstance = null;
+
+        // ================= INITIALIZATION =================
+        window.onload = function() {
+            // Load LocalStorage
+            const stored = localStorage.getItem('movidesk_qa_audits_v2');
+            if (stored) {
+                try { auditsList = JSON.parse(stored); } catch(e) { auditsList = [...SAMPLE_AUDITS_DATA]; }
+            } else {
+                auditsList = [...SAMPLE_AUDITS_DATA];
+                saveState();
+            }
+
+            // Set today's date in form fields
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('audit-date').value = today;
+            document.getElementById('search-date-start').value = today;
+            document.getElementById('search-date-end').value = today;
+
+            // Render Criteria Checklist
+            renderCriteriaForm();
+
+            // Populate Filter Agents
+            populateAgentDropdowns();
+
+            // Render App Views
+            refreshApp();
+        };
+
+        function saveState() {
+            localStorage.setItem('movidesk_qa_audits_v2', JSON.stringify(auditsList));
+        }
+
+        function refreshApp() {
+            renderDashboard();
+            renderRecordsTable();
+        }
+
+        // ================= NAVIGATION =================
+        function switchTab(tabName) {
+            document.querySelectorAll('section[id^="view-"]').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-sky-400', 'bg-slate-800');
+                btn.classList.add('text-slate-300');
+            });
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            const active = document.getElementById(`tab-${tabName}`);
+            active.classList.add('text-sky-400', 'bg-slate-800');
+            active.classList.remove('text-slate-300');
+
+            if (tabName === 'dashboard') {
+                setTimeout(() => { renderDashboard(); }, 50);
+            }
+        }
+
+        // ================= INTEGRACAO E BUSCA MOVIDESK =================
+        function toggleTokenVisibility() {
+            const input = document.getElementById('movidesk-token');
+            const icon = document.getElementById('token-eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash text-xs';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye text-xs';
+            }
+        }
+
+        function testMovideskConnection() {
+            const token = document.getElementById('movidesk-token').value.trim();
+            const mode = document.getElementById('movidesk-mode').value;
+
+            if (mode === 'mock' || !token) {
+                updateApiStatus(true, "Mock Data Ativo (Simulado)");
+                alert("Conexão bem sucedida com o ambiente do Movidesk (Modo Simulação/Mock Ativo).");
+            } else {
+                updateApiStatus(true, "API Conectada");
+                alert("Token configurado! Pronto para buscar dados da API do Movidesk.");
+            }
+        }
+
+        function updateApiStatus(connected, text) {
+            const pill = document.getElementById('api-status-pill');
+            const textEl = document.getElementById('api-status-text');
+
+            if (connected) {
+                pill.className = "flex items-center gap-2 px-2.5 py-1 rounded-full text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-400";
+                pill.querySelector('span').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+            } else {
+                pill.className = "flex items-center gap-2 px-2.5 py-1 rounded-full text-xs bg-slate-800 border border-slate-700 text-slate-400";
+                pill.querySelector('span').className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
+            }
+            textEl.textContent = text;
+        }
+
+        // FETCH SINGLE TICKET
+        async function fetchSingleTicket() {
+            const id = document.getElementById('search-ticket-id').value.trim();
+            if (!id) { alert("Informe o ID do chamado para buscar."); return; }
+
+            const mode = document.getElementById('movidesk-mode').value;
+            const token = document.getElementById('movidesk-token').value.trim();
+
+            let ticket = null;
+
+            if (mode === 'auto' && token) {
+                try {
+                    // Chamada real REST da API Movidesk
+                    const url = `https://api.movidesk.com/public/v1/tickets?token=${token}&$filter=id eq ${id}&$expand=owner,clients,actions`;
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.length > 0) ticket = data[0];
+                    }
+                } catch(e) {
+                    console.warn("CORS ou erro de rede. Usando Mock Data fallback.", e);
+                }
+            }
+
+            // Fallback para Mock se não encontrado
+            if (!ticket) {
+                ticket = MOVIDESK_MOCK_TICKETS.find(t => t.id === id) || {
+                    id: id,
+                    subject: "Atendimento técnico geral - Ticket #" + id,
+                    status: "Encerrado",
+                    createdDate: new Date().toISOString(),
+                    resolvedInFirstCall: true,
+                    category: "Suporte Geral",
+                    owner: { name: "Atendente " + id },
+                    clients: [{ name: "Cliente Exemplo " + id }],
+                    createdIn: "Chat/Portal",
+                    actions: [{ description: "Atendimento importado via simulador Movidesk." }]
+                };
+            }
+
+            renderMovideskTicketsTable([ticket]);
+        }
+
+        // FETCH LIST TICKETS
+        async function fetchMovideskTicketsList() {
+            const mode = document.getElementById('movidesk-mode').value;
+            const token = document.getElementById('movidesk-token').value.trim();
+            let tickets = [];
+
+            if (mode === 'auto' && token) {
+                try {
+                    const url = `https://api.movidesk.com/public/v1/tickets?token=${token}&$top=10&$expand=owner,clients,actions&$orderby=id desc`;
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        tickets = await res.json();
+                    }
+                } catch(e) {
+                    console.warn("Usando mock data por fallback.", e);
+                }
+            }
+
+            if (!tickets || tickets.length === 0) {
+                tickets = [...MOVIDESK_MOCK_TICKETS];
+            }
+
+            renderMovideskTicketsTable(tickets);
+        }
+
+        function renderMovideskTicketsTable(tickets) {
+            const tbody = document.getElementById('movidesk-tickets-tbody');
+            document.getElementById('ticket-count-badge').textContent = `${tickets.length} chamados`;
+
+            tbody.innerHTML = '';
+
+            tickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition";
+
+                const clientName = (t.clients && t.clients.length > 0) ? t.clients[0].name : "Não Informado";
+                const agentName = t.owner ? t.owner.name : "Sem Agente";
+                const createdDateFormatted = t.createdDate ? new Date(t.createdDate).toLocaleDateString('pt-BR') : "--";
+
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-900">#${t.id}</td>
+                    <td class="p-3 font-semibold text-slate-800 max-w-xs truncate" title="${t.subject}">${t.subject}</td>
+                    <td class="p-3 text-slate-600">${clientName}</td>
+                    <td class="p-3 text-slate-600 font-medium">${agentName}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.status === 'Encerrado' ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'}">
+                            ${t.status || 'Aberto'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-500">${createdDateFormatted}</td>
+                    <td class="p-3 text-right">
+                        <button onclick='importTicketToAuditForm(${JSON.stringify(t).replace(/'/g, "&apos;")})' class="px-3 py-1.5 bg-gradient-to-r from-sky-600 to-movi-600 hover:opacity-90 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm inline-flex">
+                            <i class="fa-solid fa-file-import"></i> Auditar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // IMPORT TICKET DATA DIRECTLY TO AUDIT FORM
+        function importTicketToAuditForm(ticket) {
+            document.getElementById('audit-ticket-id').value = ticket.id;
+            document.getElementById('audit-agent-name').value = ticket.owner ? ticket.owner.name : "Agente Indefinido";
+            document.getElementById('audit-client-name').value = (ticket.clients && ticket.clients.length > 0) ? ticket.clients[0].name : "Cliente Não Informado";
+            document.getElementById('audit-subject').value = ticket.subject || "";
+            document.getElementById('audit-category').value = ticket.category || "Suporte Geral";
+            document.getElementById('audit-channel').value = ticket.createdIn || "Chat/Portal";
+
+            if (ticket.actions && ticket.actions.length > 0) {
+                document.getElementById('audit-history-summary').value = ticket.actions.map(a => a.description).join(" | ").substring(0, 300);
+            }
+
+            document.getElementById('imported-ticket-badge').classList.remove('hidden');
+
+            switchTab('audit');
+        }
+
+        // ================= RENDER FORM CRITERIA =================
+        function renderCriteriaForm() {
+            const container = document.getElementById('criteria-form-container');
+            container.innerHTML = '';
+
+            CRITERIA_CATEGORIES.forEach(cat => {
+                const box = document.createElement('div');
+                box.className = "bg-slate-50/80 border border-slate-200 rounded-xl p-4";
+
+                let html = `<div class="font-bold text-xs uppercase tracking-wider text-slate-800 mb-3 flex items-center gap-2">
+                    <i class="fa-solid ${cat.icon} text-sky-600"></i> ${cat.title}
+                </div><div class="space-y-3">`;
+
+                cat.items.forEach(item => {
+                    html += `
+                    <div class="bg-white border border-slate-200 p-3 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+                        <div class="md:w-1/2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-xs text-slate-800">${item.label}</span>
+                                <span class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Peso: ${item.weight} pts</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">${item.desc}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="inline-flex items-center gap-1 text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-md cursor-pointer hover:bg-emerald-100 transition">
+                                <input type="radio" name="${item.id}" value="conforme" checked onchange="calculateScore()" class="text-emerald-600 focus:ring-emerald-500"> Conforme
+                            </label>
+                            <label class="inline-flex items-center gap-1 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-md cursor-pointer hover:bg-amber-100 transition">
+                                <input type="radio" name="${item.id}" value="parcial" onchange="calculateScore()" class="text-amber-600 focus:ring-amber-500"> Parcial
+                            </label>
+                            <label class="inline-flex items-center gap-1 text-xs font-medium bg-red-50 text-red-800 border border-red-200 px-2.5 py-1 rounded-md cursor-pointer hover:bg-red-100 transition">
+                                <input type="radio" name="${item.id}" value="nao" onchange="calculateScore()" class="text-red-600 focus:ring-red-500"> Não Conf.
+                            </label>
+                            <label class="inline-flex items-center gap-1 text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-md cursor-pointer hover:bg-slate-200 transition">
+                                <input type="radio" name="${item.id}" value="na" onchange="calculateScore()" class="text-slate-500 focus:ring-slate-400"> N/A
+                            </label>
+                        </div>
+                    </div>`;
+                });
+
+                html += `</div>`;
+                box.innerHTML = html;
+                container.appendChild(box);
+            });
+
+            calculateScore();
+        }
+
+        // CALCULATE DYNAMIC SCORE
+        function calculateScore() {
+            let totalAvailableWeight = 0;
+            let totalEarnedPoints = 0;
+
+            CRITERIA_CATEGORIES.forEach(cat => {
+                cat.items.forEach(item => {
+                    const selected = document.querySelector(`input[name="${item.id}"]:checked`);
+                    const val = selected ? selected.value : 'conforme';
+
+                    if (val !== 'na') {
+                        totalAvailableWeight += item.weight;
+                        if (val === 'conforme') totalEarnedPoints += item.weight;
+                        else if (val === 'parcial') totalEarnedPoints += (item.weight * 0.5);
+                    }
+                });
+            });
+
+            // Zero Tolerance Check
+            const fzLgpd = document.getElementById('fz-lgpd').checked;
+            const fzRespeito = document.getElementById('fz-respeito').checked;
+            const fzProcedimento = document.getElementById('fz-procedimento').checked;
+            const hasZeroTolerance = fzLgpd || fzRespeito || fzProcedimento;
+
+            let finalScorePercent = totalAvailableWeight > 0 ? (totalEarnedPoints / totalAvailableWeight) * 100 : 100;
+            if (hasZeroTolerance) finalScorePercent = 0;
+
+            finalScorePercent = Math.round(finalScorePercent * 10) / 10;
+
+            // UI Label Status
+            let statusLabel = "Excelente";
+            let badgeClass = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+
+            if (hasZeroTolerance) {
+                statusLabel = "Fato Zero (0%)";
+                badgeClass = "bg-red-500/20 text-red-400 border-red-500/30";
+            } else if (finalScorePercent >= 90) {
+                statusLabel = "Excelente";
+                badgeClass = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+            } else if (finalScorePercent >= 75) {
+                statusLabel = "Adequado";
+                badgeClass = "bg-amber-500/20 text-amber-400 border-amber-500/30";
+            } else {
+                statusLabel = "Insuficiente";
+                badgeClass = "bg-red-500/20 text-red-400 border-red-500/30";
+            }
+
+            document.getElementById('calculated-score-num').textContent = finalScorePercent.toFixed(1) + "%";
+            const badge = document.getElementById('calculated-score-badge');
+            badge.textContent = statusLabel;
+            badge.className = `px-2.5 py-1 text-xs rounded-md font-bold border ${badgeClass}`;
+
+            const alertBox = document.getElementById('alert-zero-tolerance');
+            if (hasZeroTolerance) alertBox.classList.remove('hidden');
+            else alertBox.classList.add('hidden');
+
+            return { score: finalScorePercent, statusLabel, hasZeroTolerance };
+        }
+
+        // SAVE AUDIT FORM
+        function saveAuditSubmit(e) {
+            e.preventDefault();
+
+            const { score, statusLabel, hasZeroTolerance } = calculateScore();
+
+            // Collect evaluation states
+            const evaluations = {};
+            let isFCR = false;
+
+            CRITERIA_CATEGORIES.forEach(cat => {
+                cat.items.forEach(item => {
+                    const selected = document.querySelector(`input[name="${item.id}"]:checked`);
+                    const val = selected ? selected.value : 'conforme';
+                    evaluations[item.id] = val;
+
+                    if (item.isFCR && val === 'conforme') isFCR = true;
+                });
+            });
+
+            const newAudit = {
+                id: "AUD-" + Math.floor(100 + Math.random() * 900),
+                ticketId: document.getElementById('audit-ticket-id').value.trim(),
+                agentName: document.getElementById('audit-agent-name').value.trim(),
+                clientName: document.getElementById('audit-client-name').value.trim(),
+                requester: document.getElementById('audit-requester').value.trim() || 'Não Informado',
+                channel: document.getElementById('audit-channel').value,
+                category: document.getElementById('audit-category').value || 'Geral',
+                date: document.getElementById('audit-date').value,
+                auditorName: document.getElementById('audit-auditor-name').value.trim(),
+                subject: document.getElementById('audit-subject').value.trim() || 'Chamado sem assunto',
+                historySummary: document.getElementById('audit-history-summary').value.trim() || 'Atendimento padronizado.',
+                score: score,
+                statusLabel: statusLabel,
+                hasZeroTolerance: hasZeroTolerance,
+                isFCR: isFCR,
+                evaluations: evaluations,
+                feedbackPos: document.getElementById('feedback-pos').value.trim() || 'Sem observações.',
+                feedbackImp: document.getElementById('feedback-imp').value.trim() || 'Sem observações.',
+                feedbackPlan: document.getElementById('feedback-plan').value.trim() || 'Nenhuma ação necessária.'
+            };
+
+            auditsList.unshift(newAudit);
+            saveState();
+            populateAgentDropdowns();
+            refreshApp();
+
+            alert(`Auditoria ${newAudit.id} salva com sucesso com a nota ${newAudit.score}%!`);
+            resetAuditForm();
+            switchTab('records');
+        }
+
+        function resetAuditForm() {
+            document.getElementById('auditForm').reset();
+            document.getElementById('audit-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('imported-ticket-badge').classList.add('hidden');
+            calculateScore();
+        }
+
+        function populateAgentDropdowns() {
+            const select = document.getElementById('dash-filter-agent');
+            const current = select.value;
+            const agents = [...new Set(auditsList.map(a => a.agentName))].sort();
+
+            select.innerHTML = '<option value="all">Todos os Agentes</option>';
+            agents.forEach(ag => {
+                const opt = document.createElement('option');
+                opt.value = ag;
+                opt.textContent = ag;
+                select.appendChild(opt);
+            });
+            select.value = current;
+        }
+
+        // ================= DASHBOARD & CHARTS =================
+        function renderDashboard() {
+            const agentFilter = document.getElementById('dash-filter-agent').value;
+            const periodFilter = document.getElementById('dash-filter-period').value;
+
+            const filtered = auditsList.filter(item => {
+                if (agentFilter !== 'all' && item.agentName !== agentFilter) return false;
+                if (periodFilter !== 'all') {
+                    const days = parseInt(periodFilter);
+                    const itemDate = new Date(item.date);
+                    const diffDays = Math.ceil(Math.abs(new Date() - itemDate) / (1000 * 60 * 60 * 24));
+                    if (diffDays > days) return false;
+                }
+                return true;
+            });
+
+            const total = filtered.length;
+            if (total === 0) {
+                document.getElementById('kpi-avg-score').textContent = "0.0%";
+                document.getElementById('kpi-total-audits').textContent = "0";
+                document.getElementById('kpi-compliance-rate').textContent = "0%";
+                document.getElementById('kpi-fatal-errors').textContent = "0";
+                document.getElementById('kpi-top-agent').textContent = "--";
+                renderCharts([], []);
+                return;
+            }
+
+            const avgScore = filtered.reduce((a, b) => a + b.score, 0) / total;
+            const approved = filtered.filter(a => a.score >= 75 && !a.hasZeroTolerance).length;
+            const fatalErrors = filtered.filter(a => a.hasZeroTolerance).length;
+            const complianceRate = Math.round((approved / total) * 100);
+
+            // Find Top Agent
+            const agentScores = {};
+            const agentCounts = {};
+            filtered.forEach(a => {
+                agentScores[a.agentName] = (agentScores[a.agentName] || 0) + a.score;
+                agentCounts[a.agentName] = (agentCounts[a.agentName] || 0) + 1;
+            });
+            let topAgent = "--";
+            let topAvg = -1;
+            Object.keys(agentScores).forEach(ag => {
+                const avg = agentScores[ag] / agentCounts[ag];
+                if (avg > topAvg) { topAvg = avg; topAgent = ag; }
+            });
+
+            document.getElementById('kpi-avg-score').textContent = avgScore.toFixed(1) + "%";
+            document.getElementById('kpi-total-audits').textContent = total;
+            document.getElementById('kpi-compliance-rate').textContent = complianceRate + "%";
+            document.getElementById('kpi-fatal-errors').textContent = fatalErrors;
+            document.getElementById('kpi-top-agent').textContent = topAgent + ` (${topAvg.toFixed(0)}%)`;
+
+            renderCharts(filtered, agentScores, agentCounts);
+        }
+
+        function renderCharts(filtered, agentScores = {}, agentCounts = {}) {
+            // 1. Chart Agents Performance
+            const agentLabels = Object.keys(agentScores);
+            const agentData = agentLabels.map(a => (agentScores[a] / agentCounts[a]).toFixed(1));
+
+            if (chartAgentsInstance) chartAgentsInstance.destroy();
+            const ctx1 = document.getElementById('chartAgents').getContext('2d');
+            chartAgentsInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: agentLabels.length ? agentLabels : ['Sem dados'],
+                    datasets: [{
+                        label: 'Média de Nota (%)',
+                        data: agentData.length ? agentData : [0],
+                        backgroundColor: '#0284c7',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100 } }
+                }
+            });
+
+            // 2. Chart Category Radar
+            const catTotals = { "Cordialidade": [], "Diagnóstico": [], "Resolução": [], "Registro": [] };
+            filtered.forEach(a => {
+                if (a.evaluations) {
+                    catTotals["Cordialidade"].push(a.evaluations["c_saudacao"] === 'conforme' ? 100 : 50);
+                    catTotals["Diagnóstico"].push(a.evaluations["c_procedimento"] === 'conforme' ? 100 : 50);
+                    catTotals["Resolução"].push(a.evaluations["c_solucao"] === 'conforme' ? 100 : 50);
+                    catTotals["Registro"].push(a.evaluations["c_registro"] === 'conforme' ? 100 : 50);
+                }
+            });
+
+            const catLabels = Object.keys(catTotals);
+            const catData = catLabels.map(c => {
+                const arr = catTotals[c];
+                return arr.length ? (arr.reduce((x, y) => x + y, 0) / arr.length).toFixed(0) : 0;
+            });
+
+            if (chartCategoriesInstance) chartCategoriesInstance.destroy();
+            const ctx2 = document.getElementById('chartCategories').getContext('2d');
+            chartCategoriesInstance = new Chart(ctx2, {
+                type: 'radar',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        label: 'Nível de Qualidade por Categoria (%)',
+                        data: catData,
+                        backgroundColor: 'rgba(147, 51, 234, 0.2)',
+                        borderColor: '#9333ea',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 100 } }
+                }
+            });
+
+            // 3. Timeline Line Chart
+            const sorted = [...filtered].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const dates = sorted.map(s => formatDate(s.date));
+            const timelineScores = sorted.map(s => s.score);
+
+            if (chartTimelineInstance) chartTimelineInstance.destroy();
+            const ctx3 = document.getElementById('chartTimeline').getContext('2d');
+            chartTimelineInstance = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: dates.length ? dates : ['Sem dados'],
+                    datasets: [{
+                        label: 'Evolução da Nota (%)',
+                        data: timelineScores.length ? timelineScores : [0],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100 } }
+                }
+            });
+        }
+
+        // ================= RECORDS TABLE & SEARCH =================
+        function renderRecordsTable() {
+            const tbody = document.getElementById('records-tbody');
+            const emptyMsg = document.getElementById('records-empty');
+            const search = document.getElementById('records-search').value.toLowerCase();
+
+            tbody.innerHTML = '';
+
+            const filtered = auditsList.filter(a => {
+                return a.ticketId.toLowerCase().includes(search) ||
+                       a.agentName.toLowerCase().includes(search) ||
+                       a.clientName.toLowerCase().includes(search);
+            });
+
+            if (filtered.length === 0) {
+                emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            filtered.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+
+                let badgeColor = "bg-emerald-100 text-emerald-800";
+                if (a.hasZeroTolerance) badgeColor = "bg-red-100 text-red-800 font-bold";
+                else if (a.score < 75) badgeColor = "bg-red-100 text-red-800";
+                else if (a.score < 90) badgeColor = "bg-amber-100 text-amber-800";
+
+                tr.innerHTML = `
+                    <td class="p-3.5 text-slate-500 font-medium whitespace-nowrap">${formatDate(a.date)}</td>
+                    <td class="p-3.5 font-bold text-slate-900 whitespace-nowrap">#${a.ticketId}</td>
+                    <td class="p-3.5 font-semibold text-slate-800">${a.agentName}</td>
+                    <td class="p-3.5 text-slate-600">${a.clientName}</td>
+                    <td class="p-3.5 text-slate-500">${a.channel}</td>
+                    <td class="p-3.5">${a.isFCR ? '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-bolt"></i> Sim</span>' : '<span class="text-slate-400">Não</span>'}</td>
+                    <td class="p-3.5">
+                        <span class="px-2.5 py-1 rounded-md text-[11px] font-bold ${badgeColor}">
+                            ${a.score.toFixed(1)}% (${a.statusLabel})
+                        </span>
+                    </td>
+                    <td class="p-3.5 text-right whitespace-nowrap">
+                        <button onclick="openModal('${a.id}')" title="Visualizar / Imprimir Laudo" class="p-2 bg-sky-50 text-sky-600 hover:bg-sky-100 rounded-lg transition mr-1">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </button>
+                        <button onclick="deleteAudit('${a.id}')" title="Excluir" class="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '--';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            return dateStr;
+        }
+
+        function deleteAudit(id) {
+            if (confirm("Excluir definitivamente este registro de auditoria?")) {
+                auditsList = auditsList.filter(a => a.id !== id);
+                saveState();
+                populateAgentDropdowns();
+                refreshApp();
+            }
+        }
+
+        // ================= MODAL & IMPRESSÃO =================
+        function openModal(id) {
+            const audit = auditsList.find(a => a.id === id);
+            if (!audit) return;
+
+            document.getElementById('modal-ticket-id').textContent = "#" + audit.ticketId;
+            document.getElementById('modal-agent-name').textContent = audit.agentName;
+            document.getElementById('modal-client-name').textContent = audit.clientName;
+            document.getElementById('modal-auditor-name').textContent = audit.auditorName || "Auditor de QA";
+            document.getElementById('modal-audit-date').textContent = "Auditado em: " + formatDate(audit.date);
+            document.getElementById('modal-subject').textContent = audit.subject || "Sem assunto";
+            document.getElementById('modal-score-val').textContent = audit.score.toFixed(1) + "%";
+
+            // Status Badge Modal
+            const badge = document.getElementById('modal-status-badge');
+            badge.textContent = audit.statusLabel;
+            if (audit.hasZeroTolerance) badge.className = "px-3 py-1 rounded-full text-xs font-black uppercase bg-red-100 text-red-800 border border-red-300";
+            else if (audit.score >= 90) badge.className = "px-3 py-1 rounded-full text-xs font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300";
+            else if (audit.score >= 75) badge.className = "px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-100 text-amber-800 border border-amber-300";
+            else badge.className = "px-3 py-1 rounded-full text-xs font-black uppercase bg-red-100 text-red-800 border border-red-300";
+
+            // Render Criteria Table in Modal
+            const tbody = document.getElementById('modal-criteria-tbody');
+            tbody.innerHTML = '';
+
+            CRITERIA_CATEGORIES.forEach(cat => {
+                cat.items.forEach(item => {
+                    const evalVal = audit.evaluations ? audit.evaluations[item.id] : 'conforme';
+                    let label = "Conforme";
+                    let pts = item.weight + " pts";
+                    let css = "text-emerald-700 font-bold";
+
+                    if (evalVal === 'parcial') {
+                        label = "Parcial (50%)";
+                        pts = (item.weight * 0.5) + " pts";
+                        css = "text-amber-700 font-bold";
+                    } else if (evalVal === 'nao') {
+                        label = "Não Conforme";
+                        pts = "0 pts";
+                        css = "text-red-700 font-bold";
+                    } else if (evalVal === 'na') {
+                        label = "Não Aplicável (N/A)";
+                        pts = "Desconsiderado";
+                        css = "text-slate-400";
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2">
+                            <span class="font-bold text-slate-800 block">${item.label}</span>
+                            <span class="text-[10px] text-slate-500">${item.desc}</span>
+                        </td>
+                        <td class="p-2 text-center text-slate-600">${item.weight}</td>
+                        <td class="p-2 text-center ${css}">${label}</td>
+                        <td class="p-2 text-right font-bold text-slate-800">${pts}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+
+            document.getElementById('modal-feedback-pos').textContent = audit.feedbackPos;
+            document.getElementById('modal-feedback-imp').textContent = audit.feedbackImp;
+            document.getElementById('modal-feedback-plan').textContent = audit.feedbackPlan;
+
+            document.getElementById('auditModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('auditModal').classList.add('hidden');
+        }
+
+        // ================= EXPORT & BACKUP =================
+        function exportCSV() {
+            if (auditsList.length === 0) { alert("Não há auditorias para exportar."); return; }
+
+            let csv = "data:text/csv;charset=utf-8,";
+            csv += "ID Auditoria;ID Ticket Movidesk;Data;Agente;Cliente;Canal;Nota %;Status;FCR;Auditor\n";
+
+            auditsList.forEach(a => {
+                csv += [
+                    a.id,
+                    a.ticketId,
+                    a.date,
+                    `"${a.agentName}"`,
+                    `"${a.clientName}"`,
+                    a.channel,
+                    a.score.toFixed(1),
+                    a.statusLabel,
+                    a.isFCR ? "Sim" : "Nao",
+                    `"${a.auditorName}"`
+                ].join(";") + "\n";
+            });
+
+            const link = document.createElement("a");
+            link.href = encodeURI(csv);
+            link.download = `Auditorias_Movidesk_QA_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportJSONBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(auditsList, null, 2));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `Backup_QA_Movidesk_${new Date().toISOString().split('T')[0]}.json`);
+            dl.click();
+        }
+
+        function importJSONBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (Array.isArray(parsed)) {
+                        auditsList = parsed;
+                        saveState();
+                        populateAgentDropdowns();
+                        refreshApp();
+                        alert("Backup de auditorias restaurado com sucesso!");
+                    } else {
+                        alert("Arquivo JSON inválido.");
+                    }
+                } catch(err) {
+                    alert("Erro ao ler arquivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
