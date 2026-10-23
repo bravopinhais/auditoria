@@ -1,64 +1,1006 @@
-async function fetchMovideskTicket() {
-    const token = document.getElementById('movideskToken').value.trim();
-    const ticketId = document.getElementById('movideskTicketId').value.trim();
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Auditoria de Chamados - Arquem Sistemas</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    if (!token || !ticketId) {
-        alert('Por favor, informe a Chave API do Movidesk e o Número do Chamado.');
-        return;
-    }
+    <!-- Header / Navbar Principal -->
+    <header class="bg-slate-900 text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 p-2 rounded-lg">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-none">Arquem Sistemas</h1>
+                        <p class="text-xs text-slate-400">Plataforma de Auditoria & Qualidade de Chamados</p>
+                    </div>
+                </div>
 
-    const statusEl = document.getElementById('movideskStatus');
-    statusEl.innerHTML = '<span class="text-blue-600 font-medium">⌛ Conectando ao Movidesk...</span>';
+                <!-- Navegação por Abas -->
+                <nav class="flex space-x-2">
+                    <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="tab-btn px-3 py-2 rounded-md text-sm font-medium transition-colors bg-indigo-600 text-white">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-1"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('integrations')" id="tabBtn-integrations" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <i data-lucide="plug" class="w-4 h-4 inline mr-1"></i> Movidesk Integration
+                    </button>
+                    <button onclick="switchTab('queue')" id="tabBtn-queue" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors relative">
+                        <i data-lucide="list-todo" class="w-4 h-4 inline mr-1"></i> Fila Sincronizada
+                        <span id="queueBadge" class="ml-1 px-1.5 py-0.5 text-xs bg-indigo-500 text-white rounded-full">0</span>
+                    </button>
+                    <button onclick="switchTab('audit')" id="tabBtn-audit" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 inline mr-1"></i> Nova Auditoria
+                    </button>
+                    <button onclick="switchTab('history')" id="tabBtn-history" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <i data-lucide="history" class="w-4 h-4 inline mr-1"></i> Histórico
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
 
-    // URL oficial da API OData do Movidesk
-    const rawUrl = `https://api.movidesk.com/public/v1/tickets?token=${token}&$filter=id eq ${ticketId}&$expand=owner,clients,actions`;
-    
-    // Utiliza proxy CORS para permitir chamadas do navegador sem bloqueio
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rawUrl)}`;
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
 
-    try {
-        let response = await fetch(proxyUrl);
-        
-        // Tentativa de fallback caso o proxy primário falhe
-        if (!response.ok) {
-            const fallbackProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`;
-            response = await fetch(fallbackProxy);
+        <!-- ABAS -->
+
+        <!-- 1. DASHBOARD DE QUALIDADE -->
+        <section id="tab-dashboard" class="tab-content">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Painel de Qualidade e Desempenho</h2>
+                    <p class="text-slate-500 text-sm">Métricas consolidadas baseadas nos critérios de auditoria da Arquem Sistemas</p>
+                </div>
+                <button onclick="loadMockData()" class="px-3 py-1.5 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md transition-colors flex items-center">
+                    <i data-lucide="database" class="w-3.5 h-3.5 mr-1"></i> Carregar Dados Demo
+                </button>
+            </div>
+
+            <!-- Cards de KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold uppercase text-slate-400">Total Auditado</p>
+                            <h3 id="kpiTotalAudits" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                        </div>
+                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="files" class="w-5 h-5"></i></span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold uppercase text-slate-400">Média Geral</p>
+                            <h3 id="kpiAvgScore" class="text-3xl font-extrabold text-slate-800 mt-1">0.0</h3>
+                        </div>
+                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="award" class="w-5 h-5"></i></span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold uppercase text-slate-400">Conformidade</p>
+                            <h3 id="kpiConformityRate" class="text-3xl font-extrabold text-emerald-600 mt-1">0%</h3>
+                        </div>
+                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="check-circle-2" class="w-5 h-5"></i></span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-semibold uppercase text-slate-400">Total com Não Conformidade</p>
+                            <h3 id="kpiTotalNc" class="text-3xl font-extrabold text-red-600 mt-1">0</h3>
+                        </div>
+                        <span class="p-2 bg-red-50 text-red-600 rounded-lg"><i data-lucide="alert-triangle" class="w-5 h-5"></i></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-indigo-600"></i> Não Conformidades por Critério (Seção 2)
+                    </h3>
+                    <div class="relative h-64">
+                        <canvas id="chartCriteriaNC"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+                        <i data-lucide="pie-chart" class="w-4 h-4 mr-2 text-indigo-600"></i> Distribuição de Status
+                    </h3>
+                    <div class="relative h-64 flex items-center justify-center">
+                        <canvas id="chartStatusDist"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. MÓDULO DE INTEGRAÇÃO MOVIDESK -->
+        <section id="tab-integrations" class="tab-content hidden">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-orange-100 text-orange-600 rounded-lg">
+                            <i data-lucide="cloud-cog" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Conector API Movidesk</h2>
+                            <p class="text-xs text-slate-500">Configure as credenciais de acesso para importar e sincronizar chamados em lote</p>
+                        </div>
+                    </div>
+                    <span id="apiStatusBadge" class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-600">Desconectado</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Chave da API Movidesk (Token)</label>
+                        <input type="password" id="movideskToken" placeholder="Insira o token gerado no Movidesk (Configurações > Pessoas / API)" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usar Proxy CORS para Navegador</label>
+                        <select id="useCorsProxy" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="true">Sim (Recomendado para uso no Browser)</option>
+                            <option value="false">Não (Apenas se servidor backend próprio)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button onclick="testMovideskConnection()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                        <i data-lucide="activity" class="w-4 h-4 mr-2"></i> Testar Conexão
+                    </button>
+                    <button onclick="saveApiSettings()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                        <i data-lucide="save" class="w-4 h-4 mr-2"></i> Salvar Configurações
+                    </button>
+                </div>
+            </div>
+
+            <!-- Módulo de Sincronização em Lote -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 mr-2 text-indigo-600"></i> Sincronizador de Chamados em Lote
+                </h3>
+                <p class="text-xs text-slate-500 mb-6">Busque uma lista de chamados recentes para alimentar a fila de auditoria da equipe</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Quantidade Máxima</label>
+                        <select id="syncLimit" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            <option value="5">5 chamados</option>
+                            <option value="10" selected>10 chamados</option>
+                            <option value="20">20 chamados</option>
+                            <option value="50">50 chamados</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Filtrar por Status</label>
+                        <select id="syncStatusFilter" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                            <option value="all">Todos os Status</option>
+                            <option value="Resolved">Resolvidos / Finalizados</option>
+                            <option value="InService">Em Atendimento</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 flex items-end">
+                        <button onclick="syncTicketsFromMovidesk()" class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center">
+                            <i data-lucide="download-cloud" class="w-4 h-4 mr-2"></i> Executar Sincronização Agora
+                        </button>
+                    </div>
+                </div>
+
+                <div id="syncLog" class="p-3 bg-slate-50 rounded-lg text-xs font-mono text-slate-600 max-h-32 overflow-y-auto border border-slate-200">
+                    Aguardando início da sincronização...
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. FILA DE CHAMADOS SINCRONIZADOS -->
+        <section id="tab-queue" class="tab-content hidden">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Fila de Chamados Importados</h2>
+                        <p class="text-xs text-slate-500">Selecione um chamado da lista para iniciar a auditoria completa</p>
+                    </div>
+                    <button onclick="clearQueue()" class="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 border border-red-200 rounded-md transition-colors flex items-center">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5 mr-1"></i> Limpar Fila
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold">
+                            <tr>
+                                <th class="p-3">ID Chamado</th>
+                                <th class="p-3">Assunto</th>
+                                <th class="p-3">Solicitante / Cliente</th>
+                                <th class="p-3">Atendente</th>
+                                <th class="p-3">Status Auditoria</th>
+                                <th class="p-3 text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queueTableBody" class="divide-y divide-slate-200">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. NOA AUDITORIA / FORMULÁRIO COMPLETO -->
+        <section id="tab-audit" class="tab-content hidden">
+            <!-- Header do Formulário -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Formulário de Auditoria de Qualidade</h2>
+                        <p class="text-xs text-slate-500">Regulamento Oficial da Arquem Sistemas (13 Critérios de Avaliação)</p>
+                    </div>
+
+                    <!-- Configuração de IA API Key -->
+                    <div class="flex items-center space-x-2 w-full md:w-auto">
+                        <input type="password" id="geminiApiKey" placeholder="Chave Gemini API (Para Análise IA)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs w-full md:w-64 focus:outline-none">
+                        <button onclick="runAiAnalysis()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center whitespace-nowrap">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 mr-1"></i> Análise IA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dados do Chamado -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">ID Chamado *</label>
+                        <input type="text" id="ticketId" placeholder="Ex: 10495" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Atendente / Responsável *</label>
+                        <input type="text" id="agentName" placeholder="Nome do Analista" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Cliente / Empresa *</label>
+                        <input type="text" id="clientName" placeholder="Nome do Cliente/Loja" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Auditor Responsável *</label>
+                        <input type="text" id="auditorName" placeholder="Seu Nome" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Assunto do Chamado *</label>
+                        <input type="text" id="ticketSubject" placeholder="Assunto completo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Tabulação / Categoria *</label>
+                        <input type="text" id="ticketCategory" placeholder="Ex: Dúvida / Suporte Técfnico" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Descrição Completa e Apontamentos do Chamado</label>
+                    <textarea id="ticketContent" rows="4" placeholder="Cole o histórico de interações do chamado aqui para análise da IA..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono text-xs"></textarea>
+                </div>
+            </div>
+
+            <!-- CHECKLIST DE REQUISITOS MÍNIMOS (SEÇÃO 3) -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6">
+                <h3 class="font-bold text-amber-900 text-sm mb-3 flex items-center">
+                    <i data-lucide="check-square" class="w-4 h-4 mr-2 text-amber-600"></i> Checklist de Requisitos Mínimos Antes do Encaminhamento (Seção 3)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-amber-950">
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_1" class="rounded text-amber-600"> <span>Assunto corresponde e segue macro</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_2" class="rounded text-amber-600"> <span>ID da Base/Loja informado</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_3" class="rounded text-amber-600"> <span>Cadastro do solicitante atualizado</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_4" class="rounded text-amber-600"> <span>Descrição clara e com dados essenciais</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_5" class="rounded text-amber-600"> <span>Passo a passo e evidências anexadas</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_6" class="rounded text-amber-600"> <span>Melhorias possuem croqui/esboço</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_7" class="rounded text-amber-600"> <span>Tabulação e setor corretos</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_8" class="rounded text-amber-600"> <span>Previsão e apontamentos registrados</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
+                        <input type="checkbox" id="chk3_9" class="rounded text-amber-600"> <span>Tipo/Modalidade de chamado correto</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- TABELA DE CRITÉRIOS DE AUDITORIA (SEÇÃO 2) -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-sm">Avaliação dos 13 Critérios do Regulamento (Seção 2)</h3>
+                    <div class="text-xs text-slate-500">
+                        Total Calculado: <span id="calculatedScoreDisplay" class="font-extrabold text-indigo-600 text-sm">100 / 100</span>
+                    </div>
+                </div>
+
+                <div class="divide-y divide-slate-200" id="criteriaList">
+                    <!-- Gerado dinamicamente no JS com base nos 13 critérios -->
+                </div>
+            </div>
+
+            <!-- FEEDBACK E PLANO DE AÇÃO -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
+                <h3 class="font-bold text-slate-800 text-sm mb-4">Parecer da Auditoria & Orientação ao Analista</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Pontos Positivos / Elogios</label>
+                        <textarea id="auditPositive" rows="3" placeholder="Boas práticas observadas no atendimento..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Plano de Ação / Orientação Corretiva</label>
+                        <textarea id="auditActionPlan" rows="3" placeholder="Ações necessárias para adequação ao regimento..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTÃO DE SALVAR -->
+            <div class="flex justify-end">
+                <button onclick="saveAudit()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center text-sm">
+                    <i data-lucide="check-circle-2" class="w-5 h-5 mr-2"></i> Finalizar & Salvar Auditoria
+                </button>
+            </div>
+        </section>
+
+        <!-- 5. HISTÓRICO DE AUDITORIAS -->
+        <section id="tab-history" class="tab-content hidden">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Histórico de Auditorias Realizadas</h2>
+                        <p class="text-xs text-slate-500">Consulte laudos, imprima relatórios ou exporte a base completa</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="exportToCsv()" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-colors flex items-center">
+                            <i data-lucide="download" class="w-3.5 h-3.5 mr-1"></i> Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold">
+                            <tr>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">ID Chamado</th>
+                                <th class="p-3">Atendente</th>
+                                <th class="p-3">Cliente</th>
+                                <th class="p-3 text-center">Nota</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-slate-200">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DE VISUALIZAÇÃO DO LAUDO (IMPRESSÃO A4) -->
+    <div id="modalReport" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 relative">
+            <button onclick="closeModalReport()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 no-print">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div id="reportPrintArea">
+                <!-- Conteúdo do Laudo Fiel da Arquem Sistemas -->
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3 no-print">
+                <button onclick="closeModalReport()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">Fechar</button>
+                <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold flex items-center">
+                    <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Imprimir Laudo (A4)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DA APLICAÇÃO -->
+    <script>
+        // CRITÉRIOS DA SEÇÃO 2 DO REGIMENTO ARQUEM SISTEMAS
+        const AUDIT_CRITERIA = [
+            { id: "c2_1", title: "2.1. Assunto incompatível com a solicitação", weight: 8, desc: "Assunto genérico ou incompatível com a demanda." },
+            { id: "c2_2", title: "2.2. Macro ou padrão de assunto incorreto", weight: 5, desc: "Deixar de utilizar a macro definida ou selecionar macro incorreta." },
+            { id: "c2_3", title: "2.3. Identificação da base ausente ou incorreta", weight: 8, desc: "Falta do ID da base ao lado do assunto ou nome da loja no corpo para ACO." },
+            { id: "c2_4", title: "2.4. Dados do solicitante ausentes ou desatualizados", weight: 7, desc: "Ausência/desatualização de nome do cliente, e-mail e telefone." },
+            { id: "c2_5", title: "2.5. Descrição insuficiente ou incompreensível", weight: 10, desc: "Descrição obscura, contraditória ou sem dados para início de análise." },
+            { id: "c2_6", title: "2.6. Falta de informações para reproduzir ou analisar", weight: 10, desc: "Ausência de passo a passo, telas, mensagens de erro ou resultado esperado." },
+            { id: "c2_7", title: "2.7. Ausência de evidências necessárias", weight: 10, desc: "Falta de prints, vídeos ou documentos indispensáveis." },
+            { id: "c2_8", title: "2.8. Melhoria em ferramenta ou guia sem croqui", weight: 8, desc: "Solicitação de melhoria/funcionalidade sem esboço/croqui/representação visual." },
+            { id: "c2_9", title: "2.9. Tabulação incorreta", weight: 8, desc: "Classificação/tabulação não corresponde ao assunto ou tipo real." },
+            { id: "c2_10", title: "2.10. Encaminhamento para setor incorreto", weight: 10, desc: "Envio a setor não responsável, gerando retrabalho ou atrasos." },
+            { id: "c2_11", title: "2.11. Chamado sem previsão", weight: 8, desc: "Andamento sem registro/atualização de prazo/previsão de entrega." },
+            { id: "c2_12", title: "2.12. Chamado sem apontamentos", weight: 8, desc: "Ausência de registros de análises, testes, contatos ou atualizações." },
+            { id: "c2_13", title: "2.13. Abertura indevida de chamado como interno", weight: 10, desc: "Registrado como interno quando deveria estar vinculado ao cliente." }
+        ];
+
+        // ESTADO DA APLICAÇÃO
+        let appState = {
+            audits: JSON.parse(localStorage.getItem('arquem_audits') || '[]'),
+            syncedQueue: JSON.parse(localStorage.getItem('arquem_queue') || '[]'),
+            movideskToken: localStorage.getItem('arquem_movid_token') || '',
+            useCorsProxy: localStorage.getItem('arquem_cors') !== 'false'
+        };
+
+        let criteriaChartInstance = null;
+        let statusChartInstance = null;
+
+        // INICIALIZAÇÃO
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            document.getElementById('movideskToken').value = appState.movideskToken;
+            renderCriteriaForm();
+            updateQueueTable();
+            updateHistoryTable();
+            renderDashboard();
+        });
+
+        // NAVEGAÇÃO DE ABAS
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('text-slate-300');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+            activeBtn.classList.add('bg-indigo-600', 'text-white');
+            activeBtn.classList.remove('text-slate-300');
+
+            if (tabId === 'dashboard') renderDashboard();
         }
 
-        if (!response.ok) {
-            throw new Error(`Erro na API (${response.status}): Verifique o token e as permissões.`);
+        // RENDERIZAR FORMULÁRIO DE CRITÉRIOS
+        function renderCriteriaForm() {
+            const container = document.getElementById('criteriaList');
+            container.innerHTML = AUDIT_CRITERIA.map(c => `
+                <div class="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-slate-800 text-sm">${c.title}</span>
+                            <span class="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded font-semibold">Peso: ${c.weight} pts</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">${c.desc}</p>
+                    </div>
+                    <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                        <select id="select_${c.id}" onchange="calculateScore()" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+                            <option value="CONFORME" class="text-emerald-600">✅ Conforme</option>
+                            <option value="NAO_CONFORME" class="text-red-600">❌ Não Conforme</option>
+                            <option value="NA" class="text-slate-400">⚪ N/A (Não Aplicável)</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+            calculateScore();
         }
 
-        const data = await response.json();
+        // CÁLCULO DINÂMICO DA PONTUAÇÃO DE AUDITORIA
+        function calculateScore() {
+            let maxScore = 0;
+            let earnedScore = 0;
+            let hasNC = false;
 
-        if (!data || data.length === 0) {
-            statusEl.innerHTML = `<span class="text-red-600 font-medium">❌ Chamado #${ticketId} não encontrado.</span>`;
-            return;
+            AUDIT_CRITERIA.forEach(c => {
+                const val = document.getElementById(`select_${c.id}`).value;
+                if (val !== 'NA') {
+                    maxScore += c.weight;
+                    if (val === 'CONFORME') {
+                        earnedScore += c.weight;
+                    } else if (val === 'NAO_CONFORME') {
+                        hasNC = true;
+                    }
+                }
+            });
+
+            const finalPercent = maxScore > 0 ? Math.round((earnedScore / maxScore) * 100) : 100;
+            const displayEl = document.getElementById('calculatedScoreDisplay');
+            displayEl.innerText = `${finalPercent} / 100 pts (${hasNC ? 'COM NC' : 'CONFORME'})`;
+            displayEl.className = `font-extrabold text-sm ${hasNC ? 'text-red-600' : 'text-emerald-600'}`;
+
+            return { score: finalPercent, hasNC };
         }
 
-        const ticket = data[0];
+        // CONEXÃO COM MOVIDESK API
+        function saveApiSettings() {
+            appState.movideskToken = document.getElementById('movideskToken').value.trim();
+            appState.useCorsProxy = document.getElementById('useCorsProxy').value === 'true';
+            localStorage.setItem('arquem_movid_token', appState.movideskToken);
+            localStorage.setItem('arquem_cors', appState.useCorsProxy);
+            alert('Configurações da API salvas com sucesso!');
+        }
 
-        // Preenche os campos do formulário automaticamente
-        document.getElementById('ticketId').value = ticket.id || ticketId;
-        document.getElementById('ticketSubject').value = ticket.subject || '';
-        document.getElementById('ticketCategory').value = ticket.category || ticket.serviceFirstLevel || 'Não informada';
-        document.getElementById('agentName').value = ticket.owner ? ticket.owner.businessName : 'Não atribuído';
-        document.getElementById('clientName').value = (ticket.clients && ticket.clients.length > 0) ? ticket.clients[0].businessName : 'Não informado';
+        async function testMovideskConnection() {
+            const token = document.getElementById('movideskToken').value.trim();
+            if (!token) return alert('Insira a chave Token da API Movidesk.');
 
-        // Consolida o histórico e apontamentos do chamado para a análise da IA
-        let fullDescription = `ASSUNTO: ${ticket.subject}\n\n`;
-        if (ticket.actions && ticket.actions.length > 0) {
-            fullDescription += "HISTÓRICO / APONTAMENTOS DO CHAMADO:\n";
-            ticket.actions.forEach((act, idx) => {
-                fullDescription += `\n--- Apontamento #${idx + 1} (${act.createdDate || 'Data N/I'}) ---\n${act.description || ''}\n`;
+            const badge = document.getElementById('apiStatusBadge');
+            badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800";
+            badge.innerText = "Testando...";
+
+            const rawUrl = `https://api.movidesk.com/public/v1/tickets?token=${token}&$top=1`;
+            const proxyUrl = appState.useCorsProxy ? `https://corsproxy.io/?${encodeURIComponent(rawUrl)}` : rawUrl;
+
+            try {
+                const res = await fetch(proxyUrl);
+                if (res.ok) {
+                    badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800";
+                    badge.innerText = "Conectado ✅";
+                } else {
+                    throw new Error('Falha na autenticação');
+                }
+            } catch (err) {
+                badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800";
+                badge.innerText = "Erro de Conexão ❌";
+            }
+        }
+
+        // SINCRONIZAÇÃO EM LOTE MOVIDESK
+        async function syncTicketsFromMovidesk() {
+            const token = document.getElementById('movideskToken').value.trim() || appState.movideskToken;
+            if (!token) return alert('Por favor, configure o Token da API do Movidesk primeiro.');
+
+            const limit = document.getElementById('syncLimit').value;
+            const logEl = document.getElementById('syncLog');
+            logEl.innerHTML = `[${new Date().toLocaleTimeString()}] Iniciando busca de ${limit} chamados no Movidesk...<br>`;
+
+            const rawUrl = `https://api.movidesk.com/public/v1/tickets?token=${token}&$top=${limit}&$orderby=id desc&$expand=owner,clients,actions`;
+            const proxyUrl = appState.useCorsProxy ? `https://corsproxy.io/?${encodeURIComponent(rawUrl)}` : rawUrl;
+
+            try {
+                const res = await fetch(proxyUrl);
+                if (!res.ok) throw new Error(`Erro na API (${res.status})`);
+                const tickets = await res.json();
+
+                logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ✅ ${tickets.length} chamados retornados.<br>`;
+
+                // Adiciona à fila local
+                tickets.forEach(t => {
+                    if (!appState.syncedQueue.some(q => q.id === String(t.id))) {
+                        appState.syncedQueue.push({
+                            id: String(t.id),
+                            subject: t.subject || 'Sem assunto',
+                            client: (t.clients && t.clients.length > 0) ? t.clients[0].businessName : 'N/I',
+                            agent: t.owner ? t.owner.businessName : 'Não Atribuído',
+                            category: t.category || 'Geral',
+                            content: formatTicketContent(t),
+                            status: 'PENDING'
+                        });
+                    }
+                });
+
+                localStorage.setItem('arquem_queue', JSON.stringify(appState.syncedQueue));
+                updateQueueTable();
+                logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ✅ Fila atualizada com sucesso! Acesse a aba "Fila Sincronizada".<br>`;
+
+            } catch (err) {
+                logEl.innerHTML += `<span class="text-red-600">[${new Date().toLocaleTimeString()}] ❌ Erro ao sincronizar: ${err.message}</span><br>`;
+            }
+        }
+
+        function formatTicketContent(ticket) {
+            let text = `ASSUNTO: ${ticket.subject || ''}\n\n`;
+            if (ticket.actions && ticket.actions.length > 0) {
+                text += "HISTÓRICO / APONTAMENTOS DO CHAMADO:\n";
+                ticket.actions.forEach((act, idx) => {
+                    text += `\n--- Apontamento #${idx + 1} --- \n${act.description || ''}\n`;
+                });
+            }
+            return text;
+        }
+
+        // GERENCIAMENTO DA FILA
+        function updateQueueTable() {
+            const tbody = document.getElementById('queueTableBody');
+            document.getElementById('queueBadge').innerText = appState.syncedQueue.length;
+
+            if (appState.syncedQueue.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Nenhum chamado na fila. Clique em "Movidesk Integration" para sincronizar.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = appState.syncedQueue.map((item, index) => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 font-bold text-slate-800">#${item.id}</td>
+                    <td class="p-3 font-medium text-slate-700">${item.subject}</td>
+                    <td class="p-3 text-slate-600">${item.client}</td>
+                    <td class="p-3 text-slate-600">${item.agent}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'AUDITED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                            ${item.status === 'AUDITED' ? 'Auditado' : 'Pendente'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="loadTicketToAudit(${index})" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-md transition-colors">
+                            Auditar Este
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function loadTicketToAudit(index) {
+            const ticket = appState.syncedQueue[index];
+            document.getElementById('ticketId').value = ticket.id;
+            document.getElementById('ticketSubject').value = ticket.subject;
+            document.getElementById('ticketCategory').value = ticket.category;
+            document.getElementById('agentName').value = ticket.agent;
+            document.getElementById('clientName').value = ticket.client;
+            document.getElementById('ticketContent').value = ticket.content;
+
+            switchTab('audit');
+        }
+
+        function clearQueue() {
+            if (confirm("Deseja realmente limpar a fila de chamados importados?")) {
+                appState.syncedQueue = [];
+                localStorage.setItem('arquem_queue', JSON.stringify([]));
+                updateQueueTable();
+            }
+        }
+
+        // ANÁLISE DE IA GEMINI COM O REGIMENTO ARQUEM
+        async function runAiAnalysis() {
+            const apiKey = document.getElementById('geminiApiKey').value.trim();
+            const content = document.getElementById('ticketContent').value;
+            const subject = document.getElementById('ticketSubject').value;
+
+            if (!content || !subject) return alert('Preencha o Assunto e o Conteúdo do chamado antes de executar a análise.');
+
+            if (!apiKey) {
+                // FALLBACK HEURÍSTICO LOCAL
+                alert("Nenhuma chave Gemini informada. Executando verificação heurística padrão...");
+                runLocalAnalysis(subject, content);
+                return;
+            }
+
+            const prompt = `
+            Você é um Auditor de Qualidade Sênior da Arquem Sistemas.
+            Analise o chamado abaixo com base no REGULAMENTO DE AUDITORIA DE CHAMADOS ARQUEM SISTEMAS (13 Critérios).
+
+            DADOS DO CHAMADO:
+            Assunto: ${subject}
+            Conteúdo / Histórico: ${content}
+
+            CRITÉRIOS DE AVALIAÇÃO:
+            2.1. Assunto incompatível com a solicitação
+            2.2. Macro ou padrão de assunto incorreto
+            2.3. Identificação da base ausente ou incorreta (ID da base ao lado do assunto ou nome da loja para ACO)
+            2.4. Dados do solicitante ausentes ou desatualizados (nome, e-mail, telefone)
+            2.5. Descrição insuficiente ou incompreensível
+            2.6. Falta de informações para reproduzir ou analisar o problema (passos, telas, erros)
+            2.7. Ausência de evidências necessárias (prints, vídeos)
+            2.8. Melhoria em ferramenta ou guia sem croqui (deve ter esboço/croqui visual)
+            2.9. Tabulação incorreta
+            2.10. Encaminhamento para setor incorreto
+            2.11. Chamado sem previsão (falta de prazo)
+            2.12. Chamado sem apontamentos (falta de histórico de testes/ações)
+            2.13. Abertura indevida de chamado como interno
+
+            Retorne APENAS um JSON no seguinte formato:
+            {
+                "criteria": {
+                    "c2_1": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_2": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_3": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_4": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_5": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_6": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_7": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_8": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_9": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_10": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_11": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_12": "CONFORME" | "NAO_CONFORME" | "NA",
+                    "c2_13": "CONFORME" | "NAO_CONFORME" | "NA"
+                },
+                "positive": "Pontos fortes do atendimento",
+                "actionPlan": "Plano de ação e correções para adequação ao regimento da Arquem"
+            }
+            `;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await res.json();
+                const jsonText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const result = JSON.parse(jsonText);
+
+                // Aplicar resultados no formulário
+                Object.keys(result.criteria).forEach(cid => {
+                    const el = document.getElementById(`select_${cid}`);
+                    if (el) el.value = result.criteria[cid];
+                });
+
+                document.getElementById('auditPositive').value = result.positive || '';
+                document.getElementById('auditActionPlan').value = result.actionPlan || '';
+
+                calculateScore();
+                alert('✨ Análise de IA concluída com sucesso com base no Regimento da Arquem!');
+
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao executar IA Gemini. Executando análise heurística local...');
+                runLocalAnalysis(subject, content);
+            }
+        }
+
+        // ANÁLISE HEURÍSTICA LOCAL
+        function runLocalAnalysis(subject, content) {
+            AUDIT_CRITERIA.forEach(c => {
+                document.getElementById(`select_${c.id}`).value = "CONFORME";
+            });
+
+            // Regras básicas
+            if (subject.length < 10 || subject.toLowerCase().includes('duvida')) document.getElementById('select_c2_1').value = "NAO_CONFORME";
+            if (!content.includes('http') && !content.toLowerCase().includes('anexo') && !content.toLowerCase().includes('print')) document.getElementById('select_c2_7').value = "NAO_CONFORME";
+            if (content.toLowerCase().includes('melhoria') && !content.toLowerCase().includes('croqui') && !content.toLowerCase().includes('layout')) document.getElementById('select_c2_8').value = "NAO_CONFORME";
+
+            document.getElementById('auditPositive').value = "Chamado com registros de interações salvas.";
+            document.getElementById('auditActionPlan').value = "Verificar inclusão de evidências visuais e detalhamento dos passos para reprodução conforme Seção 2 do Regimento.";
+
+            calculateScore();
+        }
+
+        // SALVAR AUDITORIA
+        function saveAudit() {
+            const ticketId = document.getElementById('ticketId').value.trim();
+            const agent = document.getElementById('agentName').value.trim();
+            const client = document.getElementById('clientName').value.trim();
+
+            if (!ticketId || !agent || !client) {
+                return alert('Preencha os campos obrigatórios: ID Chamado, Atendente e Cliente.');
+            }
+
+            const calc = calculateScore();
+            const auditData = {
+                id: 'AUD-' + Date.now(),
+                date: new Date().toLocaleDateString('pt-BR'),
+                ticketId,
+                agent,
+                client,
+                auditor: document.getElementById('auditorName').value || 'Auditor Qualidade',
+                subject: document.getElementById('ticketSubject').value,
+                category: document.getElementById('ticketCategory').value,
+                score: calc.score,
+                hasNC: calc.hasNC,
+                positive: document.getElementById('auditPositive').value,
+                actionPlan: document.getElementById('auditActionPlan').value,
+                criteria: {}
+            };
+
+            AUDIT_CRITERIA.forEach(c => {
+                auditData.criteria[c.id] = document.getElementById(`select_${c.id}`).value;
+            });
+
+            // Atualiza histórico
+            appState.audits.unshift(auditData);
+            localStorage.setItem('arquem_audits', JSON.stringify(appState.audits));
+
+            // Atualiza status na fila caso exista
+            const queueIndex = appState.syncedQueue.findIndex(q => q.id === ticketId);
+            if (queueIndex !== -1) {
+                appState.syncedQueue[queueIndex].status = 'AUDITED';
+                localStorage.setItem('arquem_queue', JSON.stringify(appState.syncedQueue));
+                updateQueueTable();
+            }
+
+            updateHistoryTable();
+            alert('✅ Auditoria salva com sucesso!');
+            switchTab('history');
+        }
+
+        // TABELA DE HISTÓRICO
+        function updateHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            if (appState.audits.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Nenhuma auditoria realizada ainda.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = appState.audits.map((a, idx) => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 text-slate-600">${a.date}</td>
+                    <td class="p-3 font-bold text-slate-800">#${a.ticketId}</td>
+                    <td class="p-3 font-medium text-slate-700">${a.agent}</td>
+                    <td class="p-3 text-slate-600">${a.client}</td>
+                    <td class="p-3 text-center font-bold ${a.hasNC ? 'text-red-600' : 'text-emerald-600'}">${a.score}%</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${a.hasNC ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}">
+                            ${a.hasNC ? 'Com NC' : 'Conforme'}
+                        </span>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="viewReport(${idx})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded transition-colors">
+                            Ver Laudo
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // LAUDO DE IMPRESSÃO A4
+        function viewReport(idx) {
+            const a = appState.audits[idx];
+            const area = document.getElementById('reportPrintArea');
+
+            area.innerHTML = `
+                <div class="border-b border-slate-200 pb-4 mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Arquem Sistemas</h2>
+                        <p class="text-xs text-slate-500">Laudo de Auditoria de Qualidade de Chamados</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-mono text-slate-400">Regulamento v2.0</span>
+                        <p class="text-xs text-slate-600">Data: ${a.date}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg mb-6 text-xs">
+                    <div><strong>ID Chamado:</strong> #${a.ticketId}</div>
+                    <div><strong>Atendente:</strong> ${a.agent}</div>
+                    <div><strong>Cliente:</strong> ${a.client}</div>
+                    <div><strong>Auditor:</strong> ${a.auditor}</div>
+                    <div class="col-span-2"><strong>Assunto:</strong> ${a.subject}</div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="font-bold text-sm text-slate-800 mb-2">Resultado da Avaliação</h3>
+                    <div class="p-4 rounded-lg border text-center ${a.hasNC ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}">
+                        <span class="text-2xl font-black">${a.score} / 100 pts</span>
+                        <p class="text-xs mt-1 font-semibold">${a.hasNC ? 'NÃO CONFORMIDADE IDENTIFICADA' : 'ATENDIMENTO EM CONFORMIDADE'}</p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="font-bold text-sm text-slate-800 mb-2">Detalhamento dos Critérios (Seção 2)</h3>
+                    <div class="space-y-1.5 text-xs">
+                        ${AUDIT_CRITERIA.map(c => {
+                            const val = a.criteria[c.id] || 'CONFORME';
+                            return `
+                                <div class="flex justify-between items-center p-2 rounded ${val === 'NAO_CONFORME' ? 'bg-red-50 text-red-900' : 'bg-slate-50'}">
+                                    <span>${c.title}</span>
+                                    <span class="font-bold ${val === 'NAO_CONFORME' ? 'text-red-600' : 'text-slate-600'}">${val}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                ${a.positive ? `<div class="mb-4"><strong>Elogios / Pontos Fortes:</strong><p class="text-xs text-slate-600 mt-1">${a.positive}</p></div>` : ''}
+                ${a.actionPlan ? `<div class="mb-4"><strong>Plano de Ação Corretiva:</strong><p class="text-xs text-slate-600 mt-1">${a.actionPlan}</p></div>` : ''}
+            `;
+
+            document.getElementById('modalReport').classList.remove('hidden');
+        }
+
+        function closeModalReport() {
+            document.getElementById('modalReport').classList.add('hidden');
+        }
+
+        // RENDERIZAR DASHBOARD & GRÁFICOS
+        function renderDashboard() {
+            const total = appState.audits.length;
+            const avgScore = total > 0 ? (appState.audits.reduce((acc, curr) => acc + curr.score, 0) / total).toFixed(1) : '0.0';
+            const ncCount = appState.audits.filter(a => a.hasNC).length;
+            const confRate = total > 0 ? Math.round(((total - ncCount) / total) * 100) : 0;
+
+            document.getElementById('kpiTotalAudits').innerText = total;
+            document.getElementById('kpiAvgScore').innerText = avgScore;
+            document.getElementById('kpiConformityRate').innerText = confRate + '%';
+            document.getElementById('kpiTotalNc').innerText = ncCount;
+
+            // Gráfico de NCs por Critério
+            const ncCountsByCriteria = AUDIT_CRITERIA.map(c => {
+                return appState.audits.filter(a => a.criteria && a.criteria[c.id] === 'NAO_CONFORME').length;
+            });
+
+            const ctx1 = document.getElementById('chartCriteriaNC').getContext('2d');
+            if (criteriaChartInstance) criteriaChartInstance.destroy();
+
+            criteriaChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: AUDIT_CRITERIA.map(c => c.id.replace('c2_', 'Crit ')),
+                    datasets: [{
+                        label: 'Não Conformidades',
+                        data: ncCountsByCriteria,
+                        backgroundColor: '#ef4444'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Gráfico de Distribuição
+            const ctx2 = document.getElementById('chartStatusDist').getContext('2d');
+            if (statusChartInstance) statusChartInstance.destroy();
+
+            statusChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Conforme', 'Com Não Conformidade'],
+                    datasets: [{
+                        data: [total - ncCount, ncCount],
+                        backgroundColor: ['#10b981', '#ef4444']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        document.getElementById('ticketContent').value = fullDescription;
-        statusEl.innerHTML = `<span class="text-emerald-600 font-medium">✅ Chamado #${ticketId} carregado com sucesso!</span>`;
+        // CARREGAR DADOS DEMO
+        function loadMockData() {
+            appState.audits = [
+                { id: 'AUD-1', date: '22/10/2026', ticketId: '10294', agent: 'Carlos Silva', client: 'Mercado BomPreço', auditor: 'Mariana Qualidade', subject: 'Dúvida na nota fiscal', category: 'Fiscal', score: 82, hasNC: true, positive: 'Boa comunicação', actionPlan: 'Ajustar assunto conforme a macro', criteria: { c2_1: 'NAO_CONFORME', c2_2: 'CONFORME', c2_3: 'CONFORME', c2_4: 'CONFORME', c2_5: 'CONFORME', c2_6: 'CONFORME', c2_7: 'CONFORME', c2_8: 'NA', c2_9: 'CONFORME', c2_10: 'CONFORME', c2_11: 'CONFORME', c2_12: 'CONFORME', c2_13: 'CONFORME' } },
+                { id: 'AUD-2', date: '23/10/2026', ticketId: '10301', agent: 'Ana Souza', client: 'Farmácia Central', auditor: 'Mariana Qualidade', subject: 'ACO - Loja Centro - Erro ao emitir cupom', category: 'PDV', score: 100, hasNC: false, positive: 'Passo a passo perfeito', actionPlan: 'Nenhuma ação necessária', criteria: { c2_1: 'CONFORME', c2_2: 'CONFORME', c2_3: 'CONFORME', c2_4: 'CONFORME', c2_5: 'CONFORME', c2_6: 'CONFORME', c2_7: 'CONFORME', c2_8: 'NA', c2_9: 'CONFORME', c2_10: 'CONFORME', c2_11: 'CONFORME', c2_12: 'CONFORME', c2_13: 'CONFORME' } }
+            ];
+            localStorage.setItem('arquem_audits', JSON.stringify(appState.audits));
+            updateHistoryTable();
+            renderDashboard();
+            alert('Dados demonstrativos carregados!');
+        }
 
-    } catch (err) {
-        console.error("Erro na busca Movidesk:", err);
-        statusEl.innerHTML = `<span class="text-red-600 font-medium">❌ Erro ao puxar chamado: ${err.message}. Tente colar o texto manualmente.</span>`;
-    }
-}
+        // EXPORTAR CSV
+        function exportToCsv() {
+            if (appState.audits.length === 0) return alert('Nenhum dado para exportar.');
+            let csv = "ID,Data,Chamado,Atendente,Cliente,Nota,Status\n";
+            appState.audits.forEach(a => {
+                csv += `"${a.id}","${a.date}","${a.ticketId}","${a.agent}","${a.client}","${a.score}","${a.hasNC ? 'Com NC' : 'Conforme'}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'relatorio_auditoria_arquem.csv');
+            a.click();
+        }
+    </script>
+</body>
+</html>
