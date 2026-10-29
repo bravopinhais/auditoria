@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Central de Auditoria | Ticket Manager & IA</title>
 <!-- Bibliotecas para Excel (.xlsx) e Gráficos Interativos (Chart.js) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -152,7 +153,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   <button class="nav" data-page="settings">⚙ Gerenciar Dados</button>
   <button class="nav" data-page="guide">ⓘ Indicadores</button>
 </aside>
-<main><div class="head"><div><div class="eyebrow">QUALIDADE • OPERAÇÃO</div><h1 id="title">Visão geral</h1><div class="muted" id="subtitle">Acompanhe a fila e identifique onde concentrar a auditoria.</div></div><div class="tools"><button id="refresh" class="btn secondary">↻ Atualizar</button><button id="export" class="btn primary">Exportar CSV</button></div></div><div id="appNotice" class="notice"></div>
+<main><div class="head"><div><div class="eyebrow">QUALIDADE • OPERAÇÃO</div><h1 id="title">Visão geral</h1><div class="muted" id="subtitle">Acompanhe a fila e identifique onde concentrar a auditoria.</div></div><div class="tools"><button id="refresh" class="btn secondary">↻ Atualizar</button><button id="export" class="btn primary">Exportar Excel (.xlsx)</button></div></div><div id="appNotice" class="notice"></div>
 
 <!-- BARRA DE FILTROS GLOBAIS DE DATA, SETOR E COLABORADOR -->
 <div class="date-filter-group" style="margin-bottom: 20px; background: white; padding: 12px 18px; border-radius: 12px;">
@@ -211,20 +212,20 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 </div>
 </section>
 
-<!-- AUDITORIA DE JORNADA E CAPACIDADE (8H DIÁRIAS) -->
+<!-- AUDITORIA DE JORNADA E CAPACIDADE (8H DIÁRIAS / REGRA 80%) -->
 <section id="capacityAuditPage" class="hidden">
   <div class="panel">
     <div class="panelhead">
       <div>
         <h2>Auditoria de Carga Horária & Ocupação Trabalhista (8 Horas/Dia)</h2>
-        <small>Comparação minuciosa entre apontamentos reais e a jornada de <b>09:00 às 18:00 (8h líquidas)</b> para todos os setores.</small>
+        <small>Comparação entre apontamentos e jornada de 8h. <b>Regra de Negócio: >= 80% (6,4h) = Excelente | < 80% (< 6,4h) = Crítico (Tolerância de 20% para pausas/reuniões)</b>.</small>
       </div>
     </div>
     
     <div class="grid" style="padding:18px; margin:0">
       <div class="metric"><label>COLABORADORES AUDITADOS</label><div id="capColabCount" class="value">0</div></div>
-      <div class="metric"><label>DIAS COM APONTAMENTO EM FALTA</label><div id="capUnderDays" class="value">0</div><small>< 8.0 horas no dia</small></div>
-      <div class="metric"><label>TOTAL DE HORAS NÃO REGISTADAS</label><div id="capMissingHours" class="value">0 h</div><small>Diferença de jornada</small></div>
+      <div class="metric"><label>DIAS ABAIXO DA MARGEM DE 80%</label><div id="capUnderDays" class="value">0</div><small>< 6.4 horas no dia</small></div>
+      <div class="metric"><label>TOTAL DE HORAS NÃO REGISTADAS</label><div id="capMissingHours" class="value">0 h</div><small>Diferença para a meta diária</small></div>
       <div class="metric"><label>TAXA MÉDIA DE ADERÊNCIA</label><div id="capAvgAdherence" class="value">0%</div></div>
     </div>
 
@@ -238,8 +239,8 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
             <th>Horas Apontadas</th>
             <th>Diferença / Faltante</th>
             <th>Percentual Aderência</th>
-            <th>Status da Jornada</th>
-            <th>Sugestão de Atividades Não Registadas (Escopo)</th>
+            <th>Status da Jornada (Regra 80%)</th>
+            <th>Sugestão de Atividades Não Registradas (Escopo)</th>
           </tr>
         </thead>
         <tbody id="capacityAuditRows"></tbody>
@@ -579,7 +580,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   </div>
 </section>
 
-<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> exclui chamados com status reconhecidos como encerrados.</p></div></section>
+<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> exclui chamados com status reconhecidos como encerrados.</p><p><b>Regra dos 80% (6,4h):</b> considera a tolerância operacional para pausas e reuniões diárias.</p></div></section>
 
 <div class="foot">Central de Auditoria • Guardiões do Bravo • Atualizado em <span id="lastRefresh">—</span></div></main></div>
 
@@ -709,15 +710,8 @@ function applyGlobalFilters() {
   const colab = $("globalColabFilter").value;
 
   filteredTickets = rawTickets.filter(t => {
-    // Filtro de Setor
-    if (sector !== "todos" && t.sector && t.sector.toLowerCase() !== sector.toLowerCase()) {
-      return false;
-    }
-    // Filtro de Colaborador
-    if (colab !== "todos" && t.owner_name !== colab) {
-      return false;
-    }
-    // Filtro de Datas
+    if (sector !== "todos" && t.sector && t.sector.toLowerCase() !== sector.toLowerCase()) return false;
+    if (colab !== "todos" && t.owner_name !== colab) return false;
     if (t.synced_at) {
       const ticketDate = new Date(t.synced_at);
       if (sDate && ticketDate < new Date(sDate)) return false;
@@ -796,6 +790,7 @@ function processPeopleData() {
   people = Object.values(map).sort((a,b) => b.total_hours - a.total_hours);
 }
 
+// AUDITORIA DE JORNADA COM A REGRA DOS 80% (6,4h/DIA)
 function renderCapacityAuditSection() {
   const dailyMap = {};
   let missingHoursTotal = 0;
@@ -826,17 +821,18 @@ function renderCapacityAuditSection() {
     const adhPct = Math.min(100, ((worked / 8.0) * 100)).toFixed(1);
     totalAdherenceSum += parseFloat(adhPct);
 
-    let statusPill = `<span class="pill good">100% Cumpriu 8h</span>`;
-    let suggestion = "Jornada totalmente registrada em chamados.";
+    let statusPill = "";
+    let suggestion = "";
 
-    if (diff > 0) {
+    // APLICANDO A REGRA DOS 80% (6,4h DIÁRIAS)
+    if (parseFloat(adhPct) >= 80.0) {
+      statusPill = `<span class="pill good">✅ Excelente (>= 80%)</span>`;
+      suggestion = "Jornada cumprida dentro do parâmetro produtivo esperado (considerando pausas/reuniões).";
+    } else {
       underDaysCount++;
-      missingHoursTotal += diff;
-      statusPill = `<span class="pill bad">🚨 Faltam ${hours(diff)}h para 8h</span>`;
-      suggestion = `<b>Sugestão de Escopo:</b> Provável tempo em <i>reuniões de alinhamento, atendimento telefónico/chat direto, triagem de caixa de entrada ou testes</i> não vinculados a chamados.`;
-    } else if (diff < 0) {
-      statusPill = `<span class="pill warn">⚠️ Excedeu 8h (+${hours(Math.abs(diff))}h)</span>`;
-      suggestion = "Risco de hora extra / sobrecarga diária.";
+      missingHoursTotal += diff > 0 ? diff : 0;
+      statusPill = `<span class="pill bad">🚨 Crítico (< 80%)</span>`;
+      suggestion = `<b>Atenção:</b> Abaixo da margem tolerada. Provável tempo em <i>reuniões de alinhamento, atendimento telefónico/chat direto, triagem de caixa de entrada ou testes</i> não vinculados a chamados.`;
     }
 
     rows.push(`<tr>
@@ -1289,36 +1285,118 @@ function renderCrossAudit() {
   $("crossAuditRows").innerHTML = tableRows;
 }
 
-// CORREÇÃO DO BOTÃO DE EXPORTAR CSV (GERA DOWLOAD REAL)
-function exportCurrentViewToCSV() {
-  let table = null;
-  let filename = `auditoria_${page}_${new Date().toISOString().split('T')[0]}.csv`;
-
-  if (page === "capacityAudit") table = $("tableCapacityAudit");
-  else if (page === "projectAudit") table = $("tableProjectAudit");
-  else if (page === "tickets") table = $("tableTickets");
-  else if (page === "people") table = $("tablePeople");
-  else if (page === "crossAudit") table = $("tableCrossAudit");
-  else if (page === "pivotTable") table = $("pivotResultTable");
-
-  if (!table) {
-    alert("Selecione uma aba com tabela para exportar os dados.");
+// FUNÇÃO DE EXPORTAÇÃO COMPLETA EM EXCEL (.XLSX) COM MÚLTIPLAS ABAS NATIVAS
+function exportFullAuditToExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert("A biblioteca SheetJS não foi carregada. Verifique a conexão com a internet.");
     return;
   }
 
-  const rows = Array.from(table.querySelectorAll("tr"));
-  const csvContent = rows.map(row => {
-    const cols = Array.from(row.querySelectorAll("th, td"));
-    return cols.map(c => `"${c.innerText.replace(/"/g, '""').replace(/\n/g, ' ')}"`).join(";");
-  }).join("\n");
+  const wb = XLSX.utils.book_new();
 
-  const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  // 1. ABA: Resumo Executivo
+  const execData = [
+    ["CENTRAL DE AUDITORIA - RELATÓRIO EXECUTIVO GLOBAL"],
+    ["Data da Exportação", new Date().toLocaleString("pt-BR")],
+    [""],
+    ["Métrica / KPI Global", "Valor Auditado"],
+    ["Total de Chamados na Fila", filteredTickets.length],
+    ["Total de Horas Registradas", filteredTickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0)],
+    ["Parâmetro de Jornada Aderente (80%)", "6,40 h/dia"],
+    ["Limite Diário Recomendado em Projetos", "4,00 h/dia"]
+  ];
+  const wsExec = XLSX.utils.aoa_to_sheet(execData);
+  XLSX.utils.book_append_sheet(wb, wsExec, "Resumo Executivo");
+
+  // 2. ABA: Auditoria de Jornada & Ocupação
+  const capacityRows = [
+    ["Colaborador", "Data Jornada", "Carga Contratual", "Horas Apontadas", "Diferença p/ 8h", "% Aderência", "Status Jornada (Regra 80%)", "Sugestão de Escopo"]
+  ];
+  
+  const dailyMap = {};
+  filteredTickets.forEach(t => {
+    const owner = t.owner_name || "Não identificado";
+    const appts = t.appointments || [{ date: t.synced_at || "—", hours: Number(t.total_hours || 0) }];
+    appts.forEach(ap => {
+      const dKey = `${owner}_${ap.date || 'sem_data'}`;
+      if (!dailyMap[dKey]) dailyMap[dKey] = { owner, date: ap.date || "—", hours: 0 };
+      dailyMap[dKey].hours += Number(ap.hours || 0);
+    });
+  });
+
+  Object.values(dailyMap).forEach(r => {
+    const worked = r.hours;
+    const diff = 8.0 - worked;
+    const adhPct = Math.min(100, ((worked / 8.0) * 100)).toFixed(1);
+    const statusText = parseFloat(adhPct) >= 80.0 ? "Excelente (>= 80%)" : "Crítico (< 80%)";
+    const sug = parseFloat(adhPct) >= 80.0 ? "Jornada cumprida dentro da margem." : "Provável tempo em reuniões, alinhamentos ou e-mails.";
+    
+    capacityRows.push([r.owner, r.date, "8.0h", worked, diff, `${adhPct}%`, statusText, sug]);
+  });
+  
+  const wsCapacity = XLSX.utils.aoa_to_sheet(capacityRows);
+  XLSX.utils.book_append_sheet(wb, wsCapacity, "Jornada e Ocupação");
+
+  // 3. ABA: Auditoria de Projetos
+  const projectRows = [
+    ["ID Ticket", "Cliente", "Assunto", "Responsável", "Data Apontamento", "Horas do Dia", "Status Limite Diário (4h)", "Horas Estimadas", "Horas Acumuladas", "Status Cronograma"]
+  ];
+
+  filteredTickets.filter(t => String(t.sector || "").toLowerCase() === "projetos" || String(t.subject || "").toLowerCase().includes("projeto"))
+    .forEach(t => {
+      const workedTotal = Number(t.total_hours || 0);
+      const promised = Number(t.promised_hours || 0);
+      const isOverBudget = promised > 0 && workedTotal > promised;
+      const appts = t.appointments || [{ date: t.synced_at || "—", hours: workedTotal }];
+
+      appts.forEach(ap => {
+        const hDay = Number(ap.hours || 0);
+        projectRows.push([
+          t.ticket_id,
+          t.client_name,
+          t.subject,
+          t.owner_name,
+          ap.date,
+          hDay,
+          hDay > 4.0 ? "Excedeu 4h/dia" : "Normal",
+          promised,
+          workedTotal,
+          isOverBudget ? "Estourou Projeto" : "Dentro da Estimativa"
+        ]);
+      });
+    });
+
+  const wsProjects = XLSX.utils.aoa_to_sheet(projectRows);
+  XLSX.utils.book_append_sheet(wb, wsProjects, "Auditoria de Projetos");
+
+  // 4. ABA: Fila Completa de Chamados
+  const ticketRowsExcel = [
+    ["ID Ticket", "Cliente", "Assunto", "Status", "Setor", "Responsável", "Horas Apontadas", "Horas Estimadas", "Idade (Dias)", "Última Atualização", "Prioritário?", "Nível Risco", "Ação Recomendada"]
+  ];
+
+  filteredTickets.forEach(t => {
+    ticketRowsExcel.push([
+      t.ticket_id,
+      t.client_name,
+      t.subject,
+      t.status,
+      t.sector,
+      t.owner_name,
+      Number(t.total_hours || 0),
+      Number(t.promised_hours || 0),
+      Number(t.age_days || 0),
+      t.synced_at,
+      t.priority_client ? "SIM (★)" : "NÃO",
+      t.risk || "Atenção",
+      t.action || "Acompanhar"
+    ]);
+  });
+
+  const wsTickets = XLSX.utils.aoa_to_sheet(ticketRowsExcel);
+  XLSX.utils.book_append_sheet(wb, wsTickets, "Fila de Chamados");
+
+  const fileName = `Auditoria_Consolidada_Ticket_Manager_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, fileName);
 }
 
 function switchPage(p){
@@ -1334,7 +1412,7 @@ function switchPage(p){
  const titleMap = {
    overview: ["Visão geral", "Acompanhe a fila e identifique onde concentrar a auditoria."],
    aiAssistant: ["Consulta com IA", "Pesquise por empresa ou colaborador para analisar prazos e desvios."],
-   capacityAudit: ["Auditoria de Jornada & Ocupação", "Comparação entre a jornada de 8h/dia (09h-18h) e os apontamentos reais."],
+   capacityAudit: ["Auditoria de Jornada & Ocupação", "Comparação com a jornada de 8h/dia (09h-18h) com margem de 80%."],
    projectAudit: ["Auditoria Detalhada de Projetos", "Análise de limite diário (4h/dia), estimativa cadastrada e cronograma."],
    pivotTable: ["Tabela Dinâmica", "Cruze dimensões, filtre métricas e agregue dados dinamicamente."],
    tickets: ["Fila de chamados", "Pesquise, filtre e priorize os chamados que precisam de atenção."],
@@ -1351,7 +1429,6 @@ function switchPage(p){
    $("subtitle").textContent = titleMap[p][1];
  }
 
- // RENDERIZAÇÃO GARANTIDA AO MUDAR DE ABA
  if (p === "people") renderPeopleSection();
  else if (p === "capacityAudit") renderCapacityAuditSection();
  else if (p === "projectAudit") renderProjectAuditSection();
@@ -1373,7 +1450,7 @@ $("btnSaveDomain").addEventListener("click", () => {
 
 $("btnApplyGlobalFilters").addEventListener("click", applyGlobalFilters);
 $("btnResetGlobalFilters").addEventListener("click", resetGlobalFilters);
-$("export").addEventListener("click", exportCurrentViewToCSV);
+$("export").addEventListener("click", exportFullAuditToExcel);
 
 $("btnSearchAI").addEventListener("click", runAIInteractiveSearch);
 $("aiQueryInput").addEventListener("keypress", (e) => { if (e.key === "Enter") runAIInteractiveSearch(); });
