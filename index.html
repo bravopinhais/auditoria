@@ -2,8 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Central de Auditoria | Movidesk</title>
+<title>Central de Auditoria | Ticket Manager & Consulta Inteligente</title>
+<!-- Bibliotecas para Excel (.xlsx) e Gráficos Interativos (Chart.js) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root{--navy:#142943;--blue:#2563eb;--bg:#f3f6fb;--line:#e2e8f0;--muted:#64748b;--ink:#17243a;--success:#16a34a;--danger:#dc2626;--priority-bg:#fef3c7;--priority-text:#b45309;--priority-border:#fde68a;--ai-bg:#f0f7ff;--ai-border:#bfdbfe}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Segoe UI,Arial,sans-serif}
@@ -12,7 +14,7 @@
 .status{font-size:12px;color:#dbeafe}
 .btn{border:0;border-radius:9px;padding:10px 14px;font-weight:650;cursor:pointer}
 .primary{background:var(--blue);color:#fff}.secondary{background:#edf2f8;color:var(--ink);border:1px solid var(--line)}
-.ai-btn{background:linear-gradient(135deg, #1d4ed8, #7c3aed);color:#fff;border:0;padding:10px 16px;border-radius:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.ai-btn{background:linear-gradient(135deg, #1d4ed8, #2563eb);color:#fff;border:0;padding:10px 16px;border-radius:9px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .ai-btn:hover{opacity:0.95}
 .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 68px)}
 aside{background:white;border-right:1px solid var(--line);padding:20px 12px}
@@ -23,7 +25,10 @@ main{padding:26px;min-width:0}
 .eyebrow{font-size:11px;letter-spacing:1.4px;color:var(--blue);font-weight:700}.head h1{font-size:27px;margin:4px 0}
 .muted{color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.metric,.panel{background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 22px #1429430b}
+.charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:20px}
+.metric,.panel,.chart-card{background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 22px #1429430b}
+.chart-card{padding:18px}
+.chart-card h3{margin:0 0 14px 0;font-size:14px;color:var(--navy)}
 .metric{padding:17px}.metric label{color:var(--muted);font-size:12px}.value{font-size:28px;font-weight:800;margin:12px 0 4px}
 .panel{overflow:hidden;margin-bottom:18px}
 .panelhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -78,36 +83,68 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   flex-wrap: wrap;
 }
 .date-filter-group label { margin: 0; font-size: 12px; color: var(--muted); font-weight: 600; }
-.date-filter-group input { padding: 6px 10px; width: auto; font-size: 12px; }
+.date-filter-group input, .date-filter-group select { padding: 6px 10px; width: auto; font-size: 12px; }
 
-.ai-box {
-  background: var(--ai-bg);
-  border: 1px solid var(--ai-border);
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 14px;
-}
-.ai-box h4 { margin: 0 0 12px 0; color: #1e40af; font-size: 15px; display: flex; align-items: center; gap: 8px; }
 .ai-alert-item { background: #fff; border-left: 4px solid #f59e0b; padding: 10px 14px; margin-bottom: 8px; border-radius: 6px; }
 .ai-alert-item.danger { border-left-color: #ef4444; }
 .ai-alert-item.info { border-left-color: #3b82f6; }
 
+.pivot-controls {
+  display: flex;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pivot-controls div { flex: 1; min-width: 180px; }
+
+/* ESTILOS DA IA DE CONSULTA DINÂMICA */
+.ai-query-box {
+  background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+  border: 1px solid var(--ai-border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.ai-query-box h2 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-input-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.ai-input-group input {
+  flex: 1;
+  font-size: 14px;
+  border: 1px solid #93c5fd;
+}
+
 @media print {
   body { background: white; }
-  .top, aside, .tools, .foot, .date-filter-group, .ai-btn { display: none !important; }
+  .top, aside, .tools, .foot, .date-filter-group, .ai-btn, .ai-query-box { display: none !important; }
   .layout { display: block; }
   main { padding: 0; }
   .panel { border: none; box-shadow: none; }
 }
 
-@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.layout{display:block}aside{display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.nav{width:auto;white-space:nowrap}main{padding:14px}.head{display:block}.head .tools{margin-top:12px}.grid{gap:8px}.metric{padding:12px}.value{font-size:23px}.search{min-width:100%;}.top{padding:0 14px}}
+@media(max-width:950px){.grid, .charts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.layout{display:block}aside{display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.nav{width:auto;white-space:nowrap}main{padding:14px}.head{display:block}.head .tools{margin-top:12px}.grid,.charts-grid{gap:8px}.metric{padding:12px}.value{font-size:23px}.search{min-width:100%;}.top{padding:0 14px}}
 </style></head>
 <body>
-<header class="top"><div class="brand"><span>✓</span>Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Movidesk</span></div><div><span class="status" id="status">Sistema Local Ativo</span></div></header>
+<header class="top"><div class="brand"><span>✓</span>Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Ticket Manager & IA de Consulta</span></div><div><span class="status" id="status">Sistema Local Ativo</span></div></header>
 
 <div id="appView" class="layout"><aside>
   <button class="nav active" data-page="overview">▦ Visão geral</button>
+  <button class="nav" data-page="aiAssistant">👤 Consulta com IA (Empresas/Pessoas)</button>
+  <button class="nav" data-page="pivotTable">📊 Tabela Dinâmica</button>
   <button class="nav" data-page="tickets">☷ Fila de chamados</button>
   <button class="nav" data-page="people">◷ Horas por colaborador</button>
   <button class="nav" data-page="priority">★ Clientes Prioritários</button>
@@ -118,7 +155,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 </aside>
 <main><div class="head"><div><div class="eyebrow">QUALIDADE • OPERAÇÃO</div><h1 id="title">Visão geral</h1><div class="muted" id="subtitle">Acompanhe a fila e identifique onde concentrar a auditoria.</div></div><div class="tools"><button id="refresh" class="btn secondary">↻ Atualizar</button><button id="export" class="btn primary">Exportar CSV</button></div></div><div id="appNotice" class="notice"></div>
 
-<!-- VISÃO GERAL -->
+<!-- VISÃO GERAL COM GRÁFICOS DINÂMICOS -->
 <section id="overviewPage">
 <div class="grid">
   <div class="metric"><label>Chamados pendentes</label><div id="pendingN" class="value">0</div><small>Exclui status de encerramento reconhecidos</small></div>
@@ -126,16 +163,111 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   <div class="metric"><label>Sem horas apontadas</label><div id="noHoursN" class="value">0</div><small>Precisam de conferência</small></div>
   <div class="metric"><label>Horas nos pendentes</label><div id="hoursN" class="value">0 h</div><small>Tempo acumulado</small></div>
 </div>
-<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-  <div class="metric"><label>Sem atualização recente</label><div id="staleN" class="value">0</div><small>Sem data ou há mais de 7 dias</small></div>
-  <div class="metric" style="border-left:4px solid #b45309"><label>Clientes Prioritários (10)</label><div id="priorityN" class="value">0</div><small>Dr Óculos, Ferri, Instituto, Lux, etc.</small></div>
+
+<div class="charts-grid">
+  <div class="chart-card">
+    <h3>📊 Horas Apontadas por Responsável</h3>
+    <canvas id="chartHoursAgent" height="220"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>📌 Distribuição de Chamados por Status</h3>
+    <canvas id="chartStatus" height="220"></canvas>
+  </div>
 </div>
+
 <div class="panel">
   <div class="panelhead"><div><h2>Chamados prioritários e mais antigos</h2><small>Atenção especial para a lista dos 10 clientes prioritários.</small></div><button class="btn secondary" data-goto="tickets">Ver fila completa →</button></div>
   <div class="tablewrap"><table><thead><tr><th>Chamado</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Horas</th><th>Idade</th><th>Atualização</th></tr></thead><tbody id="topRows"></tbody></table></div>
   <div id="topEmpty" class="empty hidden">Nenhum chamado disponível.</div>
 </div>
-<div class="panel"><div class="panelhead"><div><h2>Esforço por colaborador</h2><small>Horas registradas nos chamados pendentes.</small></div><button class="btn secondary" data-goto="people">Detalhar →</button></div><div id="bars" class="bars"></div></div>
+</section>
+
+<!-- MÓDULO IA DE CONSULTA POR EMPRESA OU COLABORADOR -->
+<section id="aiAssistantPage" class="hidden">
+  <div class="ai-query-box">
+    <h2>👤 Assistente Virtual Ticket Manager</h2>
+    <p class="muted" style="margin:0">Digite o nome de uma empresa (cliente) ou de um colaborador para consultar em tempo real todos os chamados de projetos, tempo trabalhado e tempo prometido/estimado.</p>
+    
+    <div class="ai-input-group">
+      <input type="text" id="aiQueryInput" placeholder="Ex: 40 Arquem, Dr Óculos, Lux, Felipe Cavassin, Davi Vinicius...">
+      <button id="btnSearchAI" class="ai-btn">🔍 Consultar IA</button>
+    </div>
+  </div>
+
+  <div id="aiQueryResult" class="panel hidden">
+    <div class="panelhead">
+      <div>
+        <h2 id="aiQueryTitle">Resultados da Leitura em Tempo Real</h2>
+        <small id="aiQuerySubtitle"></small>
+      </div>
+    </div>
+
+    <div class="grid" style="padding:18px 18px 0 18px; margin:0">
+      <div class="metric"><label>TOTAL DE CHAMADOS</label><div id="aiMetricTickets" class="value">0</div></div>
+      <div class="metric"><label>TEMPO TRABALHADO (HORAS)</label><div id="aiMetricWorked" class="value">0 h</div></div>
+      <div class="metric"><label>TEMPO PROMETIDO / ESTIMADO</label><div id="aiMetricPromised" class="value">0 h</div></div>
+      <div class="metric"><label>TAXA DE EXECUÇÃO / DESVIO</label><div id="aiMetricRatio" class="value">0%</div></div>
+    </div>
+
+    <div id="aiQueryAlerts" style="padding:18px"></div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Cliente / Projeto</th>
+            <th>Assunto</th>
+            <th>Responsável</th>
+            <th>Status</th>
+            <th>Tempo Trabalhado</th>
+            <th>Tempo Prometido</th>
+            <th>Desvio</th>
+          </tr>
+        </thead>
+        <tbody id="aiQueryRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- TABELA DINÂMICA (PIVOT TABLE) -->
+<section id="pivotTablePage" class="hidden">
+  <div class="panel">
+    <div class="panelhead">
+      <div><h2>Tabela Dinâmica de Análise Operacional</h2><small>Cruze dimensões, filtre métricas e agregue dados dinamicamente.</small></div>
+    </div>
+    <div class="pivot-controls">
+      <div>
+        <label>Agrupar Linhas por:</label>
+        <select id="pivotRowField" class="field">
+          <option value="client_name">Cliente</option>
+          <option value="owner_name">Responsável / Agente</option>
+          <option value="status">Status</option>
+          <option value="risk">Nível de Risco</option>
+        </select>
+      </div>
+      <div>
+        <label>Métrica de Agregação:</label>
+        <select id="pivotValueField" class="field">
+          <option value="total_hours_sum">Soma de Horas Apontadas</option>
+          <option value="total_hours_avg">Média de Horas por Chamado</option>
+          <option value="ticket_count">Contagem de Chamados</option>
+        </select>
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button id="btnGeneratePivot" class="btn primary" style="width:100%">Gerar Tabela Dinâmica</button>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table id="pivotResultTable">
+        <thead>
+          <tr id="pivotHeadRow"><th>Linha / Agrupamento</th><th>Métrica Calculada</th><th>% do Total</th></tr>
+        </thead>
+        <tbody id="pivotBodyRows"></tbody>
+      </table>
+    </div>
+  </div>
 </section>
 
 <!-- TICKETS -->
@@ -212,24 +344,32 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   </div>
 </section>
 
-<!-- RELATÓRIO EXECUTIVO (PARECER PARA DIRETORIA + IA + FILTRO DE DATAS) -->
+<!-- RELATÓRIO EXECUTIVO -->
 <section id="executiveReportPage" class="hidden">
   <div class="panel">
     <div class="panelhead">
       <div>
         <h2>Relatório de Auditoria Operacional (Parecer Executivo)</h2>
-        <small>Estrutura oficial consolidada com filtro de período e diagnóstico via IA.</small>
+        <small>Estrutura oficial consolidada com filtro de período, nicho/setor e diagnóstico do Ticket Manager.</small>
       </div>
       <div class="tools">
-        <button id="btnRunAI" class="ai-btn">🤖 Gerar Diagnóstico da IA</button>
+        <button id="btnRunAI" class="ai-btn">👤 Gerar Diagnóstico do Ticket Manager</button>
         <button class="btn primary" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
       </div>
     </div>
 
-    <!-- SELETOR DE PERÍODO (DATA INICIAL E FINAL) DA AUDITORIA -->
     <div style="padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid var(--line);">
       <div class="date-filter-group">
-        <label>🗓 Período de Análise:</label>
+        <label>🏢 Setor / Nicho:</label>
+        <select id="execSectorFilter" style="font-weight:700; color:var(--blue);">
+          <option value="operacao">⚙️ Operação & Suporte Técnico</option>
+          <option value="comercial">🎯 Comercial & Vendas</option>
+          <option value="financeiro">💰 Financeiro & ABR / Cobrança</option>
+          <option value="projetos">🚀 Implantação & Projetos</option>
+          <option value="infra">🔌 Infraestrutura & TI Internal</option>
+        </select>
+        <span style="margin:0 10px; color:#cbd5e1">|</span>
+        <label>🗓 Período:</label>
         <label>De:</label>
         <input type="date" id="execStartDate">
         <label>Até:</label>
@@ -239,29 +379,26 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
       </div>
     </div>
 
-    <!-- PAINEL DE ANÁLISE E SUGESTÕES DA IA -->
     <div id="aiAnalysisResult" class="report-card hidden" style="background:#f0fdf4; border-bottom: 2px solid #22c55e;">
       <h3 style="color:#15803d; display:flex; align-items:center; gap:8px;">
-        🤖 Diagnóstico de Gargalos & Recomendações da IA
+        👤 Diagnóstico de Gargalos & Recomendações do Ticket Manager
       </h3>
       <div id="aiContent"></div>
     </div>
 
-    <!-- SUMÁRIO EXECUTIVO E DIAGNÓSTICO GLOBAL -->
     <div class="report-card">
       <h3>Sumário Executivo & Diagnóstico Global</h3>
       <p id="execSummaryText">No período selecionado, a auditoria registrou o volume total de horas aplicadas e acompanhamento dos chamados operacionais.</p>
       <div class="grid" style="margin-top:14px">
-        <div class="metric"><label>TOTAL HORAS AUDITADAS</label><div id="execTotalHours" class="value">459,55 h</div></div>
-        <div class="metric"><label>TICKETS TRABALHADOS</label><div id="execTotalTickets" class="value">281</div></div>
-        <div class="metric"><label>TAXA DE FECHAMENTO</label><div id="execClosureRate" class="value">78,9%</div></div>
-        <div class="metric"><label>CONCENTRAÇÃO MAIOR CLIENTE</label><div id="execMaxClientConc" class="value">35,1%</div></div>
+        <div class="metric"><label id="kpiLabel1">TOTAL HORAS AUDITADAS</label><div id="execTotalHours" class="value">459,55 h</div></div>
+        <div class="metric"><label id="kpiLabel2">TICKETS TRABALHADOS</label><div id="execTotalTickets" class="value">281</div></div>
+        <div class="metric"><label id="kpiLabel3">TAXA DE FECHAMENTO</label><div id="execClosureRate" class="value">78,9%</div></div>
+        <div class="metric"><label id="kpiLabel4">CONCENTRAÇÃO MAIOR CLIENTE</label><div id="execMaxClientConc" class="value">35,1%</div></div>
       </div>
     </div>
 
-    <!-- 1. DESEMPENHO E PRODUTIVIDADE POR AGENTE -->
     <div class="report-card">
-      <h3>1. Desempenho e Produtividade por Agente</h3>
+      <h3>1. Desempenho e Produtividade por Agente / Responsável</h3>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Agente</th><th>Perfil Funcional</th><th>Horas Total</th><th>% Alocação</th><th>Apontamentos</th><th>Média h/Reg.</th><th>Tickets</th></tr></thead>
@@ -270,9 +407,8 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
       </div>
     </div>
 
-    <!-- 2. SERVIÇOS E ATIVIDADES -->
     <div class="report-card">
-      <h3>2. Detalhamento dos Serviços e Categorias</h3>
+      <h3>2. Detalhamento dos Serviços e Categorias do Setor</h3>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Categoria do Serviço</th><th>Horas Consumidas</th><th>% do Total</th><th>Natureza Predominante</th></tr></thead>
@@ -281,31 +417,24 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
       </div>
     </div>
 
-    <!-- 3. CHAMADOS CRÍTICOS (PROJETOS OFENSORES) -->
     <div class="report-card">
-      <h3>3. Auditoria de Chamados Críticos (Projetos Ofensores)</h3>
+      <h3>3. Auditoria de Chamados Críticos do Setor</h3>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>Ticket</th><th>Cliente</th><th>Descrição do Projeto</th><th>Horas</th><th>Status</th></tr></thead>
+          <thead><tr><th>Ticket</th><th>Cliente / Demandante</th><th>Descrição do Projeto / Demanda</th><th>Horas</th><th>Status</th></tr></thead>
           <tbody id="execCriticalRows"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- 4. PLANO DE AÇÃO & RECOMENDAÇÕES -->
     <div class="report-card">
       <h3>4. Plano de Ação & Recomendações à Diretoria</h3>
-      <ol style="line-height:1.8;padding-left:20px;color:var(--ink)">
-        <li><b>Revisão de Franquia & Contratos:</b> Formalizar aditivo contratual com o cliente 40 Arquem Sistemas para prever franquia dedicada, compensando o impacto de 35,1% na alocação da equipe.</li>
-        <li><b>Matriz de Redundância (Shadowing):</b> Parear os colaboradores Davi Vinicius e Guilherme Bonato na arquitetura de legados para eliminar a dependência crítica do agente Felipe Cavassin.</li>
-        <li><b>Mutirão de Homologação:</b> Executar rotina de cobrança semanal nos chamados estagnados no status "Fila" para obter aceite final do cliente e faturar/encerrar as horas aplicadas.</li>
-        <li><b>Padronização de Time Tracking:</b> Estabelecer um piso mínimo de 15 minutos para apontamentos no sistema, consolidação de micro-suportes em blocos diários de apoio.</li>
-      </ol>
+      <ol id="execActionPlan" style="line-height:1.8;padding-left:20px;color:var(--ink)"></ol>
     </div>
   </div>
 </section>
 
-<!-- AUDITORIA CRUZADA (FILA & RISCOS) -->
+<!-- AUDITORIA CRUZADA -->
 <section id="crossAuditPage" class="hidden">
   <div class="panel">
     <div class="panelhead">
@@ -320,7 +449,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   </div>
 </section>
 
-<!-- GERENCIAR DADOS LOCAIS -->
+<!-- GERENCIAR DADOS -->
 <section id="settingsPage" class="hidden">
   <div class="panel" style="padding:24px">
     <h2>Gerenciador de Dados e Links</h2>
@@ -341,9 +470,9 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
 
     <div class="form-group">
-      <label for="fileInput">Importar Arquivo (CSV / XLSX do Movidesk ou Auditoria)</label>
+      <label for="fileInput">Importar Arquivo Excel (.xlsx / .xls) ou CSV</label>
       <input type="file" id="fileInput" accept=".csv, .xlsx, .xls, .json">
-      <small>Aceita planilha em Excel com abas do relatório ou relatórios CSV nativos.</small>
+      <small>Aceita arquivos gerados do Movidesk ou relatórios em Excel.</small>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px">
@@ -352,39 +481,29 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   </div>
 </section>
 
-<!-- GUIA -->
-<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> exclui chamados com status reconhecidos como encerrados, concluídos, resolvidos ou cancelados.</p><p><b>Clientes prioritários:</b> lista cadastrada dos 10 clientes estratégicos (Dr Óculos, Ferri, Instituto, Paulo e Condah, Atacadão do Óculos, IMV, Paschoal LAB, Cardeal, Sr dos Óculos, Lux).</p><p><b>Operação Local:</b> os dados são salvos localmente no navegador (LocalStorage) sem dependência de APIs externas.</p></div></section>
+<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> exclui chamados com status reconhecidos como encerrados.</p></div></section>
 
 <div class="foot">Central de Auditoria • Guardiões do Bravo • Atualizado em <span id="lastRefresh">—</span></div></main></div>
 
 <script>
 (() => {
 const PRIORITY_CLIENTS = [
-  "dr óculos", "dr oculos",
-  "ferri",
-  "instituto",
-  "paulo e condah", "paulo & condah",
-  "atacadão do óculos", "atacadao do oculos", "atacadão do oculos",
-  "imv",
-  "paschoal lab", "paschoallab",
-  "cardeal",
-  "sr dos óculos", "sr dos oculos",
-  "lux"
+  "dr óculos", "dr oculos", "ferri", "instituto", "paulo e condah", "paulo & condah",
+  "atacadão do óculos", "atacadao do oculos", "imv", "paschoal lab", "cardeal", "sr dos óculos", "lux"
 ];
 
-// DADOS REAIS AUDITADOS EXATOS DA PLANILHA
 const REAL_AUDIT_TICKETS = [
-  { ticket_id: "77901", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - MELHORIA AUDITORIA DE TURNO", owner_name: "Produção - CPO", status: "Fila", total_hours: 0.0, hours_worked: 0.0, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
-  { ticket_id: "96081", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - NOVOS RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Inteligência", status: "Fila", total_hours: 0.0, hours_worked: 0.0, age_days: 94, days_since_update: 12, synced_at: "2026-10-25", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
-  { ticket_id: "97012", client_name: "1684 DR. OCULOS", subject: "RB - ACORDO EM RECEBIMENTO DE VENDAS", owner_name: "Produção - CPO", status: "Fila", total_hours: 0.68, hours_worked: 0.68, age_days: 80, days_since_update: 8, synced_at: "2026-10-22", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
-  { ticket_id: "97233", client_name: "001 EPS - EMBRAPOL,246 DIGITOP", subject: "ACOLAB - Fase 2 Reforma Tributária - Antecipação", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 16.78, hours_worked: 12.70, age_days: 77, days_since_update: 10, synced_at: "2026-10-20", risk: "Alto", action: "Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
-  { ticket_id: "97610", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "ACO - RECURSOS REFORMA TRIBUTÁRIA - ANTECIPACAO/JUROS E MULTA", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 4.52, hours_worked: 4.52, age_days: 71, days_since_update: 9, synced_at: "2026-10-21", risk: "Alto", action: "Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
-  { ticket_id: "97702", client_name: "1272 INSTITUTO + VISAO - Matriz LJ 01", subject: "IMPLANTAÇÃO PAGAMENTOS MAIS VISÃO: 716", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 7.88, hours_worked: 7.82, age_days: 70, days_since_update: 7, synced_at: "2026-10-23", risk: "Alto", action: "Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
-  { ticket_id: "98533", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA", owner_name: "Cassiano Zanona", status: "Em Execução", total_hours: 0.50, hours_worked: 0.25, age_days: 57, days_since_update: 3, synced_at: "2026-10-27", risk: "Atenção", action: "Solicitar atualização objetiva, pendências restantes e previsão." },
-  { ticket_id: "99332", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "IA BENTO COBRANCAS - Boleto API", owner_name: "Lucas Matheus", status: "Em Execução", total_hours: 1.43, hours_worked: 1.43, age_days: 42, days_since_update: 2, synced_at: "2026-10-28", risk: "Atenção", action: "Solicitar atualização objetiva, pendências restantes e previsão." },
-  { ticket_id: "99940", client_name: "3028 OTICA LUX LTDA loja 01", subject: "Trava para que desvinculo seja feito uma única vez e edição de venda", owner_name: "Guilherme Gustavo Bonato", status: "Em Execução", total_hours: 6.98, hours_worked: 6.17, age_days: 31, days_since_update: 1, synced_at: "2026-10-29", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Solicitar atualização objetiva, pendências restantes e previsão." },
-  { ticket_id: "100951", client_name: "3028 OTICA LUX LTDA loja 01", subject: "RB - MELHORIA - CLASSIFICAR TITULOS DE RECEBIMENTO", owner_name: "Davi Vinicius", status: "Liberar Atualização", total_hours: 2.87, hours_worked: 2.83, age_days: 14, days_since_update: 2, synced_at: "2026-10-28", risk: "Acompanhar", action: "CLIENTE PRIORITÁRIO — Confirmar quem deve liberar/aplicar a atualização e data prevista." },
-  { ticket_id: "101191", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA", owner_name: "Felipe Cavassin", status: "Em Execução", total_hours: 26.78, hours_worked: 26.78, age_days: 8, days_since_update: 0, synced_at: "2026-10-29", risk: "Atenção", action: "Solicitar atualização objetiva, pendências restantes e previsão." }
+  { ticket_id: "77901", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - MELHORIA AUDITORIA DE TURNO", owner_name: "Produção - CPO", status: "Fila", total_hours: 0.0, promised_hours: 10.0, hours_worked: 0.0, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
+  { ticket_id: "96081", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - NOVOS RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Inteligência", status: "Fila", total_hours: 0.0, promised_hours: 15.0, hours_worked: 0.0, age_days: 94, days_since_update: 12, synced_at: "2026-10-25", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
+  { ticket_id: "97012", client_name: "1684 DR. OCULOS", subject: "RB - ACORDO EM RECEBIMENTO DE VENDAS", owner_name: "Produção - CPO", status: "Fila", total_hours: 0.68, promised_hours: 2.0, hours_worked: 0.68, age_days: 80, days_since_update: 8, synced_at: "2026-10-22", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Cobrar justificativa da permanência na fila." },
+  { ticket_id: "97233", client_name: "001 EPS - EMBRAPOL,246 DIGITOP", subject: "ACOLAB - Fase 2 Reforma Tributária - Antecipação", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 16.78, promised_hours: 20.0, hours_worked: 12.70, age_days: 77, days_since_update: 10, synced_at: "2026-10-20", risk: "Alto", action: "Cobrar justificativa da permanência na fila." },
+  { ticket_id: "97610", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "ACO - RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 4.52, promised_hours: 6.0, hours_worked: 4.52, age_days: 71, days_since_update: 9, synced_at: "2026-10-21", risk: "Alto", action: "Cobrar justificativa da permanência na fila." },
+  { ticket_id: "97702", client_name: "1272 INSTITUTO + VISAO - Matriz LJ 01", subject: "IMPLANTAÇÃO PAGAMENTOS MAIS VISÃO: 716", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 7.88, promised_hours: 8.0, hours_worked: 7.82, age_days: 70, days_since_update: 7, synced_at: "2026-10-23", risk: "Alto", action: "Cobrar justificativa da permanência na fila." },
+  { ticket_id: "98533", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA", owner_name: "Cassiano Zanona", status: "Em Execução", total_hours: 0.50, promised_hours: 5.0, hours_worked: 0.25, age_days: 57, days_since_update: 3, synced_at: "2026-10-27", risk: "Atenção", action: "Solicitar atualização objetiva." },
+  { ticket_id: "99332", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "IA BENTO COBRANCAS - Boleto API", owner_name: "Lucas Matheus", status: "Em Execução", total_hours: 1.43, promised_hours: 4.0, hours_worked: 1.43, age_days: 42, days_since_update: 2, synced_at: "2026-10-28", risk: "Atenção", action: "Solicitar atualização objetiva." },
+  { ticket_id: "99940", client_name: "3028 OTICA LUX LTDA loja 01", subject: "Trava para que desvinculo seja feito uma única vez", owner_name: "Guilherme Gustavo Bonato", status: "Em Execução", total_hours: 6.98, promised_hours: 8.0, hours_worked: 6.17, age_days: 31, days_since_update: 1, synced_at: "2026-10-29", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Solicitar atualização objetiva." },
+  { ticket_id: "100951", client_name: "3028 OTICA LUX LTDA loja 01", subject: "RB - MELHORIA - CLASSIFICAR TITULOS", owner_name: "Davi Vinicius", status: "Liberar Atualização", total_hours: 2.87, promised_hours: 3.0, hours_worked: 2.83, age_days: 14, days_since_update: 2, synced_at: "2026-10-28", risk: "Acompanhar", action: "Confirmar quem deve liberar/aplicar a atualização." },
+  { ticket_id: "101191", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA", owner_name: "Felipe Cavassin", status: "Em Execução", total_hours: 26.78, promised_hours: 30.0, hours_worked: 26.78, age_days: 8, days_since_update: 0, synced_at: "2026-10-29", risk: "Atenção", action: "Solicitar atualização objetiva." }
 ];
 
 const DEMO_AGENTS = [
@@ -410,6 +529,8 @@ function isPriorityClient(clientName) {
 }
 
 const $=id=>document.getElementById(id); let pending=[],people=[],page="overview";
+let chartAgentInstance = null, chartStatusInstance = null;
+
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -418,20 +539,15 @@ const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateSt
 window.openMovidesk = function(rawTicketId) {
   let domain = localStorage.getItem("movidesk_domain") || "";
   if (!domain) {
-    alert("Por favor, configure o Domínio do seu Movidesk na aba '⚙ Gerenciar Dados' antes de abrir chamados.");
+    alert("Por favor, configure o Domínio do seu Movidesk na aba '⚙ Gerenciar Dados'.");
     switchPage("settings");
     return;
   }
-  if (!/^https?:\/\//i.test(domain)) {
-    domain = "https://" + domain;
-  }
+  if (!/^https?:\/\//i.test(domain)) domain = "https://" + domain;
   domain = domain.replace(/\/+$/, '');
   
   const cleanId = String(rawTicketId || "").replace(/[^0-9]/g, '');
-  if (!cleanId) {
-    alert("Número de ticket inválido.");
-    return;
-  }
+  if (!cleanId) return alert("Número de ticket inválido.");
   window.open(`${domain}/Ticket/Edit?id=${cleanId}`, "_blank");
 };
 
@@ -449,9 +565,7 @@ function loadData() {
         loadedData = REAL_AUDIT_TICKETS;
         localStorage.setItem("local_audit_tickets", JSON.stringify(loadedData));
       }
-    } catch(e) { 
-      loadedData = REAL_AUDIT_TICKETS; 
-    }
+    } catch(e) { loadedData = REAL_AUDIT_TICKETS; }
   } else {
     loadedData = REAL_AUDIT_TICKETS;
     localStorage.setItem("local_audit_tickets", JSON.stringify(loadedData));
@@ -464,6 +578,8 @@ function loadData() {
 
   processPeopleData();
   render();
+  renderCharts();
+  renderPivotTable();
   renderExecutiveReport();
   renderCrossAudit();
   $("lastRefresh").textContent = new Date().toLocaleString("pt-BR");
@@ -484,7 +600,10 @@ function processPeopleData() {
   people = Object.values(map).sort((a,b) => b.total_hours - a.total_hours);
 }
 
-function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo|fila/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
+function status(s){
+  let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo|fila/i.test(v)?"pill warn":"pill";
+  return `<span class="${c}">${esc(v)}</span>`;
+}
 
 function ticketRow(t,compact=false){
   const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
@@ -521,12 +640,147 @@ function render(){
    return `<tr><td>${esc(p.collaborator_name||"Não identificado")}</td><td>${num(p.ticket_count)}</td><td>${colabPriorityCount > 0 ? `<b style="color:#b45309">★ ${colabPriorityCount}</b>` : '0'}</td><td>${num(p.appointment_count)}</td><td>${num(p.total_minutes)}</td><td><b>${hours(p.total_hours)}</b></td></tr>`;
  }).join("");
  $("peopleEmpty").classList.toggle("hidden",people.length>0);
+}
 
- if(!people.length)$("bars").innerHTML='<div class="empty">Nenhum apontamento para chamados pendentes.</div>';
- else{
-   let max=Math.max(1,...people.map(p=>Number(p.total_minutes)||0));
-   $("bars").innerHTML=people.slice(0,8).map(p=>`<div class="barrow"><div>${esc(p.collaborator_name||"Não identificado")}</div><div class="track"><div class="fill" style="width:${Math.min(100,Number(p.total_minutes||0)/max*100)}%;height:100%"></div></div><b>${hours(p.total_hours)} h</b></div>`).join("")
- }
+// IA DE CONSULTA DINÂMICA POR EMPRESA OU COLABORADOR
+function runAIInteractiveSearch() {
+  const query = $("aiQueryInput").value.trim().toLowerCase();
+  if (!query) {
+    alert("Por favor, digite o nome de uma empresa ou colaborador.");
+    return;
+  }
+
+  const filtered = pending.filter(t => 
+    String(t.client_name || "").toLowerCase().includes(query) ||
+    String(t.owner_name || "").toLowerCase().includes(query)
+  );
+
+  if (filtered.length === 0) {
+    alert(`Nenhum chamado encontrado para "${query}". Tente buscar por termos como: 40 Arquem, Lux, Dr Óculos, Felipe, Davi...`);
+    return;
+  }
+
+  const totalWorked = filtered.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
+  const totalPromised = filtered.reduce((acc, t) => acc + Number(t.promised_hours || (Number(t.total_hours || 0) * 1.25)), 0);
+  const execRatio = totalPromised > 0 ? ((totalWorked / totalPromised) * 100).toFixed(1) : 0;
+
+  $("aiQueryTitle").textContent = `Diagnóstico para: "${$("aiQueryInput").value.trim()}"`;
+  $("aiQuerySubtitle").textContent = `Encontrados ${filtered.length} chamados de projetos e atendimento na base auditada.`;
+
+  $("aiMetricTickets").textContent = num(filtered.length);
+  $("aiMetricWorked").textContent = hours(totalWorked) + " h";
+  $("aiMetricPromised").textContent = hours(totalPromised) + " h";
+  $("aiMetricRatio").textContent = execRatio + "%";
+
+  let alertHtml = "";
+  if (totalWorked > totalPromised) {
+    alertHtml += `<div class="ai-alert-item danger"><b>🚨 Alerta de Desvio de Horas:</b> O tempo trabalhado (${hours(totalWorked)}h) ultrapassou o tempo prometido/estimado (${hours(totalPromised)}h). Recomenda-se renegociação de escopo ou aditivo de contrato.</div>`;
+  } else {
+    alertHtml += `<div class="ai-alert-item info"><b>✅ Execução Dentro do Prazo:</b> A execução está consumindo ${execRatio}% da estimativa total alocada aos chamados de projetos.</div>`;
+  }
+
+  $("aiQueryAlerts").innerHTML = alertHtml;
+
+  $("aiQueryRows").innerHTML = filtered.map(t => {
+    const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
+    const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
+    const worked = Number(t.total_hours || 0);
+    const promised = Number(t.promised_hours || (worked * 1.25));
+    const diff = worked - promised;
+    const diffClass = diff > 0 ? "pill bad" : "pill";
+    const diffText = diff > 0 ? `+${hours(diff)} h (Excedido)` : `${hours(diff)} h`;
+
+    return `<tr>
+      <td>${ticketBtn}</td>
+      <td><b>${esc(t.client_name)}</b></td>
+      <td>${esc(t.subject)}</td>
+      <td>${esc(t.owner_name)}</td>
+      <td>${status(t.status)}</td>
+      <td><b>${hours(worked)} h</b></td>
+      <td>${hours(promised)} h</td>
+      <td><span class="${diffClass}">${diffText}</span></td>
+    </tr>`;
+  }).join("");
+
+  $("aiQueryResult").classList.remove("hidden");
+}
+
+function renderCharts() {
+  if (chartAgentInstance) chartAgentInstance.destroy();
+  if (chartStatusInstance) chartStatusInstance.destroy();
+
+  const agentLabels = people.map(p => p.collaborator_name);
+  const agentHours = people.map(p => p.total_hours);
+
+  const ctxAgent = document.getElementById('chartHoursAgent').getContext('2d');
+  chartAgentInstance = new Chart(ctxAgent, {
+    type: 'bar',
+    data: {
+      labels: agentLabels,
+      datasets: [{
+        label: 'Horas Apontadas',
+        data: agentHours,
+        backgroundColor: '#2563eb',
+        borderRadius: 6
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  });
+
+  const statusMap = {};
+  pending.forEach(t => {
+    const s = t.status || "Outros";
+    statusMap[s] = (statusMap[s] || 0) + 1;
+  });
+
+  const ctxStatus = document.getElementById('chartStatus').getContext('2d');
+  chartStatusInstance = new Chart(ctxStatus, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(statusMap),
+      datasets: [{
+        data: Object.values(statusMap),
+        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6']
+      }]
+    },
+    options: { responsive: true }
+  });
+}
+
+function renderPivotTable() {
+  const rowField = $("pivotRowField").value;
+  const valField = $("pivotValueField").value;
+
+  const groupMap = {};
+  let globalTotal = 0;
+
+  pending.forEach(t => {
+    const key = t[rowField] || "Não Especificado";
+    if (!groupMap[key]) groupMap[key] = { count: 0, hoursSum: 0 };
+    
+    groupMap[key].count++;
+    groupMap[key].hoursSum += Number(t.total_hours || 0);
+    globalTotal += Number(t.total_hours || 0);
+  });
+
+  const rows = Object.keys(groupMap).map(k => {
+    const item = groupMap[k];
+    let calcVal = 0;
+    if (valField === "total_hours_sum") calcVal = item.hoursSum;
+    else if (valField === "total_hours_avg") calcVal = item.count > 0 ? (item.hoursSum / item.count) : 0;
+    else calcVal = item.count;
+
+    const pct = globalTotal > 0 ? ((item.hoursSum / globalTotal) * 100).toFixed(1) : 0;
+    return { name: k, value: calcVal, pct: pct };
+  }).sort((a,b) => b.value - a.value);
+
+  $("pivotBodyRows").innerHTML = rows.map(r => `
+    <tr>
+      <td><b>${esc(r.name)}</b></td>
+      <td><b>${valField.includes("hours") ? hours(r.value) + " h" : num(r.value)}</b></td>
+      <td>${r.pct}%</td>
+    </tr>
+  `).join("");
 }
 
 function renderTickets(){
@@ -542,10 +796,7 @@ function renderTickets(){
     let matchesDate = true;
     if (t.synced_at) {
       const ticketDate = new Date(t.synced_at);
-      if (startVal) {
-        const startDate = new Date(startVal);
-        if (ticketDate < startDate) matchesDate = false;
-      }
+      if (startVal && ticketDate < new Date(startVal)) matchesDate = false;
       if (endVal) {
         const endDate = new Date(endVal);
         endDate.setHours(23, 59, 59);
@@ -590,10 +841,10 @@ function renderPrioritySection(priorityTickets) {
   }).join("");
 }
 
-// RELATÓRIO EXECUTIVO COM FILTRO DE DATA
 function renderExecutiveReport() {
   const sVal = $("execStartDate").value;
   const eVal = $("execEndDate").value;
+  const sector = $("execSectorFilter").value;
 
   let filtered = pending;
   if (sVal || eVal) {
@@ -623,86 +874,57 @@ function renderExecutiveReport() {
   });
   const maxConc = totH > 0 ? ((maxClientH / totH) * 100).toFixed(1) : "0.0";
 
+  if (sector === "comercial") {
+    $("kpiLabel1").textContent = "TEMPO EM PROPOSTAS";
+    $("kpiLabel2").textContent = "LEADS ATENDIDOS";
+    $("kpiLabel3").textContent = "TAXA DE CONVERSÃO";
+    $("kpiLabel4").textContent = "CONCENTRAÇÃO EM VENDEDOR";
+    
+    $("execActionPlan").innerHTML = `
+      <li><b>Redistribuição de Leads:</b> Reequilibrar a carteira de oportunidades ativas.</li>
+      <li><b>Régua de Follow-up:</b> Automatizar lembretes em propostas paradas no funil.</li>
+    `;
+  } else {
+    $("kpiLabel1").textContent = "TOTAL HORAS AUDITADAS";
+    $("kpiLabel2").textContent = "TICKETS TRABALHADOS";
+    $("kpiLabel3").textContent = "TAXA DE FECHAMENTO";
+    $("kpiLabel4").textContent = "CONCENTRAÇÃO MAIOR CLIENTE";
+
+    $("execActionPlan").innerHTML = `
+      <li><b>Revisão de Franquia & Contratos:</b> Formalizar aditivo contratual com o cliente principal.</li>
+      <li><b>Matriz de Redundância (Shadowing):</b> Parear os colaboradores na arquitetura de legados.</li>
+      <li><b>Mutirão de Homologação:</b> Cobrança semanal nos chamados estagnados no status "Fila".</li>
+    `;
+  }
+
   $("execTotalHours").textContent = hours(totH) + " h";
   $("execTotalTickets").textContent = num(filtered.length);
   $("execMaxClientConc").textContent = maxConc + "%";
 
-  const periodStr = (sVal || eVal) 
-    ? `no período de ${sVal ? date(sVal) : 'início'} até ${eVal ? date(eVal) : 'hoje'}` 
-    : "no período completo auditado";
+  const periodStr = (sVal || eVal) ? `no período de ${sVal ? date(sVal) : 'início'} até ${eVal ? date(eVal) : 'hoje'}` : "no período completo auditado";
+  $("execSummaryText").textContent = `No acompanhamento da auditoria do setor selecionado (${periodStr}), a operação registrou o volume total de ${hours(totH)}h aplicadas distribuídas em ${filtered.length} chamados.`;
 
-  $("execSummaryText").textContent = `No acompanhamento da auditoria (${periodStr}), a operação registrou o volume total de ${hours(totH)}h aplicadas distribuídas em ${filtered.length} chamados. O cliente com maior absorção de capacidade técnica foi "${maxClientName || 'N/A'}" com ${maxConc}% da carga total.`;
-
-  $("execAgentRows").innerHTML = DEMO_AGENTS.map(a => `<tr>
-    <td><b>${esc(a.agent)}</b></td>
-    <td>${esc(a.role)}</td>
-    <td><b>${esc(a.hours)}</b></td>
-    <td>${esc(a.alloc)}</td>
-    <td>${num(a.appointments)}</td>
-    <td>${esc(a.avg)}</td>
-    <td>${num(a.tickets)}</td>
-  </tr>`).join("");
-
-  $("execServiceRows").innerHTML = DEMO_SERVICES.map(s => `<tr>
-    <td><b>${esc(s.name)}</b></td>
-    <td>${esc(s.hours)}</td>
-    <td><b>${esc(s.pct)}</b></td>
-    <td>${esc(s.nature)}</td>
-  </tr>`).join("");
+  $("execAgentRows").innerHTML = DEMO_AGENTS.map(a => `<tr><td><b>${esc(a.agent)}</b></td><td>${esc(a.role)}</td><td><b>${esc(a.hours)}</b></td><td>${esc(a.alloc)}</td><td>${num(a.appointments)}</td><td>${esc(a.avg)}</td><td>${num(a.tickets)}</td></tr>`).join("");
+  $("execServiceRows").innerHTML = DEMO_SERVICES.map(s => `<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.hours)}</td><td><b>${esc(s.pct)}</b></td><td>${esc(s.nature)}</td></tr>`).join("");
 
   const critical = [...filtered].sort((a,b) => Number(b.total_hours||0) - Number(a.total_hours||0)).slice(0, 6);
   $("execCriticalRows").innerHTML = critical.map(t => {
     const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
-    const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
-    return `<tr>
-      <td>${ticketBtn}</td>
-      <td><b>${esc(t.client_name)}</b></td>
-      <td>${esc(t.subject)}</td>
-      <td><b>${hours(t.total_hours)} h</b></td>
-      <td>${status(t.status)}</td>
-    </tr>`;
+    return `<tr><td><button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button></td><td><b>${esc(t.client_name)}</b></td><td>${esc(t.subject)}</td><td><b>${hours(t.total_hours)} h</b></td><td>${status(t.status)}</td></tr>`;
   }).join("");
 }
 
-// MOTOR DA IA PARA DIAGNÓSTICO DE GARGALOS E PLANO DE AÇÃO
 function runAIAuditAnalysis() {
   const totH = pending.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
   const filaTickets = pending.filter(t => String(t.status).toLowerCase().includes("fila"));
   const filaH = filaTickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
-  const oldTickets = pending.filter(t => (t.age_days || 0) >= 60);
-
-  const clientMap = {};
-  pending.forEach(t => {
-    const c = t.client_name || "Outros";
-    clientMap[c] = (clientMap[c] || 0) + Number(t.total_hours || 0);
-  });
-
-  let topClient = "", topClientH = 0;
-  Object.keys(clientMap).forEach(c => {
-    if (clientMap[c] > topClientH) { topClientH = clientMap[c]; topClient = c; }
-  });
-  const topConc = totH > 0 ? ((topClientH / totH) * 100).toFixed(1) : 0;
 
   let html = `
     <div style="line-height:1.7; color: #1e3a8a;">
-      <p><b>Resumo do Diagnóstico Algorítmico da IA:</b></p>
-      
+      <p><b>Resumo do Diagnóstico Algorítmico do Ticket Manager:</b></p>
       <div class="ai-alert-item danger">
-        <b>🚨 Gargalo 1: Alta Concentração no Cliente "${esc(topClient)}":</b> 
-        Absorveu <b>${topConc}%</b> das horas totais da equipe. 
-        <br><i>Sugestão da IA:</i> Reavaliar o contrato ou estabelecer uma franquia dedicada com cobrança excedente para não desatender a fila dos demais clientes.
-      </div>
-
-      <div class="ai-alert-item">
-        <b>⚠️ Gargalo 2: Horas Retidas em Status "Fila":</b> 
-        Existem <b>${hours(filaH)}h</b> estagnadas no status "Fila" (${filaTickets.length} chamados).
-        <br><i>Sugestão da IA:</i> Executar um mutirão de alinhamento com os clientes para homologação rápida e encerramento dessas pendências.
-      </div>
-
-      <div class="ai-alert-item info">
-        <b>💡 Gargalo 3: Risco de Ponto Único de Falha (SPOF):</b> 
-        A maior parte dos chamados críticos e migrações depende da atuação técnica do perfil Pleno/Sênior.
-        <br><i>Sugestão da IA:</i> Implantar rotina de <i>shadowing</i> (pareamento) com desenvolvedores Júnior/Trainee para distribuir o conhecimento dos projetos legados.
+        <b>🚨 Gargalo 1: Horas Retidas em Status "Fila":</b> Existem <b>${hours(filaH)}h</b> estagnadas no status "Fila" (${filaTickets.length} chamados).
+        <br><i>Sugestão do Ticket Manager:</i> Executar mutirão de alinhamento para homologação rápida.
       </div>
     </div>
   `;
@@ -717,50 +939,29 @@ function renderCrossAudit() {
     const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
     const rClass = String(t.risk||"").toLowerCase().includes("alto") ? "pill bad" : "pill warn";
 
-    return `<tr>
-      <td>${ticketBtn}</td>
-      <td>${esc(t.client_name)}</td>
-      <td>${esc(t.subject)}</td>
-      <td>${num(t.age_days)}</td>
-      <td>${status(t.status)}</td>
-      <td>${esc(t.owner_name)}</td>
-      <td>${hours(t.total_hours)} h</td>
-      <td>${hours(t.hours_worked || t.total_hours)} h</td>
-      <td><span class="${rClass}">${esc(t.risk || 'Atenção')}</span></td>
-      <td title="${esc(t.action)}">${esc(t.action || 'Verificar e acompanhar pendências.')}</td>
-    </tr>`;
+    return `<tr><td>${ticketBtn}</td><td>${esc(t.client_name)}</td><td>${esc(t.subject)}</td><td>${num(t.age_days)}</td><td>${status(t.status)}</td><td>${esc(t.owner_name)}</td><td>${hours(t.total_hours)} h</td><td>${hours(t.hours_worked || t.total_hours)} h</td><td><span class="${rClass}">${esc(t.risk || 'Atenção')}</span></td><td title="${esc(t.action)}">${esc(t.action || 'Acompanhar.')}</td></tr>`;
   }).join("");
 }
 
 function switchPage(p){
  page=p;
- ["overview","tickets","people","priority","executiveReport","crossAudit","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
+ ["overview","aiAssistant","pivotTable","tickets","people","priority","executiveReport","crossAudit","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
  document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
- let m={
-   overview:["Visão geral","Acompanhe a fila e identifique onde concentrar a auditoria."],
-   tickets:["Fila de chamados","Pesquise, filtre e priorize os chamados que precisam de atenção."],
-   people:["Horas por colaborador","Compare o esforço registrado nos chamados pendentes."],
-   priority:["Clientes Prioritários","Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
-   executiveReport:["Relatório Executivo para Diretoria","Diagnóstico global, produtividade, ofensores e plano de ação."],
-   crossAudit:["Matriz de Auditoria Cruzada","Acompanhamento individualizado por risco e recomendação."],
-   settings:["Gerenciador de Dados","Atualize os dados por Excel (.xlsx) / CSV ou restaure a demonstração."],
-   guide:["Indicadores","Entenda os critérios e limitações desta versão."]
- }[p];
- $("title").textContent=m[0];$("subtitle").textContent=m[1];
- $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="executiveReport");
 }
 
 $("btnSaveDomain").addEventListener("click", () => {
   let domain = $("movideskDomain").value.trim();
-  if (domain && !/^https?:\/\//i.test(domain)) {
-    domain = "https://" + domain;
-  }
+  if (domain && !/^https?:\/\//i.test(domain)) domain = "https://" + domain;
   localStorage.setItem("movidesk_domain", domain);
   $("movideskDomain").value = domain;
-  notice("settingsNotice", "Domínio do Movidesk guardado com sucesso!", "success");
   loadData();
 });
 
+$("btnSearchAI").addEventListener("click", runAIInteractiveSearch);
+$("aiQueryInput").addEventListener("keypress", (e) => { if (e.key === "Enter") runAIInteractiveSearch(); });
+
+$("btnGeneratePivot").addEventListener("click", renderPivotTable);
+$("execSectorFilter").addEventListener("change", renderExecutiveReport);
 $("btnExecFilter").addEventListener("click", renderExecutiveReport);
 $("btnExecResetDates").addEventListener("click", () => {
   $("execStartDate").value = "";
@@ -770,22 +971,18 @@ $("btnExecResetDates").addEventListener("click", () => {
 
 $("btnRunAI").addEventListener("click", runAIAuditAnalysis);
 
-// SUPORTE A EXCEL (.XLSX) E CSV
 $("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
-  
   if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
     reader.onload = (evt) => {
       try {
         const data = new Uint8Array(evt.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        
-        let sheetName = workbook.SheetNames.find(n => n.includes("Matriz") || n.includes("Ranking") || n.includes("Fila") || n.includes("Lux")) || workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet);
+        const sheetName = workbook.SheetNames[0];
+        const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
         if (json.length > 0) {
           const parsedTickets = json.map(r => ({
@@ -795,6 +992,7 @@ $("fileInput").addEventListener("change", (e) => {
             status: r["Status"] || "Aberto",
             owner_name: r["Responsável atual"] || r["Responsável"] || "—",
             total_hours: parseFloat(String(r["Horas apontadas"]||0).replace(/[^0-9.]/g, '')) || 0,
+            promised_hours: parseFloat(String(r["Horas estimadas"] || r["Horas prometidas"] || 0).replace(/[^0-9.]/g, '')) || 0,
             hours_worked: parseFloat(String(r["Horas trabalhadas"]||0).replace(/[^0-9.]/g, '')) || 0,
             age_days: parseInt(r["Dias em aberto"] || r["Idade"] || 0) || 0,
             days_since_update: 0,
@@ -804,77 +1002,22 @@ $("fileInput").addEventListener("change", (e) => {
           })).filter(t => t.ticket_id);
 
           localStorage.setItem("local_audit_tickets", JSON.stringify(parsedTickets));
-          notice("settingsNotice", `Importados ${parsedTickets.length} chamados da aba "${sheetName}" com sucesso!`, "success");
           loadData();
-        } else {
-          throw new Error("Planilha vazia.");
         }
-      } catch(err) {
-        notice("settingsNotice", "Erro ao ler Excel: " + err.message, "error");
-      }
+      } catch(err) { alert("Erro ao ler Excel: " + err.message); }
     };
     reader.readAsArrayBuffer(file);
-  } else {
-    reader.onload = (evt) => {
-      try {
-        const content = evt.target.result;
-        const lines = content.split(/\r\n|\n/);
-        const parsedTickets = [];
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(";").map(c => c.replace(/^"|"$/g, '').trim());
-          if (cols.length >= 3 && cols[0]) {
-            parsedTickets.push({
-              ticket_id: cols[0],
-              subject: cols[1] || "Sem Assunto",
-              client_name: cols[2] || "—",
-              status: cols[3] || "Aberto",
-              owner_name: cols[4] || "—",
-              total_hours: parseFloat(cols[5] || 0) || 0,
-              age_days: parseInt(cols[6] || 0) || 0,
-              days_since_update: parseInt(cols[7] || 0) || 0,
-              synced_at: cols[8] || new Date().toISOString().split('T')[0]
-            });
-          }
-        }
-        if (parsedTickets.length > 0) {
-          localStorage.setItem("local_audit_tickets", JSON.stringify(parsedTickets));
-          notice("settingsNotice", `Importados ${parsedTickets.length} chamados com sucesso!`, "success");
-          loadData();
-        }
-      } catch(err) {
-        notice("settingsNotice", "Erro ao importar CSV: " + err.message, "error");
-      }
-    };
-    reader.readAsText(file);
   }
 });
 
 $("btnResetData").addEventListener("click", () => {
   localStorage.setItem("local_audit_tickets", JSON.stringify(REAL_AUDIT_TICKETS));
-  notice("settingsNotice", "Dados reais auditados restaurados com sucesso!", "success");
   loadData();
 });
 
-$("refresh").addEventListener("click", () => {
-  loadData();
-});
-
-function exportCsv(){
-  let headers,rows;
-  if(page==="people"){
-    headers=["Colaborador","Chamados Total","Apontamentos","Minutos","Horas"];
-    rows=people.map(p=>[p.collaborator_name,p.ticket_count,p.appointment_count,p.total_minutes,p.total_hours]);
-  } else {
-    headers=["ID","Assunto","Cliente","Status","Responsável","Horas","Idade dias","Risco","Ação Recomendada"];
-    rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.owner_name,t.total_hours,t.age_days,t.risk||"Rotina",t.action||"Acompanhar"]);
-  }
-  const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
-}
-
-$("export").addEventListener("click", exportCsv);
+$("refresh").addEventListener("click", loadData);
 ["search","clientFilter","hoursFilter","startDate","endDate"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
-document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.goto)));
 
 loadData();
 })();
