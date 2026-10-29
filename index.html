@@ -31,7 +31,7 @@ main{padding:26px;min-width:0}
 .search{min-width:230px}
 .tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
 th{background:#f8fafd;color:#66758b;text-transform:uppercase;font-size:10px;letter-spacing:.5px;text-align:left}
-th,td{padding:12px 14px;border-bottom:1px solid #edf1f6;max-width:350px;overflow:hidden;text-overflow:ellipsis}
+th,td{padding:12px 14px;border-bottom:1px solid #edf1f6;max-width:380px;overflow:hidden;text-overflow:ellipsis}
 tr:hover td{background:#f8fbff}
 .pill{display:inline-flex;align-items:center;gap:4px;background:#edf2f8;color:#4b5b72;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:600}
 .pill.priority{background:var(--priority-bg);color:var(--priority-text);border:1px solid var(--priority-border)}
@@ -308,7 +308,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px">
-      <button id="btnResetData" class="btn secondary">Restaurar Dados Demonstrativos</button>
+      <button id="btnResetData" class="btn secondary">Restaurar Dados Reais da Auditoria</button>
     </div>
   </div>
 </section>
@@ -333,7 +333,7 @@ const PRIORITY_CLIENTS = [
   "lux"
 ];
 
-// DADOS REAIS AUDITADOS DA PLANILHA
+// DADOS REAIS AUDITADOS EXATOS DA PLANILHA
 const REAL_AUDIT_TICKETS = [
   { ticket_id: "77901", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - MELHORIA AUDITORIA DE TURNO", owner_name: "Produção - CPO", status: "Fila", total_hours: 0.0, hours_worked: 0.0, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
   { ticket_id: "96081", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - NOVOS RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Inteligência", status: "Fila", total_hours: 0.0, hours_worked: 0.0, age_days: 94, days_since_update: 12, synced_at: "2026-10-25", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
@@ -401,14 +401,25 @@ function loadData() {
   $("movideskDomain").value = savedDomain;
 
   const stored = localStorage.getItem("local_audit_tickets");
+  let loadedData = null;
+
   if (stored) {
-    try { pending = JSON.parse(stored); } catch(e) { pending = REAL_AUDIT_TICKETS; }
+    try { 
+      loadedData = JSON.parse(stored); 
+      // Se contiver os IDs antigos do mock antigo (#1011, #1012), substitui automaticamente pelos dados reais
+      if (Array.isArray(loadedData) && loadedData.some(t => String(t.ticket_id).startsWith("101") && t.ticket_id.length === 4)) {
+        loadedData = REAL_AUDIT_TICKETS;
+        localStorage.setItem("local_audit_tickets", JSON.stringify(loadedData));
+      }
+    } catch(e) { 
+      loadedData = REAL_AUDIT_TICKETS; 
+    }
   } else {
-    pending = REAL_AUDIT_TICKETS;
-    localStorage.setItem("local_audit_tickets", JSON.stringify(pending));
+    loadedData = REAL_AUDIT_TICKETS;
+    localStorage.setItem("local_audit_tickets", JSON.stringify(loadedData));
   }
 
-  pending = pending.map(ticket => ({
+  pending = loadedData.map(ticket => ({
     ...ticket,
     priority_client: isPriorityClient(ticket.client_name)
   }));
@@ -721,7 +732,7 @@ function exportCsv(){
     headers=["ID","Assunto","Cliente","Status","Responsável","Horas","Idade dias","Risco","Ação Recomendada"];
     rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.owner_name,t.total_hours,t.age_days,t.risk||"Rotina",t.action||"Acompanhar"]);
   }
-  const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
+  const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
 
 $("export").addEventListener("click", exportCsv);
