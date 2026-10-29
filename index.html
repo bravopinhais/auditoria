@@ -49,6 +49,17 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 .foot{font-size:11px;color:#8793a5;padding:6px 0 20px}
 .priority-tag-list{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;background:#fff8f0;border-bottom:1px solid var(--line)}
 .priority-tag{background:#fff;border:1px solid var(--priority-border);color:var(--priority-text);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.report-card{padding:20px;border-bottom:1px solid var(--line)}
+.report-card h3{margin:0 0 10px;font-size:16px;color:var(--navy)}
+
+@media print {
+  body { background: white; }
+  .top, aside, .tools, .foot { display: none !important; }
+  .layout { display: block; }
+  main { padding: 0; }
+  .panel { border: none; box-shadow: none; }
+}
+
 @media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.layout{display:block}aside{display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.nav{width:auto;white-space:nowrap}main{padding:14px}.head{display:block}.head .tools{margin-top:12px}.grid{gap:8px}.metric{padding:12px}.value{font-size:23px}.search{min-width:100%;}.top{padding:0 14px}}
 </style></head>
@@ -60,6 +71,7 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
   <button class="nav" data-page="tickets">☷ Fila de chamados</button>
   <button class="nav" data-page="people">◷ Horas por colaborador</button>
   <button class="nav" data-page="priority">★ Clientes Prioritários</button>
+  <button class="nav" data-page="meetingReport">📊 Relatório p/ Reunião</button>
   <button class="nav" data-page="settings">⚙ Configurações API</button>
   <button class="nav" data-page="guide">ⓘ Indicadores</button>
 </aside>
@@ -151,11 +163,49 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
   </div>
 </section>
 
+<!-- NOVO: RELATÓRIO DINÂMICO PARA REUNIÕES -->
+<section id="meetingReportPage" class="hidden">
+  <div class="panel">
+    <div class="panelhead">
+      <div>
+        <h2>Relatório Executivo para Reuniões</h2>
+        <small>Pauta consolidada para reuniões de alinhamento e tomadas de decisão.</small>
+      </div>
+      <button class="btn primary" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    </div>
+
+    <div class="report-card">
+      <h3>1. Resumo da Operação</h3>
+      <p>Atualmente existem <b id="rptTotalPending">0</b> chamados pendentes na fila, totalizando <b id="rptTotalHours">0 h</b> de esforço apontado. Do total de chamados, <b id="rptPriorityCount">0</b> pertencem ao grupo de clientes prioritários.</p>
+    </div>
+
+    <div class="report-card">
+      <h3>2. Pauta: Clientes Prioritários Críticos</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Pendentes</th><th>Criticos (7+ dias)</th><th>Sem Atualização</th><th>Horas</th></tr></thead>
+          <tbody id="rptPriorityRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <h3>3. Top 5 Chamados mais Antigos (Ação Imediata)</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>ID</th><th>Cliente</th><th>Assunto</th><th>Responsável</th><th>Idade (dias)</th><th>Status</th></tr></thead>
+          <tbody id="rptOldestRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CONFIGURAÇÕES DA API MOVIDESK -->
 <section id="settingsPage" class="hidden">
   <div class="panel" style="padding:24px">
     <h2>Configuração da API Movidesk</h2>
-    <p class="muted">Insira o seu token da API do Movidesk para permitir a sincronização com o banco de dados.</p>
+    <p class="muted">Insira o seu token da API do Movidesk para testar a conexão.</p>
     
     <div id="settingsNotice" class="notice"></div>
 
@@ -165,18 +215,8 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
       <small>Obtenha este token no Movidesk em: Configurações > Integrações > API Web.</small>
     </div>
 
-    <div class="form-group">
-      <label for="supabaseUrl">Supabase URL</label>
-      <input type="text" id="supabaseUrl" placeholder="https://seu-projeto.supabase.co">
-    </div>
-
-    <div class="form-group">
-      <label for="supabaseKey">Supabase Publishable Key</label>
-      <input type="password" id="supabaseKey" placeholder="sb_publishable_...">
-    </div>
-
     <div style="display:flex;gap:10px;margin-top:20px">
-      <button id="saveSettings" class="btn primary">Salvar Configurações</button>
+      <button id="saveToken" class="btn primary">Salvar Token</button>
       <button id="testMovidesk" class="btn secondary">Testar Conexão Movidesk</button>
     </div>
   </div>
@@ -189,6 +229,9 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 
 <script>
 (() => {
+const DEFAULT_SUPABASE_URL = "https://yvsuevoekqvunnaesec.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_sua_chave_aqui";
+
 const PRIORITY_CLIENTS = [
   "dr óculos", "dr oculos",
   "ferri",
@@ -219,24 +262,12 @@ function clearNotice(id){$(id).className="notice"}
 
 function loadStoredConfig(){
   $("movideskToken").value = localStorage.getItem("movidesk_token") || "";
-  $("supabaseUrl").value = localStorage.getItem("supabase_url") || "";
-  $("supabaseKey").value = localStorage.getItem("supabase_key") || "";
 }
 
 async function init(){
  loadStoredConfig();
- const url = $("supabaseUrl").value.trim();
- const key = $("supabaseKey").value.trim();
-
- if(!url || !key) {
-   $("status").textContent = "Pendente de Configuração";
-   switchPage("settings");
-   notice("settingsNotice", "Por favor, configure as chaves do Supabase e o Token do Movidesk para continuar.", "info");
-   return;
- }
-
  try {
-   sb = window.supabase.createClient(url, key, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+   sb = window.supabase.createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
    $("status").textContent = "Conectado";
    await load();
  } catch(e) {
@@ -263,8 +294,9 @@ async function load(){
 
  people=p.data||[];
  render();
+ renderMeetingReport();
  $("lastRefresh").textContent=new Date().toLocaleString("pt-BR");
- }catch(e){notice("appNotice","Não foi possível carregar as views. Verifique as permissões RLS e as credenciais. Detalhe: "+(e.message||"erro desconhecido"))}finally{$("refresh").disabled=false}
+ }catch(e){notice("appNotice","Não foi possível carregar as views. Verifique as permissões RLS. Detalhe: "+(e.message||"erro desconhecido"))}finally{$("refresh").disabled=false}
 }
 
 function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
@@ -323,11 +355,7 @@ function renderPrioritySection(priorityTickets) {
   $("pStaleN").textContent = num(pStale);
   $("pHoursN").textContent = hours(pHours) + " h";
 
-  const displayList = [
-    "Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", 
-    "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", 
-    "Sr dos Óculos", "Lux"
-  ];
+  const displayList = ["Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", "Sr dos Óculos", "Lux"];
 
   $("priorityClientRows").innerHTML = displayList.map(client => {
     const tickets = pending.filter(t => isPriorityClient(t.client_name) && String(t.client_name).toLowerCase().includes(client.toLowerCase()));
@@ -346,33 +374,63 @@ function renderPrioritySection(priorityTickets) {
   }).join("");
 }
 
+// RENDERIZAR NOVO RELATÓRIO P/ REUNIÃO
+function renderMeetingReport() {
+  const priorityTickets = pending.filter(t => t.priority_client);
+  
+  $("rptTotalPending").textContent = num(summary.pending_tickets);
+  $("rptTotalHours").textContent = hours(summary.total_hours_pending) + " h";
+  $("rptPriorityCount").textContent = num(priorityTickets.length);
+
+  const displayList = ["Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", "Sr dos Óculos", "Lux"];
+  
+  $("rptPriorityRows").innerHTML = displayList.map(client => {
+    const tickets = pending.filter(t => isPriorityClient(t.client_name) && String(t.client_name).toLowerCase().includes(client.toLowerCase()));
+    const pOldCount = tickets.filter(t => (t.age_days || 0) >= 7).length;
+    const pStaleCount = tickets.filter(t => (t.days_since_update || 0) >= 7).length;
+    const pTotalHours = tickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
+
+    return `<tr>
+      <td><b>${client}</b></td>
+      <td>${num(tickets.length)}</td>
+      <td>${pOldCount > 0 ? `<span class="pill bad">${pOldCount}</span>` : '0'}</td>
+      <td>${pStaleCount > 0 ? `<span class="pill warn">${pStaleCount}</span>` : '0'}</td>
+      <td><b>${hours(pTotalHours)} h</b></td>
+    </tr>`;
+  }).join("");
+
+  const oldest = [...pending].sort((a,b) => Number(b.age_days || 0) - Number(a.age_days || 0)).slice(0, 5);
+  $("rptOldestRows").innerHTML = oldest.map(t => `<tr>
+    <td>#${esc(t.ticket_id)}</td>
+    <td>${esc(t.client_name || '—')}</td>
+    <td>${esc(t.subject || 'Sem assunto')}</td>
+    <td>${esc(t.owner_name || '—')}</td>
+    <td><b style="color:#dc2626">${num(t.age_days)} dias</b></td>
+    <td>${status(t.status)}</td>
+  </tr>`).join("");
+}
+
 function switchPage(p){
  page=p;
- ["overview","tickets","people","priority","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
+ ["overview","tickets","people","priority","meetingReport","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
  document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
  let m={
    overview:["Visão geral","Acompanhe a fila e identifique onde concentrar a auditoria."],
    tickets:["Fila de chamados","Pesquise, filtre e priorize os chamados que precisam de atenção."],
    people:["Horas por colaborador","Compare o esforço registrado nos chamados pendentes."],
    priority:["Clientes Prioritários","Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
-   settings:["Configurações da API","Defina os tokens de acesso do Movidesk e Supabase."],
+   meetingReport:["Relatório para Reuniões","Pauta estruturada e pronta para impressão ou exportação em PDF."],
+   settings:["Configurações da API","Gerencie o token de acesso da API do Movidesk."],
    guide:["Indicadores","Entenda os critérios e limitações desta versão."]
  }[p];
  $("title").textContent=m[0];$("subtitle").textContent=m[1];
- $("export").classList.toggle("hidden",p==="guide"||p==="settings");
+ $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="meetingReport");
 }
 
-$("saveSettings").addEventListener("click", ()=>{
+$("saveToken").addEventListener("click", ()=>{
   const mToken = $("movideskToken").value.trim();
-  const sUrl = $("supabaseUrl").value.trim();
-  const sKey = $("supabaseKey").value.trim();
-
   localStorage.setItem("movidesk_token", mToken);
-  localStorage.setItem("supabase_url", sUrl);
-  localStorage.setItem("supabase_key", sKey);
-
-  notice("settingsNotice", "Configurações salvas com sucesso!", "success");
-  init();
+  notice("settingsNotice", "Token do Movidesk salvo com sucesso!", "success");
 });
 
 $("testMovidesk").addEventListener("click", async ()=>{
@@ -390,7 +448,7 @@ $("testMovidesk").addEventListener("click", async ()=>{
       notice("settingsNotice", `Erro na API Movidesk: Status ${res.status}. Verifique se o token inserido é válido.`, "error");
     }
   } catch(e) {
-    notice("settingsNotice", "Erro de rede (CORS) ou ao conectar com a API Movidesk. A sincronização final deve ser processada no backend.", "error");
+    notice("settingsNotice", "Erro de rede (CORS) ou ao conectar com a API Movidesk.", "error");
   }
 });
 
@@ -419,23 +477,14 @@ function exportCsv(){
   const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
 
-// Botão de Atualizar com verificação de instância
+// BOTÃO DE ATUALIZAR REESCRITO E GARANTIDO
 $("refresh").addEventListener("click", async () => {
   if (!sb) {
-    const url = $("supabaseUrl").value.trim();
-    const key = $("supabaseKey").value.trim();
-
-    if (!url || !key) {
-      notice("appNotice", "Preencha a URL e a Key do Supabase no menu '⚙ Configurações API' antes de atualizar.", "error");
-      switchPage("settings");
-      return;
-    }
-
     try {
-      sb = window.supabase.createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+      sb = window.supabase.createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
       $("status").textContent = "Conectado";
     } catch (e) {
-      notice("appNotice", "Erro ao conectar com o Supabase: " + (e.message || e), "error");
+      notice("appNotice", "Erro ao inicializar conexão: " + (e.message || e), "error");
       return;
     }
   }
