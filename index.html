@@ -25,7 +25,7 @@ main{padding:26px;min-width:0}
 .panel{overflow:hidden;margin-bottom:18px}
 .panelhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .panelhead h2{font-size:15px;margin:0}
-.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .field{padding:10px;border:1px solid #d6dfeb;border-radius:9px;background:#fff;min-width:130px}
 .search{min-width:230px}
 .tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
@@ -43,13 +43,45 @@ tr:hover td{background:#f8fbff}
 .notice.success{display:block;background:#f0fdf4;color:#166534}
 .hidden{display:none!important}
 label{display:block;font-size:12px;font-weight:650;margin:13px 0 6px}
-input, textarea{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px;font-family:inherit}
+input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-radius:9px;font-family:inherit}
 .form-group{margin-bottom:16px;max-width:600px}
 .foot{font-size:11px;color:#8793a5;padding:6px 0 20px}
 .priority-tag-list{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;background:#fff8f0;border-bottom:1px solid var(--line)}
 .priority-tag{background:#fff;border:1px solid var(--priority-border);color:var(--priority-text);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
 .report-card{padding:20px;border-bottom:1px solid var(--line)}
 .report-card h3{margin:0 0 10px;font-size:16px;color:var(--navy)}
+
+.ticket-link {
+  color: var(--blue);
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ticket-link:hover {
+  text-decoration: underline;
+}
+
+.date-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 9px;
+  border: 1px solid #d6dfeb;
+}
+.date-filter-group label {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.date-filter-group input {
+  padding: 4px 8px;
+  width: auto;
+  font-size: 12px;
+}
 
 @media print {
   body { background: white; }
@@ -103,6 +135,14 @@ input, textarea{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9
     <div><h2>Fila de auditoria</h2><small id="ticketCount"></small></div>
     <div class="tools">
       <input class="field search" id="search" placeholder="Buscar ID, assunto, cliente, responsável">
+      
+      <div class="date-filter-group">
+        <label>De:</label>
+        <input type="date" id="startDate">
+        <label>Até:</label>
+        <input type="date" id="endDate">
+      </div>
+
       <select class="field" id="clientFilter">
         <option value="all">Todos os clientes</option>
         <option value="priority">★ Somente Prioritários (10)</option>
@@ -115,7 +155,7 @@ input, textarea{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9
       </select>
     </div>
   </div>
-  <div class="tablewrap"><table><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Horas</th><th>Idade (dias)</th><th>Sem Atualizar (dias)</th><th>Sincronizado</th></tr></thead><tbody id="ticketRows"></tbody></table></div>
+  <div class="tablewrap"><table><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Horas</th><th>Idade (dias)</th><th>Sem Atualizar (dias)</th><th>Sincronizado / Data</th></tr></thead><tbody id="ticketRows"></tbody></table></div>
   <div id="ticketEmpty" class="empty hidden">Nenhum resultado para os filtros selecionados.</div>
 </div>
 </section>
@@ -203,18 +243,25 @@ input, textarea{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9
 <!-- GERENCIAR DADOS LOCAIS -->
 <section id="settingsPage" class="hidden">
   <div class="panel" style="padding:24px">
-    <h2>Gerenciador de Dados do Sistema</h2>
-    <p class="muted">Carregue um arquivo CSV exportado do Movidesk ou cole o arquivo de dados para atualizar o painel.</p>
+    <h2>Gerenciador de Dados e Links</h2>
+    <p class="muted">Configure a URL do seu Movidesk e gerencie a base de dados do sistema.</p>
     
     <div id="settingsNotice" class="notice"></div>
 
     <div class="form-group">
+      <label for="movideskDomain">Domínio / URL do seu Movidesk</label>
+      <input type="text" id="movideskDomain" placeholder="https://suaempresa.movidesk.com">
+      <small>Usado para gerar os links diretos de clique nos chamados.</small>
+    </div>
+
+    <div class="form-group">
       <label for="csvFileInput">Importar Arquivo CSV / Excel (Movidesk)</label>
       <input type="file" id="csvFileInput" accept=".csv, .json, .txt">
-      <small>Colunas aceitas: Ticket ID, Client Name, Subject, Owner Name, Status, Hours, Age Days, Days Since Update.</small>
+      <small>Colunas aceitas: Ticket ID, Client Name, Subject, Owner Name, Status, Hours, Age Days, Days Since Update, Date.</small>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px">
+      <button id="btnSaveDomain" class="btn primary">Salvar Domínio</button>
       <button id="btnResetData" class="btn secondary">Restaurar Dados Demonstrativos</button>
     </div>
   </div>
@@ -227,7 +274,6 @@ input, textarea{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9
 
 <script>
 (() => {
-// LISTA DOS 10 CLIENTES PRIORITÁRIOS
 const PRIORITY_CLIENTS = [
   "dr óculos", "dr oculos",
   "ferri",
@@ -241,15 +287,14 @@ const PRIORITY_CLIENTS = [
   "lux"
 ];
 
-// DADOS DEMONSTRATIVOS INICIAIS
 const DEMO_TICKETS = [
   { ticket_id: "1011", client_name: "Dr Óculos", subject: "Integração do sistema travada", owner_name: "Carlos Silva", status: "Em Andamento", total_hours: 4.5, age_days: 12, days_since_update: 8, synced_at: "2026-10-28" },
   { ticket_id: "1012", client_name: "Cardeal", subject: "Ajuste na emissão de nota fiscal", owner_name: "Ana Costa", status: "Aberto", total_hours: 0, age_days: 9, days_since_update: 3, synced_at: "2026-10-29" },
-  { ticket_id: "1013", client_name: "Lux", subject: "Erro de permissão no usuário", owner_name: "Mariana Souza", status: "Pendente", total_hours: 2.0, age_days: 4, days_since_update: 1, synced_at: "2026-10-29" },
+  { ticket_id: "1013", client_name: "Lux", subject: "Erro de permissão no usuário", owner_name: "Mariana Souza", status: "Pendente", total_hours: 2.0, age_days: 4, days_since_update: 1, synced_at: "2026-10-20" },
   { ticket_id: "1014", client_name: "Atacadão do Óculos", subject: "Relatório de vendas divergente", owner_name: "Carlos Silva", status: "Aberto", total_hours: 1.5, age_days: 15, days_since_update: 10, synced_at: "2026-10-25" },
-  { ticket_id: "1015", client_name: "Cliente Exemplo A", subject: "Dúvida no cadastro de produtos", owner_name: "Pedro Lima", status: "Novo", total_hours: 0, age_days: 2, days_since_update: 2, synced_at: "2026-10-29" },
+  { ticket_id: "1015", client_name: "Cliente Exemplo A", subject: "Dúvida no cadastro de produtos", owner_name: "Pedro Lima", status: "Novo", total_hours: 0, age_days: 2, days_since_update: 2, synced_at: "2026-10-15" },
   { ticket_id: "1016", client_name: "Ferri", subject: "Lentidão na consulta de estoque", owner_name: "Ana Costa", status: "Em Andamento", total_hours: 6.0, age_days: 8, days_since_update: 5, synced_at: "2026-10-27" },
-  { ticket_id: "1017", client_name: "Instituto", subject: "Backup automático falhou", owner_name: "Pedro Lima", status: "Urgente", total_hours: 3.2, age_days: 11, days_since_update: 9, synced_at: "2026-10-26" }
+  { ticket_id: "1017", client_name: "Instituto", subject: "Backup automático falhou", owner_name: "Pedro Lima", status: "Urgente", total_hours: 3.2, age_days: 11, days_since_update: 9, synced_at: "2026-10-18" }
 ];
 
 function isPriorityClient(clientName) {
@@ -264,10 +309,15 @@ const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateString("pt-BR"):"—"):"—";
 
-function notice(id,msg,type="error"){const e=$(id);e.textContent=msg;e.className="notice "+type}
-function clearNotice(id){$(id).className="notice"}
+function getMovideskUrl(ticketId) {
+  let domain = localStorage.getItem("movidesk_domain") || "https://suaempresa.movidesk.com";
+  domain = domain.replace(/\/+$/, '');
+  return `${domain}/Ticket/Edit/${ticketId}`;
+}
 
 function loadData() {
+  $("movideskDomain").value = localStorage.getItem("movidesk_domain") || "https://suaempresa.movidesk.com";
+
   const stored = localStorage.getItem("local_audit_tickets");
   if (stored) {
     try { pending = JSON.parse(stored); } catch(e) { pending = DEMO_TICKETS; }
@@ -305,9 +355,11 @@ function processPeopleData() {
 function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
 
 function ticketRow(t,compact=false){
+  const ticketLink = `<a href="${getMovideskUrl(t.ticket_id)}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a>`;
   const cli = t.priority_client ? `<span class="pill priority">★ ${esc(t.client_name||"Prioritário")}</span>` : esc(t.client_name||"—");
-  if(compact) return `<tr><td title="${esc(t.subject)}">#${esc(t.ticket_id)} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.synced_at)}</td></tr>`;
-  return `<tr><td>${esc(t.ticket_id)}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
+  
+  if(compact) return `<tr><td title="${esc(t.subject)}">${ticketLink} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.synced_at)}</td></tr>`;
+  return `<tr><td>${ticketLink}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
 }
 
 function render(){
@@ -345,8 +397,33 @@ function render(){
 }
 
 function renderTickets(){
-  const q=$("search").value.toLowerCase().trim(),cf=$("clientFilter").value,hf=$("hoursFilter").value;
-  const rows=pending.filter(t=>[t.ticket_id,t.subject,t.client_name,t.owner_name,t.status].join(" ").toLowerCase().includes(q)&&(cf==="all"||(cf==="priority"?t.priority_client:!t.priority_client))&&(hf==="all"||(hf==="none"?Number(t.total_hours)===0:Number(t.total_hours)>0)));
+  const q=$("search").value.toLowerCase().trim(), cf=$("clientFilter").value, hf=$("hoursFilter").value;
+  const startVal = $("startDate").value;
+  const endVal = $("endDate").value;
+
+  const rows = pending.filter(t => {
+    const matchesSearch = [t.ticket_id, t.subject, t.client_name, t.owner_name, t.status].join(" ").toLowerCase().includes(q);
+    const matchesClient = (cf==="all" || (cf==="priority" ? t.priority_client : !t.priority_client));
+    const matchesHours = (hf==="all" || (hf==="none" ? Number(t.total_hours)===0 : Number(t.total_hours)>0));
+    
+    // FILTRO DE DATA
+    let matchesDate = true;
+    if (t.synced_at) {
+      const ticketDate = new Date(t.synced_at);
+      if (startVal) {
+        const startDate = new Date(startVal);
+        if (ticketDate < startDate) matchesDate = false;
+      }
+      if (endVal) {
+        const endDate = new Date(endVal);
+        endDate.setHours(23, 59, 59);
+        if (ticketDate > endDate) matchesDate = false;
+      }
+    }
+
+    return matchesSearch && matchesClient && matchesHours && matchesDate;
+  });
+
   $("ticketRows").innerHTML=rows.map(t=>ticketRow(t)).join("");
   $("ticketCount").textContent=`${num(rows.length)} de ${num(pending.length)} chamados`;
   $("ticketEmpty").classList.toggle("hidden",rows.length>0);
@@ -408,7 +485,7 @@ function renderMeetingReport() {
 
   const oldest = [...pending].sort((a,b) => Number(b.age_days || 0) - Number(a.age_days || 0)).slice(0, 5);
   $("rptOldestRows").innerHTML = oldest.map(t => `<tr>
-    <td>#${esc(t.ticket_id)}</td>
+    <td><a href="${getMovideskUrl(t.ticket_id)}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a></td>
     <td>${esc(t.client_name || '—')}</td>
     <td>${esc(t.subject || 'Sem assunto')}</td>
     <td>${esc(t.owner_name || '—')}</td>
@@ -434,7 +511,13 @@ function switchPage(p){
  $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="meetingReport");
 }
 
-// IMPORTAÇÃO DE ARQUIVO CSV / JSON LOCAL
+$("btnSaveDomain").addEventListener("click", () => {
+  const domain = $("movideskDomain").value.trim();
+  localStorage.setItem("movidesk_domain", domain);
+  notice("settingsNotice", "Domínio do Movidesk salvo com sucesso!", "success");
+  loadData();
+});
+
 $("csvFileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -453,7 +536,6 @@ $("csvFileInput").addEventListener("change", (e) => {
         }
       }
       
-      // PROCESSAMENTO SIMPLES DE CSV
       const lines = content.split(/\r\n|\n/);
       if (lines.length < 2) throw new Error("O arquivo CSV selecionado está vazio.");
       
@@ -470,7 +552,7 @@ $("csvFileInput").addEventListener("change", (e) => {
             total_hours: parseFloat(cols[5] || 0) || 0,
             age_days: parseInt(cols[6] || 0) || 0,
             days_since_update: parseInt(cols[7] || 0) || 0,
-            synced_at: new Date().toISOString().split('T')[0]
+            synced_at: cols[8] || new Date().toISOString().split('T')[0]
           });
         }
       }
@@ -495,7 +577,6 @@ $("btnResetData").addEventListener("click", () => {
   loadData();
 });
 
-// REFRESH LOCAL DA TELA
 $("refresh").addEventListener("click", () => {
   loadData();
 });
@@ -519,18 +600,17 @@ function exportCsv(){
       ];
     });
   } else {
-    headers=["ID","Assunto","Cliente","Status","Prioridade","Responsável","Horas","Idade dias","Dias sem atualização","Cliente prioritário","Última atualização"];
+    headers=["ID","Assunto","Cliente","Status","Prioridade","Responsável","Horas","Idade dias","Dias sem atualização","Cliente prioritário","Data"];
     rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.priority,t.owner_name,t.total_hours,t.age_days,t.days_since_update,t.priority_client ? "SIM" : "NÃO",t.synced_at]);
   }
   const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
 
 $("export").addEventListener("click", exportCsv);
-["search","clientFilter","hoursFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));
+["search","clientFilter","hoursFilter","startDate","endDate"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.goto)));
 
-// INICIALIZAÇÃO LOCAL
 loadData();
 })();
 </script></body></html>
