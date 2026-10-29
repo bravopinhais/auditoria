@@ -254,6 +254,12 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
       <small>Usado para gerar os links diretos de clique nos chamados.</small>
     </div>
 
+    <div style="display:flex;gap:10px;margin-bottom:24px">
+      <button id="btnSaveDomain" class="btn primary">Salvar Domínio</button>
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+
     <div class="form-group">
       <label for="csvFileInput">Importar Arquivo CSV / Excel (Movidesk)</label>
       <input type="file" id="csvFileInput" accept=".csv, .json, .txt">
@@ -261,7 +267,6 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px">
-      <button id="btnSaveDomain" class="btn primary">Salvar Domínio</button>
       <button id="btnResetData" class="btn secondary">Restaurar Dados Demonstrativos</button>
     </div>
   </div>
@@ -309,14 +314,22 @@ const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateString("pt-BR"):"—"):"—";
 
+function notice(id,msg,type="error"){const e=$(id);e.textContent=msg;e.className="notice "+type}
+function clearNotice(id){$(id).className="notice"}
+
 function getMovideskUrl(ticketId) {
-  let domain = localStorage.getItem("movidesk_domain") || "https://suaempresa.movidesk.com";
+  let domain = localStorage.getItem("movidesk_domain") || "";
+  if (!domain) return "#";
+  if (!/^https?:\/\//i.test(domain)) {
+    domain = "https://" + domain;
+  }
   domain = domain.replace(/\/+$/, '');
   return `${domain}/Ticket/Edit/${ticketId}`;
 }
 
 function loadData() {
-  $("movideskDomain").value = localStorage.getItem("movidesk_domain") || "https://suaempresa.movidesk.com";
+  const savedDomain = localStorage.getItem("movidesk_domain") || "";
+  $("movideskDomain").value = savedDomain;
 
   const stored = localStorage.getItem("local_audit_tickets");
   if (stored) {
@@ -355,7 +368,11 @@ function processPeopleData() {
 function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
 
 function ticketRow(t,compact=false){
-  const ticketLink = `<a href="${getMovideskUrl(t.ticket_id)}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a>`;
+  const url = getMovideskUrl(t.ticket_id);
+  const ticketLink = url !== "#" 
+    ? `<a href="${url}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a>`
+    : `<b>#${esc(t.ticket_id)}</b>`;
+
   const cli = t.priority_client ? `<span class="pill priority">★ ${esc(t.client_name||"Prioritário")}</span>` : esc(t.client_name||"—");
   
   if(compact) return `<tr><td title="${esc(t.subject)}">${ticketLink} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.synced_at)}</td></tr>`;
@@ -406,7 +423,6 @@ function renderTickets(){
     const matchesClient = (cf==="all" || (cf==="priority" ? t.priority_client : !t.priority_client));
     const matchesHours = (hf==="all" || (hf==="none" ? Number(t.total_hours)===0 : Number(t.total_hours)>0));
     
-    // FILTRO DE DATA
     let matchesDate = true;
     if (t.synced_at) {
       const ticketDate = new Date(t.synced_at);
@@ -484,14 +500,18 @@ function renderMeetingReport() {
   }).join("");
 
   const oldest = [...pending].sort((a,b) => Number(b.age_days || 0) - Number(a.age_days || 0)).slice(0, 5);
-  $("rptOldestRows").innerHTML = oldest.map(t => `<tr>
-    <td><a href="${getMovideskUrl(t.ticket_id)}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a></td>
-    <td>${esc(t.client_name || '—')}</td>
-    <td>${esc(t.subject || 'Sem assunto')}</td>
-    <td>${esc(t.owner_name || '—')}</td>
-    <td><b style="color:#dc2626">${num(t.age_days)} dias</b></td>
-    <td>${status(t.status)}</td>
-  </tr>`).join("");
+  $("rptOldestRows").innerHTML = oldest.map(t => {
+    const url = getMovideskUrl(t.ticket_id);
+    const link = url !== "#" ? `<a href="${url}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a>` : `#${esc(t.ticket_id)}`;
+    return `<tr>
+      <td>${link}</td>
+      <td>${esc(t.client_name || '—')}</td>
+      <td>${esc(t.subject || 'Sem assunto')}</td>
+      <td>${esc(t.owner_name || '—')}</td>
+      <td><b style="color:#dc2626">${num(t.age_days)} dias</b></td>
+      <td>${status(t.status)}</td>
+    </tr>`;
+  }).join("");
 }
 
 function switchPage(p){
@@ -511,10 +531,15 @@ function switchPage(p){
  $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="meetingReport");
 }
 
+// AÇÃO DE SALVAR DOMÍNIO CORRIGIDA
 $("btnSaveDomain").addEventListener("click", () => {
-  const domain = $("movideskDomain").value.trim();
+  let domain = $("movideskDomain").value.trim();
+  if (domain && !/^https?:\/\//i.test(domain)) {
+    domain = "https://" + domain;
+  }
   localStorage.setItem("movidesk_domain", domain);
-  notice("settingsNotice", "Domínio do Movidesk salvo com sucesso!", "success");
+  $("movideskDomain").value = domain;
+  notice("settingsNotice", "Domínio do Movidesk guardado com sucesso!", "success");
   loadData();
 });
 
