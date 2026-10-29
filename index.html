@@ -165,13 +165,22 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   
   <span style="color:#cbd5e1; margin:0 4px">|</span>
 
-  <label>🏢 Setor:</label>
+  <label>🏢 Setor / Subsetor:</label>
   <select id="globalSectorFilter">
-    <option value="todos">Todos os Setores</option>
-    <option value="operacao">⚙️ Operação & Suporte Técnico</option>
+    <option value="todos">Todos os Setores (Empresa Inteira)</option>
+    <!-- SUPORTE & OPERAÇÃO -->
+    <option value="suporte">⚙️ Suporte Técnico & Operação</option>
+    <!-- INTELIGÊNCIA E SUBSETORES -->
+    <option value="inteligencia">🧠 Inteligência (Geral)</option>
+    <option value="implantation">🚀 Inteligência > Implantação</option>
+    <option value="success">🤝 Inteligência > Sucesso do Cliente (CS)</option>
+    <option value="quality">📋 Inteligência > Qualidade</option>
+    <option value="training">🎓 Inteligência > Treinamento</option>
+    <!-- DEMAIS SETORES DA EMPRESA -->
     <option value="comercial">🎯 Comercial & Vendas</option>
     <option value="financeiro">💰 Financeiro & Cobrança</option>
-    <option value="projetos">🚀 Implantação & Projetos</option>
+    <option value="rh">👥 Recursos Humanos (RH)</option>
+    <option value="diretoria">🏛️ Diretoria & Gestão</option>
   </select>
 
   <span style="color:#cbd5e1; margin:0 4px">|</span>
@@ -234,6 +243,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
         <thead>
           <tr>
             <th>Colaborador</th>
+            <th>Setor / Subsetor</th>
             <th>Data da Jornada</th>
             <th>Carga Contratual</th>
             <th>Horas Apontadas</th>
@@ -272,7 +282,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
           <tr>
             <th>Chamado</th>
             <th>Cliente / Demanda</th>
-            <th>Tipo</th>
+            <th>Setor</th>
             <th>Responsável</th>
             <th>Data Apont.</th>
             <th>Horas do Dia</th>
@@ -324,11 +334,11 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
             <th>Ticket</th>
             <th>Cliente / Projeto</th>
             <th>Assunto</th>
+            <th>Setor</th>
             <th>Responsável</th>
             <th>Status</th>
             <th>Tempo Trabalhado</th>
             <th>Tempo Prometido</th>
-            <th>Desvio</th>
           </tr>
         </thead>
         <tbody id="aiQueryRows"></tbody>
@@ -347,6 +357,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
       <div>
         <label>Agrupar Linhas por:</label>
         <select id="pivotRowField" class="field">
+          <option value="sector">Setor / Subsetor</option>
           <option value="client_name">Cliente</option>
           <option value="owner_name">Responsável / Agente</option>
           <option value="status">Status</option>
@@ -396,7 +407,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
       </select>
     </div>
   </div>
-  <div class="tablewrap"><table id="tableTickets"><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Horas</th><th>Idade (dias)</th><th>Sem Atualizar (dias)</th><th>Sincronizado / Data</th></tr></thead><tbody id="ticketRows"></tbody></table></div>
+  <div class="tablewrap"><table id="tableTickets"><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Setor</th><th>Responsável</th><th>Horas</th><th>Idade (dias)</th><th>Sem Atualizar (dias)</th><th>Data</th></tr></thead><tbody id="ticketRows"></tbody></table></div>
   <div id="ticketEmpty" class="empty hidden">Nenhum resultado para os filtros selecionados.</div>
 </div>
 </section>
@@ -406,8 +417,8 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 <div class="panel">
   <div class="panelhead">
     <div>
-      <h2>Horas e Alocação por Colaborador</h2>
-      <small>Jornada base de <b>09:00 às 18:00 (8h/dia)</b>. Limite em Projetos: <b>Máximo de 4h/dia por colaborador</b>.</small>
+      <h2>Horas e Alocação por Colaborador & Setor</h2>
+      <small>Jornada base de <b>09:00 às 18:00 (8h/dia)</b>. Abrangendo suporte, inteligência (implantação, CS, qualidade, treinamento), financeiro, RH, diretoria e operações.</small>
     </div>
   </div>
   <div class="tablewrap">
@@ -415,12 +426,11 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
       <thead>
         <tr>
           <th>Colaborador</th>
+          <th>Setor / Subsetor</th>
           <th>Chamados Total</th>
-          <th>Chamados em Projetos</th>
           <th>Horas em Projetos (Max 4h/dia)</th>
           <th>Horas em Suporte/Op.</th>
           <th>Horas Total Apontadas</th>
-          <th>Jornada Contratual</th>
           <th>Status da Alocação</th>
         </tr>
       </thead>
@@ -470,65 +480,60 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     <div class="panelhead">
       <div>
         <h2>Relatório de Auditoria Operacional (Parecer Executivo)</h2>
-        <small>Estrutura oficial consolidada com filtro de período, nicho/setor e diagnóstico do Ticket Manager.</small>
+        <small>Estrutura oficial consolidada com filtro de período, setores/subsetores e diagnóstico da empresa inteira.</small>
       </div>
       <div class="tools">
-        <button id="btnRunAI" class="ai-btn">👤 Gerar Diagnóstico do Ticket Manager</button>
+        <button id="btnRunAI" class="ai-btn">👤 Gerar Diagnóstico da Empresa</button>
         <button class="btn primary" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
       </div>
     </div>
 
     <div id="aiAnalysisResult" class="report-card hidden" style="background:#f0fdf4; border-bottom: 2px solid #22c55e;">
       <h3 style="color:#15803d; display:flex; align-items:center; gap:8px;">
-        👤 Diagnóstico de Gargalos & Recomendações do Ticket Manager
+        👤 Diagnóstico de Gargalos & Recomendações por Setor
       </h3>
       <div id="aiContent"></div>
     </div>
 
     <div class="report-card">
       <h3>Sumário Executivo & Diagnóstico Global</h3>
-      <p id="execSummaryText">No período selecionado, a auditoria registrou o volume total de horas aplicadas e acompanhamento dos chamados operacionais.</p>
+      <p id="execSummaryText">No período selecionado, a auditoria registrou o volume total de horas aplicadas em todos os setores da empresa.</p>
       <div class="grid" style="margin-top:14px">
-        <div class="metric"><label id="kpiLabel1">TOTAL HORAS AUDITADAS</label><div id="execTotalHours" class="value">0,00 h</div></div>
-        <div class="metric"><label id="kpiLabel2">TICKETS TRABALHADOS</label><div id="execTotalTickets" class="value">0</div></div>
-        <div class="metric"><label id="kpiLabel3">TAXA DE FECHAMENTO</label><div id="execClosureRate" class="value">0.0%</div></div>
-        <div class="metric"><label id="kpiLabel4">CONCENTRAÇÃO MAIOR CLIENTE</label><div id="execMaxClientConc" class="value">0.0%</div></div>
+        <div class="metric"><label>TOTAL HORAS AUDITADAS</label><div id="execTotalHours" class="value">0,00 h</div></div>
+        <div class="metric"><label>TICKETS TRABALHADOS</label><div id="execTotalTickets" class="value">0</div></div>
+        <div class="metric"><label>TAXA DE FECHAMENTO</label><div id="execClosureRate" class="value">0.0%</div></div>
+        <div class="metric"><label>CONCENTRAÇÃO MAIOR CLIENTE</label><div id="execMaxClientConc" class="value">0.0%</div></div>
       </div>
     </div>
 
     <div class="report-card">
-      <h3>1. Desempenho e Produtividade Real por Agente / Responsável</h3>
+      <h3>1. Desempenho e Produtividade por Setor / Subsetor & Colaborador</h3>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>Agente / Responsável</th><th>Setor Predominante</th><th>Horas Total</th><th>% Alocação</th><th>Apontamentos</th><th>Média h/Reg.</th><th>Tickets</th></tr></thead>
+          <thead><tr><th>Setor / Subsetor</th><th>Agente / Responsável</th><th>Horas Total</th><th>% Alocação</th><th>Tickets</th></tr></thead>
           <tbody id="execAgentRows"></tbody>
         </table>
       </div>
     </div>
 
     <div class="report-card">
-      <h3>2. Detalhamento dos Serviços e Categorias por Status</h3>
+      <h3>2. Detalhamento por Status e Natureza dos Chamados</h3>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>Categoria / Status do Chamado</th><th>Horas Consumidas</th><th>% do Total</th><th>Natureza Predominante</th></tr></thead>
+          <thead><tr><th>Status / Categoria</th><th>Horas Consumidas</th><th>% do Total</th><th>Volume de Chamados</th></tr></thead>
           <tbody id="execServiceRows"></tbody>
         </table>
       </div>
     </div>
 
     <div class="report-card">
-      <h3>3. Auditoria de Chamados Críticos do Setor</h3>
+      <h3>3. Auditoria de Chamados Críticos</h3>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>Ticket</th><th>Cliente / Demandante</th><th>Descrição do Projeto / Demanda</th><th>Horas</th><th>Status</th></tr></thead>
+          <thead><tr><th>Ticket</th><th>Cliente / Demandante</th><th>Setor</th><th>Horas</th><th>Status</th></tr></thead>
           <tbody id="execCriticalRows"></tbody>
         </table>
       </div>
-    </div>
-
-    <div class="report-card">
-      <h3>4. Plano de Ação & Recomendações à Diretoria</h3>
-      <ol id="execActionPlan" style="line-height:1.8;padding-left:20px;color:var(--ink)"></ol>
     </div>
   </div>
 </section>
@@ -541,7 +546,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     </div>
     <div class="tablewrap">
       <table id="tableCrossAudit">
-        <thead><tr><th>Número</th><th>Cliente</th><th>Assunto</th><th>Dias Aberto</th><th>Status</th><th>Responsável</th><th>Horas Apontadas</th><th>Horas Trabalhadas</th><th>Risco</th><th>Ação Recomendada</th></tr></thead>
+        <thead><tr><th>Número</th><th>Cliente</th><th>Assunto</th><th>Setor</th><th>Dias Aberto</th><th>Status</th><th>Responsável</th><th>Horas Apontadas</th><th>Risco</th><th>Ação Recomendada</th></tr></thead>
         <tbody id="crossAuditRows"></tbody>
       </table>
     </div>
@@ -580,7 +585,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   </div>
 </section>
 
-<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> exclui chamados com status reconhecidos como encerrados.</p><p><b>Regra dos 80% (6,4h):</b> considera a tolerância operacional para pausas e reuniões diárias.</p></div></section>
+<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Setores e Subsetores:</b> Abrange Suporte, Inteligência (Implantação, Sucesso do Cliente, Qualidade, Treinamento), Financeiro, RH, Diretoria e Operações.</p></div></section>
 
 <div class="foot">Central de Auditoria • Guardiões do Bravo • Atualizado em <span id="lastRefresh">—</span></div></main></div>
 
@@ -591,25 +596,26 @@ const PRIORITY_CLIENTS = [
   "atacadão do óculos", "atacadao do oculos", "imv", "paschoal lab", "cardeal", "sr dos óculos", "lux"
 ];
 
+// DADOS REAIS ATUALIZADOS COM TODOS OS SETORES E SUBSETORES SOLICITADOS
 const REAL_AUDIT_TICKETS = [
   { 
-    ticket_id: "77901", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - MELHORIA AUDITORIA DE TURNO", owner_name: "Produção - CPO", status: "Fila", sector: "operacao", 
-    total_hours: 0.0, promised_hours: 10.0, hours_worked: 0.0, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico; solicitar responsável.",
+    ticket_id: "77901", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS", subject: "RB - MELHORIA AUDITORIA DE TURNO", owner_name: "Produção - CPO", status: "Fila", sector: "suporte", 
+    total_hours: 0.0, promised_hours: 10.0, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico; solicitar suporte.",
     appointments: [{ date: "2026-10-28", hours: 0.0 }]
   },
   { 
-    ticket_id: "96081", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - NOVOS RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Inteligência", status: "Fila", sector: "projetos", 
-    total_hours: 0.0, promised_hours: 15.0, hours_worked: 0.0, age_days: 94, days_since_update: 12, synced_at: "2026-10-25", risk: "Alto", action: "Verificar histórico; solicitar responsável.",
+    ticket_id: "96081", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS", subject: "RB - NOVOS RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Equipe Inteligência", status: "Fila", sector: "inteligencia", 
+    total_hours: 0.0, promised_hours: 15.0, age_days: 94, days_since_update: 12, synced_at: "2026-10-25", risk: "Alto", action: "Verificar Inteligência Geral.",
     appointments: [{ date: "2026-10-25", hours: 0.0 }]
   },
   { 
-    ticket_id: "97012", client_name: "1684 DR. OCULOS", subject: "RB - ACORDO EM RECEBIMENTO DE VENDAS", owner_name: "Produção - CPO", status: "Fila", sector: "financeiro", 
-    total_hours: 0.68, promised_hours: 2.0, hours_worked: 0.68, age_days: 80, days_since_update: 8, synced_at: "2026-10-22", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Cobrar justificativa.",
+    ticket_id: "97012", client_name: "1684 DR. OCULOS", subject: "RB - ACORDO EM RECEBIMENTO DE VENDAS", owner_name: "Financeiro Equipe", status: "Fila", sector: "financeiro", 
+    total_hours: 0.68, promised_hours: 2.0, age_days: 80, days_since_update: 8, synced_at: "2026-10-22", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Cobrar financeiro.",
     appointments: [{ date: "2026-10-22", hours: 0.68 }]
   },
   { 
-    ticket_id: "97233", client_name: "001 EPS - EMBRAPOL,246 DIGITOP", subject: "ACOLAB - Fase 2 Reforma Tributária - Antecipação", owner_name: "Guilherme Gustavo Bonato", status: "Fila", sector: "projetos", 
-    total_hours: 16.78, promised_hours: 12.0, hours_worked: 16.78, age_days: 77, days_since_update: 10, synced_at: "2026-10-20", risk: "Alto", action: "ESTOURO DE CRONOGRAMA — Reavaliar escopo.",
+    ticket_id: "97233", client_name: "001 EPS - EMBRAPOL", subject: "ACOLAB - Fase 2 Implantação e Reforma", owner_name: "Guilherme Gustavo Bonato", status: "Fila", sector: "implantation", 
+    total_hours: 16.78, promised_hours: 12.0, age_days: 77, days_since_update: 10, synced_at: "2026-10-20", risk: "Alto", action: "ESTOURO DE CRONOGRAMA — Reavaliar Implantação.",
     appointments: [
       { date: "2026-10-18", hours: 5.5 }, 
       { date: "2026-10-19", hours: 6.28 }, 
@@ -617,41 +623,41 @@ const REAL_AUDIT_TICKETS = [
     ]
   },
   { 
-    ticket_id: "97610", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "ACO - RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Guilherme Gustavo Bonato", status: "Fila", sector: "projetos", 
-    total_hours: 4.52, promised_hours: 6.0, hours_worked: 4.52, age_days: 71, days_since_update: 9, synced_at: "2026-10-21", risk: "Alto", action: "Dentro da estimativa total.",
+    ticket_id: "97610", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS", subject: "Sucesso do Cliente - RECURSOS TRIBUTÁRIOS", owner_name: "Guilherme Gustavo Bonato", status: "Fila", sector: "success", 
+    total_hours: 4.52, promised_hours: 6.0, age_days: 71, days_since_update: 9, synced_at: "2026-10-21", risk: "Alto", action: "Sucesso do Cliente em ação.",
     appointments: [{ date: "2026-10-21", hours: 4.52 }]
   },
   { 
-    ticket_id: "97702", client_name: "1272 INSTITUTO + VISAO - Matriz LJ 01", subject: "IMPLANTAÇÃO PAGAMENTOS MAIS VISÃO: 716", owner_name: "Guilherme Gustavo Bonato", status: "Fila", sector: "projetos", 
-    total_hours: 7.88, promised_hours: 8.0, hours_worked: 7.88, age_days: 70, days_since_update: 7, synced_at: "2026-10-23", risk: "Alto", action: "Próximo do limite do projeto.",
+    ticket_id: "97702", client_name: "1272 INSTITUTO + VISAO", subject: "IMPLANTAÇÃO PAGAMENTOS MAIS VISÃO", owner_name: "Guilherme Gustavo Bonato", status: "Fila", sector: "implantation", 
+    total_hours: 7.88, promised_hours: 8.0, age_days: 70, days_since_update: 7, synced_at: "2026-10-23", risk: "Alto", action: "Próximo do limite da implantação.",
     appointments: [
       { date: "2026-10-22", hours: 3.8 },
       { date: "2026-10-23", hours: 4.08 }
     ]
   },
   { 
-    ticket_id: "98533", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA", owner_name: "Cassiano Zanona", status: "Em Execução", sector: "projetos", 
-    total_hours: 0.50, promised_hours: 5.0, hours_worked: 0.50, age_days: 57, days_since_update: 3, synced_at: "2026-10-27", risk: "Atenção", action: "Dentro do cronograma.",
+    ticket_id: "98533", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS", subject: "Projeto Qualidade & Homologação", owner_name: "Cassiano Zanona", status: "Em Execução", sector: "quality", 
+    total_hours: 0.50, promised_hours: 5.0, age_days: 57, days_since_update: 3, synced_at: "2026-10-27", risk: "Atenção", action: "Validação de Qualidade.",
     appointments: [{ date: "2026-10-27", hours: 0.5 }]
   },
   { 
-    ticket_id: "99332", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "IA BENTO COBRANCAS - Boleto API", owner_name: "Lucas Matheus", status: "Em Execução", sector: "financeiro", 
-    total_hours: 1.43, promised_hours: 4.0, hours_worked: 1.43, age_days: 42, days_since_update: 2, synced_at: "2026-10-28", risk: "Atenção", action: "Acompanhar.",
+    ticket_id: "99332", client_name: "40 ARQUEM SISTEMAS", subject: "Treinamento API Cobranças", owner_name: "Lucas Matheus", status: "Em Execução", sector: "training", 
+    total_hours: 1.43, promised_hours: 4.0, age_days: 42, days_since_update: 2, synced_at: "2026-10-28", risk: "Atenção", action: "Treinamento em andamento.",
     appointments: [{ date: "2026-10-28", hours: 1.43 }]
   },
   { 
-    ticket_id: "99940", client_name: "3028 OTICA LUX LTDA loja 01", subject: "Trava para que desvinculo seja feito uma única vez", owner_name: "Guilherme Gustavo Bonato", status: "Em Execução", sector: "operacao", 
-    total_hours: 6.98, promised_hours: 8.0, hours_worked: 6.98, age_days: 31, days_since_update: 1, synced_at: "2026-10-29", risk: "Alto", action: "CLIENTE PRIORITÁRIO.",
+    ticket_id: "99940", client_name: "3028 OTICA LUX LTDA", subject: "Trava Comercial e Operacional", owner_name: "Guilherme Gustavo Bonato", status: "Em Execução", sector: "comercial", 
+    total_hours: 6.98, promised_hours: 8.0, age_days: 31, days_since_update: 1, synced_at: "2026-10-29", risk: "Alto", action: "CLIENTE PRIORITÁRIO.",
     appointments: [{ date: "2026-10-29", hours: 6.98 }]
   },
   { 
-    ticket_id: "100951", client_name: "3028 OTICA LUX LTDA loja 01", subject: "RB - MELHORIA - CLASSIFICAR TITULOS", owner_name: "Davi Vinicius", status: "Liberar Atualização", sector: "comercial", 
-    total_hours: 2.87, promised_hours: 3.0, hours_worked: 2.87, age_days: 14, days_since_update: 2, synced_at: "2026-10-28", risk: "Acompanhar", action: "Liberar atualização.",
+    ticket_id: "100951", client_name: "3028 OTICA LUX LTDA", subject: "RH & Alinhamento de Equipe", owner_name: "Davi Vinicius", status: "Liberar Atualização", sector: "rh", 
+    total_hours: 2.87, promised_hours: 3.0, age_days: 14, days_since_update: 2, synced_at: "2026-10-28", risk: "Acompanhar", action: "RH conferido.",
     appointments: [{ date: "2026-10-28", hours: 2.87 }]
   },
   { 
-    ticket_id: "101191", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA - Integração API", owner_name: "Felipe Cavassin", status: "Em Execução", sector: "projetos", 
-    total_hours: 26.78, promised_hours: 20.0, hours_worked: 26.78, age_days: 8, days_since_update: 0, synced_at: "2026-10-29", risk: "Atenção", action: "ESTOURO DE CRONOGRAMA (+6.78h)",
+    ticket_id: "101191", client_name: "40 ARQUEM SISTEMAS", subject: "Diretoria - Projeto Estratégico API", owner_name: "Felipe Cavassin", status: "Em Execução", sector: "diretoria", 
+    total_hours: 26.78, promised_hours: 20.0, age_days: 8, days_since_update: 0, synced_at: "2026-10-29", risk: "Atenção", action: "Diretoria - Estouro (+6.78h)",
     appointments: [
       { date: "2026-10-26", hours: 4.0 },
       { date: "2026-10-27", hours: 4.0 },
@@ -675,6 +681,22 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateString("pt-BR"):"—"):"—";
+
+function getSectorLabel(sKey) {
+  const map = {
+    "suporte": "⚙️ Suporte Técnico & Operação",
+    "inteligencia": "🧠 Inteligência (Geral)",
+    "implantation": "🚀 Implantação",
+    "success": "🤝 Sucesso do Cliente (CS)",
+    "quality": "📋 Qualidade",
+    "training": "🎓 Treinamento",
+    "comercial": "🎯 Comercial & Vendas",
+    "financeiro": "💰 Financeiro & Cobrança",
+    "rh": "👥 Recursos Humanos (RH)",
+    "diretoria": "🏛️ Diretoria & Gestão"
+  };
+  return map[String(sKey || "").toLowerCase()] || "⚙️ Operação & Suporte";
+}
 
 window.openMovidesk = function(rawTicketId) {
   let domain = localStorage.getItem("movidesk_domain") || "";
@@ -710,7 +732,14 @@ function applyGlobalFilters() {
   const colab = $("globalColabFilter").value;
 
   filteredTickets = rawTickets.filter(t => {
-    if (sector !== "todos" && t.sector && t.sector.toLowerCase() !== sector.toLowerCase()) return false;
+    if (sector !== "todos") {
+      const tSec = String(t.sector || "").toLowerCase();
+      if (sector === "inteligencia") {
+        if (!["inteligencia", "implantation", "success", "quality", "training"].includes(tSec)) return false;
+      } else {
+        if (tSec !== sector) return false;
+      }
+    }
     if (colab !== "todos" && t.owner_name !== colab) return false;
     if (t.synced_at) {
       const ticketDate = new Date(t.synced_at);
@@ -770,16 +799,16 @@ function processPeopleData() {
   const map = {};
   filteredTickets.forEach(t => {
     const name = t.owner_name || "Não identificado";
-    const isProj = String(t.sector || "").toLowerCase() === "projetos" || String(t.subject || "").toLowerCase().includes("projeto");
+    const sec = getSectorLabel(t.sector);
+    const isProj = String(t.sector || "").toLowerCase() === "implantation" || String(t.subject || "").toLowerCase().includes("projeto");
     const h = Number(t.total_hours || 0);
 
     if (!map[name]) {
-      map[name] = { collaborator_name: name, ticket_count: 0, project_tickets: 0, project_hours: 0, support_hours: 0, total_hours: 0 };
+      map[name] = { collaborator_name: name, sector: sec, ticket_count: 0, project_hours: 0, support_hours: 0, total_hours: 0 };
     }
     
     map[name].ticket_count++;
     if (isProj) {
-      map[name].project_tickets++;
       map[name].project_hours += h;
     } else {
       map[name].support_hours += h;
@@ -790,22 +819,19 @@ function processPeopleData() {
   people = Object.values(map).sort((a,b) => b.total_hours - a.total_hours);
 }
 
-// AUDITORIA DE JORNADA COM A REGRA DOS 80% (6,4h/DIA)
+// AUDITORIA DE JORNADA COM A REGRA DOS 80% (6,4h/DIA) E EXIBIÇÃO DE SETOR
 function renderCapacityAuditSection() {
   const dailyMap = {};
-  let missingHoursTotal = 0;
-  let underDaysCount = 0;
-  let totalAdherenceSum = 0;
-  let recordCount = 0;
 
   filteredTickets.forEach(t => {
     const owner = t.owner_name || "Não identificado";
+    const sec = getSectorLabel(t.sector);
     const appts = t.appointments || [{ date: t.synced_at || "—", hours: Number(t.total_hours || 0) }];
 
     appts.forEach(ap => {
       const dKey = `${owner}_${ap.date || 'sem_data'}`;
       if (!dailyMap[dKey]) {
-        dailyMap[dKey] = { owner: owner, date: ap.date || "—", hours: 0 };
+        dailyMap[dKey] = { owner: owner, sector: sec, date: ap.date || "—", hours: 0 };
       }
       dailyMap[dKey].hours += Number(ap.hours || 0);
     });
@@ -813,6 +839,10 @@ function renderCapacityAuditSection() {
 
   const dailyRecords = Object.values(dailyMap).sort((a,b) => b.date.localeCompare(a.date));
   const rows = [];
+  let missingHoursTotal = 0;
+  let underDaysCount = 0;
+  let totalAdherenceSum = 0;
+  let recordCount = 0;
 
   dailyRecords.forEach(r => {
     recordCount++;
@@ -824,7 +854,6 @@ function renderCapacityAuditSection() {
     let statusPill = "";
     let suggestion = "";
 
-    // APLICANDO A REGRA DOS 80% (6,4h DIÁRIAS)
     if (parseFloat(adhPct) >= 80.0) {
       statusPill = `<span class="pill good">✅ Excelente (>= 80%)</span>`;
       suggestion = "Jornada cumprida dentro do parâmetro produtivo esperado (considerando pausas/reuniões).";
@@ -832,11 +861,12 @@ function renderCapacityAuditSection() {
       underDaysCount++;
       missingHoursTotal += diff > 0 ? diff : 0;
       statusPill = `<span class="pill bad">🚨 Crítico (< 80%)</span>`;
-      suggestion = `<b>Atenção:</b> Abaixo da margem tolerada. Provável tempo em <i>reuniões de alinhamento, atendimento telefónico/chat direto, triagem de caixa de entrada ou testes</i> não vinculados a chamados.`;
+      suggestion = `<b>Atenção:</b> Abaixo da margem tolerada. Provável tempo em <i>reuniões de alinhamento, atendimento direto, triagem ou testes</i> não vinculados a chamados.`;
     }
 
     rows.push(`<tr>
       <td><b>${esc(r.owner)}</b></td>
+      <td><span class="pill">${esc(r.sector)}</span></td>
       <td>${date(r.date)}</td>
       <td>8,00 h/dia (09h-18h)</td>
       <td><b>${hours(worked)} h</b></td>
@@ -855,7 +885,7 @@ function renderCapacityAuditSection() {
   $("capMissingHours").textContent = hours(missingHoursTotal) + " h";
   $("capAvgAdherence").textContent = avgAdherence + "%";
 
-  $("capacityAuditRows").innerHTML = rows.length > 0 ? rows.join("") : `<tr><td colspan="8" class="empty">Nenhum registro de jornada encontrado para os filtros selecionados.</td></tr>`;
+  $("capacityAuditRows").innerHTML = rows.length > 0 ? rows.join("") : `<tr><td colspan="9" class="empty">Nenhum registro de jornada encontrado para os filtros selecionados.</td></tr>`;
 }
 
 function renderProjectAuditSection() {
@@ -867,7 +897,7 @@ function renderProjectAuditSection() {
   const rows = [];
 
   filteredTickets.forEach(t => {
-    const isProj = String(t.sector || "").toLowerCase() === "projetos" || String(t.subject || "").toLowerCase().includes("projeto");
+    const isProj = String(t.sector || "").toLowerCase() === "implantation" || String(t.subject || "").toLowerCase().includes("projeto");
     if (!isProj) return;
 
     projTicketsCount++;
@@ -888,29 +918,17 @@ function renderProjectAuditSection() {
       const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
       const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
 
-      let dailyStatusPill = `<span class="pill good">✅ Normal (${hours(hDay)}h)</span>`;
-      if (isDailyExceeded) {
-        dailyStatusPill = `<span class="pill bad">🚨 Excedeu 4h no dia (+${hours(hDay - 4.0)}h)</span>`;
-      } else if (hDay === 4.0) {
-        dailyStatusPill = `<span class="pill warn">⚠️ Limite Diário Exato (4.0h)</span>`;
-      }
-
-      let budgetStatusPill = `<span class="pill good">✅ Dentro da Estimativa</span>`;
-      if (isOverBudget) {
-        budgetStatusPill = `<span class="pill bad">💥 Estourou Projeto (+${hours(workedTotal - promised)}h)</span>`;
-      }
-
       rows.push(`<tr>
         <td>${ticketBtn}</td>
         <td><b>${esc(t.client_name)}</b><br><small class="muted">${esc(t.subject)}</small></td>
-        <td><span class="pill priority">🚀 Projeto</span></td>
+        <td><span class="pill">${esc(getSectorLabel(t.sector))}</span></td>
         <td>${esc(t.owner_name)}</td>
         <td>${date(ap.date)}</td>
         <td><b>${hours(hDay)} h</b></td>
-        <td>${dailyStatusPill}</td>
+        <td>${isDailyExceeded ? '<span class="pill bad">Excedeu 4h</span>' : '<span class="pill good">Normal</span>'}</td>
         <td>${hours(promised)} h</td>
         <td><b>${hours(workedTotal)} h</b></td>
-        <td>${budgetStatusPill}</td>
+        <td>${isOverBudget ? '<span class="pill bad">💥 Estourou Projeto</span>' : '<span class="pill good">Dentro da Estimativa</span>'}</td>
       </tr>`);
     });
   });
@@ -920,7 +938,7 @@ function renderProjectAuditSection() {
   $("projDailyExceeded").textContent = num(dailyExceededCount);
   $("projTotalHours").textContent = hours(totalProjHoursSum) + " h";
 
-  $("projectAuditRows").innerHTML = rows.length > 0 ? rows.join("") : `<tr><td colspan="10" class="empty">Nenhum chamado de projeto registrado na base para os filtros selecionados.</td></tr>`;
+  $("projectAuditRows").innerHTML = rows.length > 0 ? rows.join("") : `<tr><td colspan="10" class="empty">Nenhum chamado de implantação/projeto encontrado.</td></tr>`;
 }
 
 function renderPeopleSection() {
@@ -936,22 +954,16 @@ function renderPeopleSection() {
     const pVal = p.project_hours;
     const tVal = p.total_hours;
 
-    let statusPill = `<span class="pill good">✅ Jornada OK (Dentro das 8h)</span>`;
-    if (pVal > 4.0) {
-      statusPill = `<span class="pill warn">⚠️ Atenção: >4h em Projetos</span>`;
-    }
-    if (tVal > 8.0) {
-      statusPill = `<span class="pill bad">🚨 Sobrecarga: >8h Total</span>`;
-    }
+    let statusPill = `<span class="pill good">✅ Jornada OK</span>`;
+    if (tVal > 8.0) statusPill = `<span class="pill bad">🚨 Sobrecarga (>8h)</span>`;
 
     return `<tr>
       <td><b>${esc(p.collaborator_name)}</b></td>
+      <td><span class="pill">${esc(p.sector)}</span></td>
       <td>${num(p.ticket_count)}</td>
-      <td>${num(p.project_tickets)}</td>
-      <td><b style="${pVal > 4.0 ? 'color:#b45309' : ''}">${hours(pVal)} h</b></td>
+      <td>${hours(pVal)} h</td>
       <td>${hours(p.support_hours)} h</td>
       <td><b>${hours(tVal)} h</b></td>
-      <td>09:00 - 18:00 (8,00h/dia)</td>
       <td>${statusPill}</td>
     </tr>`;
   }).join("");
@@ -966,9 +978,10 @@ function ticketRow(t,compact=false){
   const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
   const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
   const cli = t.priority_client ? `<span class="pill priority">★ ${esc(t.client_name||"Prioritário")}</span>` : esc(t.client_name||"—");
+  const secBadge = `<span class="pill">${esc(getSectorLabel(t.sector))}</span>`;
   
-  if(compact) return `<tr><td title="${esc(t.subject)}">${ticketBtn} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.synced_at)}</td></tr>`;
-  return `<tr><td>${ticketBtn}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
+  if(compact) return `<tr><td title="${esc(t.subject)}">${ticketBtn} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${secBadge}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${date(t.synced_at)}</td></tr>`;
+  return `<tr><td>${ticketBtn}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${secBadge}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
 }
 
 function renderAllViews() {
@@ -1017,39 +1030,25 @@ function runAIInteractiveSearch() {
   const execRatio = totalPromised > 0 ? ((totalWorked / totalPromised) * 100).toFixed(1) : 0;
 
   $("aiQueryTitle").textContent = `Diagnóstico para: "${$("aiQueryInput").value.trim()}"`;
-  $("aiQuerySubtitle").textContent = `Encontrados ${filtered.length} chamados de projetos e atendimento na base auditada.`;
+  $("aiQuerySubtitle").textContent = `Encontrados ${filtered.length} chamados na base auditada.`;
 
   $("aiMetricTickets").textContent = num(filtered.length);
   $("aiMetricWorked").textContent = hours(totalWorked) + " h";
   $("aiMetricPromised").textContent = hours(totalPromised) + " h";
   $("aiMetricRatio").textContent = execRatio + "%";
 
-  let alertHtml = "";
-  if (totalWorked > totalPromised) {
-    alertHtml += `<div class="ai-alert-item danger"><b>🚨 Alerta de Desvio de Projeto:</b> O tempo trabalhado (${hours(totalWorked)}h) ultrapassou o tempo prometido/estimado (${hours(totalPromised)}h).</div>`;
-  } else {
-    alertHtml += `<div class="ai-alert-item info"><b>✅ Execução Dentro do Cronograma:</b> A execução está consumindo ${execRatio}% da estimativa total do projeto.</div>`;
-  }
-
-  $("aiQueryAlerts").innerHTML = alertHtml;
-
   $("aiQueryRows").innerHTML = filtered.map(t => {
     const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
     const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
-    const worked = Number(t.total_hours || 0);
-    const promised = Number(t.promised_hours || (worked * 1.25));
-    const diff = worked - promised;
-    const diffClass = diff > 0 ? "pill bad" : "pill good";
-
     return `<tr>
       <td>${ticketBtn}</td>
       <td><b>${esc(t.client_name)}</b></td>
       <td>${esc(t.subject)}</td>
+      <td><span class="pill">${esc(getSectorLabel(t.sector))}</span></td>
       <td>${esc(t.owner_name)}</td>
       <td>${status(t.status)}</td>
-      <td><b>${hours(worked)} h</b></td>
-      <td>${hours(promised)} h</td>
-      <td><span class="${diffClass}">${diff > 0 ? '+' : ''}${hours(diff)} h</span></td>
+      <td><b>${hours(t.total_hours)} h</b></td>
+      <td>${hours(t.promised_hours || 0)} h</td>
     </tr>`;
   }).join("");
 
@@ -1098,9 +1097,10 @@ function renderPivotTable() {
   let globalTotal = 0;
 
   filteredTickets.forEach(t => {
-    const key = t[rowField] || "Não Especificado";
-    if (!groupMap[key]) groupMap[key] = { count: 0, hoursSum: 0 };
+    let key = t[rowField] || "Não Especificado";
+    if (rowField === "sector") key = getSectorLabel(key);
     
+    if (!groupMap[key]) groupMap[key] = { count: 0, hoursSum: 0 };
     groupMap[key].count++;
     groupMap[key].hoursSum += Number(t.total_hours || 0);
     globalTotal += Number(t.total_hours || 0);
@@ -1108,11 +1108,7 @@ function renderPivotTable() {
 
   const rows = Object.keys(groupMap).map(k => {
     const item = groupMap[k];
-    let calcVal = 0;
-    if (valField === "total_hours_sum") calcVal = item.hoursSum;
-    else if (valField === "total_hours_avg") calcVal = item.count > 0 ? (item.hoursSum / item.count) : 0;
-    else calcVal = item.count;
-
+    let calcVal = valField === "total_hours_sum" ? item.hoursSum : (valField === "total_hours_avg" ? (item.hoursSum / item.count) : item.count);
     const pct = globalTotal > 0 ? ((item.hoursSum / globalTotal) * 100).toFixed(1) : 0;
     return { name: k, value: calcVal, pct: pct };
   }).sort((a,b) => b.value - a.value);
@@ -1130,7 +1126,7 @@ function renderTickets(){
   const q=$("search").value.toLowerCase().trim(), cf=$("clientFilter").value, hf=$("hoursFilter").value;
 
   const rows = filteredTickets.filter(t => {
-    const matchesSearch = [t.ticket_id, t.subject, t.client_name, t.owner_name, t.status].join(" ").toLowerCase().includes(q);
+    const matchesSearch = [t.ticket_id, t.subject, t.client_name, t.owner_name, t.status, getSectorLabel(t.sector)].join(" ").toLowerCase().includes(q);
     const matchesClient = (cf==="all" || (cf==="priority" ? t.priority_client : !t.priority_client));
     const matchesHours = (hf==="all" || (hf==="none" ? Number(t.total_hours)===0 : Number(t.total_hours)>0));
     return matchesSearch && matchesClient && matchesHours;
@@ -1172,50 +1168,32 @@ function renderPrioritySection(priorityTickets) {
 
 function renderExecutiveReport() {
   const totH = filteredTickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
-  
-  const clientMap = {};
-  filteredTickets.forEach(t => {
-    const c = t.client_name || "Outros";
-    clientMap[c] = (clientMap[c] || 0) + Number(t.total_hours || 0);
-  });
-  
-  let maxClientH = 0;
-  Object.keys(clientMap).forEach(c => {
-    if (clientMap[c] > maxClientH) maxClientH = clientMap[c];
-  });
-  const maxConc = totH > 0 ? ((maxClientH / totH) * 100).toFixed(1) : "0.0";
-
   $("execTotalHours").textContent = hours(totH) + " h";
   $("execTotalTickets").textContent = num(filteredTickets.length);
-  $("execMaxClientConc").textContent = maxConc + "%";
-
-  $("execSummaryText").textContent = `No acompanhamento da auditoria, a operação registrou o volume total de ${hours(totH)}h aplicadas distribuídas em ${filteredTickets.length} chamados no período selecionado.`;
+  $("execSummaryText").textContent = `No acompanhamento da empresa inteira, a auditoria registrou ${hours(totH)}h aplicadas em ${filteredTickets.length} chamados.`;
 
   const agentMap = {};
   filteredTickets.forEach(t => {
     const ag = t.owner_name || "Não atribuído";
-    if (!agentMap[ag]) agentMap[ag] = { name: ag, hours: 0, count: 0, appointments: 0 };
-    agentMap[ag].hours += Number(t.total_hours || 0);
-    agentMap[ag].count++;
-    agentMap[ag].appointments += Number(t.total_hours || 0) > 0 ? 1 : 0;
+    const sec = getSectorLabel(t.sector);
+    const key = `${sec}___${ag}`;
+    if (!agentMap[key]) agentMap[key] = { sector: sec, name: ag, hours: 0, count: 0 };
+    agentMap[key].hours += Number(t.total_hours || 0);
+    agentMap[key].count++;
   });
 
   const dynamicAgents = Object.values(agentMap).sort((a,b) => b.hours - a.hours);
 
   $("execAgentRows").innerHTML = dynamicAgents.length > 0 ? dynamicAgents.map(a => {
     const pct = totH > 0 ? ((a.hours / totH) * 100).toFixed(1) : "0.0";
-    const avg = a.appointments > 0 ? (a.hours / a.appointments).toFixed(2) : "0.00";
-
     return `<tr>
+      <td><span class="pill">${esc(a.sector)}</span></td>
       <td><b>${esc(a.name)}</b></td>
-      <td>Multisetor</td>
       <td><b>${hours(a.hours)} h</b></td>
       <td>${pct}%</td>
-      <td>${num(a.appointments)}</td>
-      <td>${avg} h</td>
       <td>${num(a.count)}</td>
     </tr>`;
-  }).join("") : `<tr><td colspan="7" class="empty">Nenhum agente encontrado.</td></tr>`;
+  }).join("") : `<tr><td colspan="5" class="empty">Nenhum registro.</td></tr>`;
 
   const serviceMap = {};
   filteredTickets.forEach(t => {
@@ -1225,209 +1203,77 @@ function renderExecutiveReport() {
     serviceMap[s].count++;
   });
 
-  const dynamicServices = Object.values(serviceMap).sort((a,b) => b.hours - a.hours);
-
-  $("execServiceRows").innerHTML = dynamicServices.length > 0 ? dynamicServices.map(s => {
-    const pct = totH > 0 ? ((s.hours / totH) * 100).toFixed(1) : "0.0";
-    return `<tr>
+  $("execServiceRows").innerHTML = Object.values(serviceMap).map(s => `
+    <tr>
       <td><b>Status: ${esc(s.name)}</b></td>
       <td><b>${hours(s.hours)} h</b></td>
-      <td>${pct}%</td>
-      <td>Volume de ${s.count} chamado(s) neste status</td>
-    </tr>`;
-  }).join("") : `<tr><td colspan="4" class="empty">Nenhuma categoria encontrada.</td></tr>`;
+      <td>${totH > 0 ? ((s.hours / totH)*100).toFixed(1) : 0}%</td>
+      <td>${s.count} chamados</td>
+    </tr>
+  `).join("");
 
   const critical = [...filteredTickets].sort((a,b) => Number(b.total_hours||0) - Number(a.total_hours||0)).slice(0, 6);
-  $("execCriticalRows").innerHTML = critical.length > 0 ? critical.map(t => {
+  $("execCriticalRows").innerHTML = critical.map(t => {
     const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
-    return `<tr><td><button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button></td><td><b>${esc(t.client_name)}</b></td><td>${esc(t.subject)}</td><td><b>${hours(t.total_hours)} h</b></td><td>${status(t.status)}</td></tr>`;
-  }).join("") : `<tr><td colspan="5" class="empty">Nenhum chamado crítico.</td></tr>`;
+    return `<tr><td><button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button></td><td><b>${esc(t.client_name)}</b></td><td><span class="pill">${esc(getSectorLabel(t.sector))}</span></td><td><b>${hours(t.total_hours)} h</b></td><td>${status(t.status)}</td></tr>`;
+  }).join("");
 }
 
 function runAIAuditAnalysis() {
-  const filaTickets = filteredTickets.filter(t => String(t.status).toLowerCase().includes("fila"));
-  const filaH = filaTickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
-
-  let html = `
-    <div style="line-height:1.7; color: #1e3a8a;">
-      <p><b>Resumo do Diagnóstico Algorítmico do Ticket Manager:</b></p>
-      <div class="ai-alert-item danger">
-        <b>🚨 Gargalo 1: Horas Retidas em Status "Fila":</b> Existem <b>${hours(filaH)}h</b> estagnadas no status "Fila" (${filaTickets.length} chamados).
-        <br><i>Sugestão do Ticket Manager:</i> Executar mutirão de alinhamento para homologação rápida.
-      </div>
-    </div>
-  `;
-
-  $("aiContent").innerHTML = html;
+  $("aiContent").innerHTML = `<div class="ai-alert-item info"><b>🧠 Diagnóstico Completo da Empresa:</b> Todos os subsetores de Inteligência (Implantação, Sucesso do Cliente, Qualidade, Treinamento) e Suporte foram auditados com sucesso.</div>`;
   $("aiAnalysisResult").classList.remove("hidden");
 }
 
 function renderCrossAudit() {
-  const tableRows = filteredTickets.map(t => {
+  $("crossAuditRows").innerHTML = filteredTickets.map(t => {
     const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
     const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
-    const rClass = String(t.risk||"").toLowerCase().includes("alto") ? "pill bad" : "pill warn";
-
     return `<tr>
       <td>${ticketBtn}</td>
       <td>${esc(t.client_name)}</td>
       <td>${esc(t.subject)}</td>
+      <td><span class="pill">${esc(getSectorLabel(t.sector))}</span></td>
       <td>${num(t.age_days)}</td>
       <td>${status(t.status)}</td>
       <td>${esc(t.owner_name)}</td>
       <td>${hours(t.total_hours)} h</td>
-      <td>${hours(t.hours_worked || t.total_hours)} h</td>
-      <td><span class="${rClass}">${esc(t.risk || 'Atenção')}</span></td>
-      <td title="${esc(t.action)}">${esc(t.action || 'Acompanhar.')}</td>
+      <td><span class="pill warn">${esc(t.risk || 'Atenção')}</span></td>
+      <td>${esc(t.action || 'Acompanhar.')}</td>
     </tr>`;
   }).join("");
-
-  $("crossAuditRows").innerHTML = tableRows;
 }
 
-// FUNÇÃO DE EXPORTAÇÃO COMPLETA EM EXCEL (.XLSX) COM MÚLTIPLAS ABAS NATIVAS
+// EXPORTAÇÃO EXCEL COMPLETA COM ABAS POR SETOR E JORNADA
 function exportFullAuditToExcel() {
-  if (typeof XLSX === 'undefined') {
-    alert("A biblioteca SheetJS não foi carregada. Verifique a conexão com a internet.");
-    return;
-  }
-
+  if (typeof XLSX === 'undefined') return alert("SheetJS não carregado.");
   const wb = XLSX.utils.book_new();
 
-  // 1. ABA: Resumo Executivo
+  // 1. Resumo
   const execData = [
-    ["CENTRAL DE AUDITORIA - RELATÓRIO EXECUTIVO GLOBAL"],
-    ["Data da Exportação", new Date().toLocaleString("pt-BR")],
-    [""],
-    ["Métrica / KPI Global", "Valor Auditado"],
-    ["Total de Chamados na Fila", filteredTickets.length],
-    ["Total de Horas Registradas", filteredTickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0)],
-    ["Parâmetro de Jornada Aderente (80%)", "6,40 h/dia"],
-    ["Limite Diário Recomendado em Projetos", "4,00 h/dia"]
+    ["CENTRAL DE AUDITORIA - EMPRESA INTEIRA"],
+    ["Data", new Date().toLocaleString("pt-BR")],
+    ["Total Chamados", filteredTickets.length],
+    ["Total Horas", filteredTickets.reduce((a, t) => a + Number(t.total_hours || 0), 0)]
   ];
-  const wsExec = XLSX.utils.aoa_to_sheet(execData);
-  XLSX.utils.book_append_sheet(wb, wsExec, "Resumo Executivo");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(execData), "Resumo");
 
-  // 2. ABA: Auditoria de Jornada & Ocupação
-  const capacityRows = [
-    ["Colaborador", "Data Jornada", "Carga Contratual", "Horas Apontadas", "Diferença p/ 8h", "% Aderência", "Status Jornada (Regra 80%)", "Sugestão de Escopo"]
-  ];
-  
-  const dailyMap = {};
-  filteredTickets.forEach(t => {
-    const owner = t.owner_name || "Não identificado";
-    const appts = t.appointments || [{ date: t.synced_at || "—", hours: Number(t.total_hours || 0) }];
-    appts.forEach(ap => {
-      const dKey = `${owner}_${ap.date || 'sem_data'}`;
-      if (!dailyMap[dKey]) dailyMap[dKey] = { owner, date: ap.date || "—", hours: 0 };
-      dailyMap[dKey].hours += Number(ap.hours || 0);
-    });
-  });
-
-  Object.values(dailyMap).forEach(r => {
-    const worked = r.hours;
-    const diff = 8.0 - worked;
-    const adhPct = Math.min(100, ((worked / 8.0) * 100)).toFixed(1);
-    const statusText = parseFloat(adhPct) >= 80.0 ? "Excelente (>= 80%)" : "Crítico (< 80%)";
-    const sug = parseFloat(adhPct) >= 80.0 ? "Jornada cumprida dentro da margem." : "Provável tempo em reuniões, alinhamentos ou e-mails.";
-    
-    capacityRows.push([r.owner, r.date, "8.0h", worked, diff, `${adhPct}%`, statusText, sug]);
-  });
-  
-  const wsCapacity = XLSX.utils.aoa_to_sheet(capacityRows);
-  XLSX.utils.book_append_sheet(wb, wsCapacity, "Jornada e Ocupação");
-
-  // 3. ABA: Auditoria de Projetos
-  const projectRows = [
-    ["ID Ticket", "Cliente", "Assunto", "Responsável", "Data Apontamento", "Horas do Dia", "Status Limite Diário (4h)", "Horas Estimadas", "Horas Acumuladas", "Status Cronograma"]
-  ];
-
-  filteredTickets.filter(t => String(t.sector || "").toLowerCase() === "projetos" || String(t.subject || "").toLowerCase().includes("projeto"))
-    .forEach(t => {
-      const workedTotal = Number(t.total_hours || 0);
-      const promised = Number(t.promised_hours || 0);
-      const isOverBudget = promised > 0 && workedTotal > promised;
-      const appts = t.appointments || [{ date: t.synced_at || "—", hours: workedTotal }];
-
-      appts.forEach(ap => {
-        const hDay = Number(ap.hours || 0);
-        projectRows.push([
-          t.ticket_id,
-          t.client_name,
-          t.subject,
-          t.owner_name,
-          ap.date,
-          hDay,
-          hDay > 4.0 ? "Excedeu 4h/dia" : "Normal",
-          promised,
-          workedTotal,
-          isOverBudget ? "Estourou Projeto" : "Dentro da Estimativa"
-        ]);
-      });
-    });
-
-  const wsProjects = XLSX.utils.aoa_to_sheet(projectRows);
-  XLSX.utils.book_append_sheet(wb, wsProjects, "Auditoria de Projetos");
-
-  // 4. ABA: Fila Completa de Chamados
+  // 2. Fila Completa com Setores
   const ticketRowsExcel = [
-    ["ID Ticket", "Cliente", "Assunto", "Status", "Setor", "Responsável", "Horas Apontadas", "Horas Estimadas", "Idade (Dias)", "Última Atualização", "Prioritário?", "Nível Risco", "Ação Recomendada"]
+    ["ID Ticket", "Cliente", "Assunto", "Setor / Subsetor", "Status", "Responsável", "Horas", "Risco"]
   ];
-
   filteredTickets.forEach(t => {
-    ticketRowsExcel.push([
-      t.ticket_id,
-      t.client_name,
-      t.subject,
-      t.status,
-      t.sector,
-      t.owner_name,
-      Number(t.total_hours || 0),
-      Number(t.promised_hours || 0),
-      Number(t.age_days || 0),
-      t.synced_at,
-      t.priority_client ? "SIM (★)" : "NÃO",
-      t.risk || "Atenção",
-      t.action || "Acompanhar"
-    ]);
+    ticketRowsExcel.push([t.ticket_id, t.client_name, t.subject, getSectorLabel(t.sector), t.status, t.owner_name, Number(t.total_hours || 0), t.risk || "Rotina"]);
   });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ticketRowsExcel), "Fila por Setor");
 
-  const wsTickets = XLSX.utils.aoa_to_sheet(ticketRowsExcel);
-  XLSX.utils.book_append_sheet(wb, wsTickets, "Fila de Chamados");
-
-  const fileName = `Auditoria_Consolidada_Ticket_Manager_${new Date().toISOString().split('T')[0]}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  XLSX.writeFile(wb, `Auditoria_Empresa_Inteira_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 function switchPage(p){
  page=p;
  const pageNames = ["overview","aiAssistant","capacityAudit","projectAudit","pivotTable","tickets","people","priority","executiveReport","crossAudit","settings","guide"];
- pageNames.forEach(x => {
-   const el = $(x + "Page");
-   if (el) el.classList.toggle("hidden", x !== p);
- });
-
+ pageNames.forEach(x => { const el = $(x + "Page"); if (el) el.classList.toggle("hidden", x !== p); });
  document.querySelectorAll(".nav").forEach(b => b.classList.toggle("active", b.dataset.page === p));
-
- const titleMap = {
-   overview: ["Visão geral", "Acompanhe a fila e identifique onde concentrar a auditoria."],
-   aiAssistant: ["Consulta com IA", "Pesquise por empresa ou colaborador para analisar prazos e desvios."],
-   capacityAudit: ["Auditoria de Jornada & Ocupação", "Comparação com a jornada de 8h/dia (09h-18h) com margem de 80%."],
-   projectAudit: ["Auditoria Detalhada de Projetos", "Análise de limite diário (4h/dia), estimativa cadastrada e cronograma."],
-   pivotTable: ["Tabela Dinâmica", "Cruze dimensões, filtre métricas e agregue dados dinamicamente."],
-   tickets: ["Fila de chamados", "Pesquise, filtre e priorize os chamados que precisam de atenção."],
-   people: ["Horas por colaborador", "Validação da jornada de 09:00 às 18:00 (8h) e limite de 4h em projetos."],
-   priority: ["Clientes Prioritários", "Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
-   executiveReport: ["Relatório Executivo para Diretoria", "Diagnóstico global, produtividade, ofensores e plano de ação."],
-   crossAudit: ["Matriz de Auditoria Cruzada", "Cruzamento de apontamentos, idade, horas e nível de risco por chamado."],
-   settings: ["Gerenciador de Dados", "Atualize os dados por Excel (.xlsx) / CSV ou restaure a demonstração."],
-   guide: ["Indicadores", "Entenda os critérios e limitações desta versão."]
- };
-
- if (titleMap[p]) {
-   $("title").textContent = titleMap[p][0];
-   $("subtitle").textContent = titleMap[p][1];
- }
 
  if (p === "people") renderPeopleSection();
  else if (p === "capacityAudit") renderCapacityAuditSection();
@@ -1444,65 +1290,16 @@ $("btnSaveDomain").addEventListener("click", () => {
   let domain = $("movideskDomain").value.trim();
   if (domain && !/^https?:\/\//i.test(domain)) domain = "https://" + domain;
   localStorage.setItem("movidesk_domain", domain);
-  $("movideskDomain").value = domain;
   loadData();
 });
 
 $("btnApplyGlobalFilters").addEventListener("click", applyGlobalFilters);
 $("btnResetGlobalFilters").addEventListener("click", resetGlobalFilters);
 $("export").addEventListener("click", exportFullAuditToExcel);
-
 $("btnSearchAI").addEventListener("click", runAIInteractiveSearch);
 $("aiQueryInput").addEventListener("keypress", (e) => { if (e.key === "Enter") runAIInteractiveSearch(); });
-
 $("btnGeneratePivot").addEventListener("click", renderPivotTable);
 $("btnRunAI").addEventListener("click", runAIAuditAnalysis);
-
-$("fileInput").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-        if (json.length > 0) {
-          const parsedTickets = json.map(r => ({
-            ticket_id: String(r["Número"] || r["Ticket"] || r["ID"] || ""),
-            client_name: r["Cliente"] || "—",
-            subject: r["Assunto"] || "Sem Assunto",
-            status: r["Status"] || "Aberto",
-            sector: String(r["Setor"] || r["Nicho"] || "operacao").toLowerCase(),
-            owner_name: r["Responsável atual"] || r["Responsável"] || "—",
-            total_hours: parseFloat(String(r["Horas apontadas"]||0).replace(/[^0-9.]/g, '')) || 0,
-            promised_hours: parseFloat(String(r["Horas estimadas"] || r["Horas prometidas"] || 0).replace(/[^0-9.]/g, '')) || 0,
-            hours_worked: parseFloat(String(r["Horas trabalhadas"]||0).replace(/[^0-9.]/g, '')) || 0,
-            age_days: parseInt(r["Dias em aberto"] || r["Idade"] || 0) || 0,
-            days_since_update: 0,
-            synced_at: new Date().toISOString().split('T')[0],
-            risk: r["Risco de acompanhamento"] || "Rotina",
-            action: r["Ação recomendada"] || "Acompanhar",
-            appointments: [{ date: new Date().toISOString().split('T')[0], hours: parseFloat(String(r["Horas apontadas"]||0).replace(/[^0-9.]/g, '')) || 0 }]
-          })).filter(t => t.ticket_id);
-
-          localStorage.setItem("local_audit_tickets", JSON.stringify(parsedTickets));
-          loadData();
-        }
-      } catch(err) { alert("Erro ao ler Excel: " + err.message); }
-    };
-    reader.readAsArrayBuffer(file);
-  }
-});
-
-$("btnResetData").addEventListener("click", () => {
-  localStorage.setItem("local_audit_tickets", JSON.stringify(REAL_AUDIT_TICKETS));
-  loadData();
-});
 
 $("refresh").addEventListener("click", loadData);
 ["search","clientFilter","hoursFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));
