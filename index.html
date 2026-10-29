@@ -1,1006 +1,816 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Auditoria de Chamados - Arquem Sistemas</title>
-    <!-- Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js para Gráficos -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @media print {
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white !important; color: black !important; }
-        }
-        .print-only { display: none; }
-    </style>
-</head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Central de Auditoria | Movidesk</title>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <style>
+            :root {
+                --navy: #142943;
+                --blue: #2563eb;
+                --bg: #f3f6fb;
+                --line: #e2e8f0;
+                --muted: #64748b;
+                --ink: #17243a
+            }
 
-    <!-- Header / Navbar Principal -->
-    <header class="bg-slate-900 text-white shadow-lg no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-indigo-600 p-2 rounded-lg">
-                        <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
-                    </div>
+            * {
+                box-sizing: border-box
+            }
+
+            body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--ink);
+                font: 14px/1.45 Segoe UI,Arial,sans-serif
+            }
+
+            .top {
+                height: 68px;
+                background: var(--navy);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 24px
+            }
+
+            .brand {
+                font-size: 18px;
+                font-weight: 750
+            }
+
+            .brand span {
+                background: #2f6ce5;
+                padding: 9px 11px;
+                border-radius: 10px;
+                margin-right: 10px
+            }
+
+            .status {
+                font-size: 12px;
+                color: #dbeafe
+            }
+
+            .btn {
+                border: 0;
+                border-radius: 9px;
+                padding: 10px 14px;
+                font-weight: 650;
+                cursor: pointer
+            }
+
+            .primary {
+                background: var(--blue);
+                color: #fff
+            }
+
+            .secondary {
+                background: #edf2f8;
+                color: var(--ink);
+                border: 1px solid var(--line)
+            }
+
+            .layout {
+                display: grid;
+                grid-template-columns: 220px 1fr;
+                min-height: calc(100vh - 68px)
+            }
+
+            aside {
+                background: white;
+                border-right: 1px solid var(--line);
+                padding: 20px 12px
+            }
+
+            .nav {
+                display: block;
+                width: 100%;
+                text-align: left;
+                border: 0;
+                background: transparent;
+                padding: 12px;
+                border-radius: 9px;
+                color: #526178;
+                margin: 3px 0;
+                cursor: pointer
+            }
+
+            .nav.active,.nav:hover {
+                background: #eaf1ff;
+                color: #1749ad
+            }
+
+            main {
+                padding: 26px;
+                min-width: 0
+            }
+
+            .head {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 20px
+            }
+
+            .eyebrow {
+                font-size: 11px;
+                letter-spacing: 1.4px;
+                color: var(--blue);
+                font-weight: 700
+            }
+
+            .head h1 {
+                font-size: 27px;
+                margin: 4px 0
+            }
+
+            .muted {
+                color: var(--muted)
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(4,minmax(0,1fr));
+                gap: 12px;
+                margin-bottom: 18px
+            }
+
+            .metric,.panel,.login {
+                background: white;
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                box-shadow: 0 6px 22px #1429430b
+            }
+
+            .metric {
+                padding: 17px
+            }
+
+            .metric label {
+                color: var(--muted);
+                font-size: 12px
+            }
+
+            .value {
+                font-size: 28px;
+                font-weight: 800;
+                margin: 12px 0 4px
+            }
+
+            .panel {
+                overflow: hidden;
+                margin-bottom: 18px
+            }
+
+            .panelhead {
+                padding: 16px 18px;
+                border-bottom: 1px solid var(--line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap
+            }
+
+            .panelhead h2 {
+                font-size: 15px;
+                margin: 0
+            }
+
+            .tools {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap
+            }
+
+            .field {
+                padding: 10px;
+                border: 1px solid #d6dfeb;
+                border-radius: 9px;
+                background: #fff;
+                min-width: 130px
+            }
+
+            .search {
+                min-width: 230px
+            }
+
+            .tablewrap {
+                overflow: auto
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 12px;
+                white-space: nowrap
+            }
+
+            th {
+                background: #f8fafd;
+                color: #66758b;
+                text-transform: uppercase;
+                font-size: 10px;
+                letter-spacing: .5px;
+                text-align: left
+            }
+
+            th,td {
+                padding: 12px 14px;
+                border-bottom: 1px solid #edf1f6;
+                max-width: 300px;
+                overflow: hidden;
+                text-overflow: ellipsis
+            }
+
+            tr:hover td {
+                background: #f8fbff
+            }
+
+            .pill {
+                display: inline-block;
+                background: #edf2f8;
+                color: #4b5b72;
+                padding: 4px 8px;
+                border-radius: 20px;
+                font-size: 10px
+            }
+
+            .priority {
+                background: #e7edff;
+                color: #244ec4
+            }
+
+            .empty {
+                padding: 28px;
+                text-align: center;
+                color: var(--muted)
+            }
+
+            .notice {
+                padding: 12px;
+                border-radius: 9px;
+                margin-bottom: 14px;
+                display: none;
+                white-space: pre-wrap
+            }
+
+            .notice.error {
+                display: block;
+                background: #fff0ef;
+                color: #9f2018
+            }
+
+            .notice.info {
+                display: block;
+                background: #edf5ff;
+                color: #1d4e89
+            }
+
+            .hidden {
+                display: none!important
+            }
+
+            .loginwrap {
+                min-height: calc(100vh - 68px);
+                display: grid;
+                place-items: center;
+                padding: 24px
+            }
+
+            .login {
+                padding: 28px;
+                width: min(450px,100%)
+            }
+
+            .login h1 {
+                margin: 0 0 8px
+            }
+
+            .login p {
+                color: var(--muted)
+            }
+
+            label {
+                display: block;
+                font-size: 12px;
+                font-weight: 650;
+                margin: 13px 0 6px
+            }
+
+            input {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #d6dfeb;
+                border-radius: 9px
+            }
+
+            .login button {
+                margin-top: 16px;
+                width: 100%
+            }
+
+            details {
+                margin-top: 20px;
+                border-top: 1px solid var(--line);
+                padding-top: 15px
+            }
+
+            summary {
+                cursor: pointer;
+                color: var(--muted);
+                font-size: 12px
+            }
+
+            small {
+                display: block;
+                color: var(--muted);
+                margin-top: 8px
+            }
+
+            .bars {
+                padding: 14px 18px
+            }
+
+            .barrow {
+                display: grid;
+                grid-template-columns: 150px 1fr 70px;
+                gap: 10px;
+                align-items: center;
+                margin: 12px 0
+            }
+
+            .track {
+                height: 9px;
+                background: #edf1f7;
+                border-radius: 20px;
+                overflow: hidden
+            }
+
+            .fill {
+                height: 100%;
+                background: #3478eb;
+                border-radius: 20px
+            }
+
+            .foot {
+                font-size: 11px;
+                color: #8793a5;
+                padding: 6px 0 20px
+            }
+
+            @media(max-width: 950px) {
+                .grid {
+                    grid-template-columns:repeat(2,minmax(0,1fr))
+                }
+            }
+
+            @media(max-width: 700px) {
+                .layout {
+                    display:block
+                }
+
+                aside {
+                    display: flex;
+                    overflow: auto;
+                    padding: 8px;
+                    border-right: 0;
+                    border-bottom: 1px solid var(--line)
+                }
+
+                .nav {
+                    width: auto;
+                    white-space: nowrap
+                }
+
+                main {
+                    padding: 14px
+                }
+
+                .head {
+                    display: block
+                }
+
+                .head .tools {
+                    margin-top: 12px
+                }
+
+                .grid {
+                    gap: 8px
+                }
+
+                .metric {
+                    padding: 12px
+                }
+
+                .value {
+                    font-size: 23px
+                }
+
+                .search {
+                    min-width: 100%;
+                }
+
+                .top {
+                    padding: 0 14px
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header class="top">
+            <div class="brand">
+                <span>✓</span>
+                Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Movidesk</span>
+            </div>
+            <div>
+                <span class="status" id="status">Não conectado</span>
+                <button id="logout" class="btn secondary hidden">Sair</button>
+            </div>
+        </header>
+        <section id="loginView" class="loginwrap">
+            <div class="login">
+                <h1>Central de Auditoria</h1>
+                <p>O painel abre diretamente. Para carregar dados reais, conecte o projeto Supabase uma única vez nesta sessão.</p>
+                <div id="loginNotice" class="notice info" style="display:block">Painel pronto. Configure a conexão para consultar os chamados.</div>
+                <details open>
+                    <summary>Configurar conexão Supabase</summary>
+                    <label>Project URL</label>
+                    <input id="projectUrl" placeholder="https://seu-projeto.supabase.co">
+                    <label>Publishable key</label>
+                    <input id="publishableKey" placeholder="sb_publishable_..." autocomplete="off">
+                    <small>Use apenas a URL e a chave publicável. Nunca coloque service_role, secret key ou token do Movidesk neste HTML.</small>
+                    <button id="connect" class="btn secondary">Conectar projeto</button>
+                </details>
+            </div>
+        </section>
+        <div id="appView" class="layout hidden">
+            <aside>
+                <button class="nav active" data-page="overview">▦ Visão geral</button>
+                <button class="nav" data-page="tickets">☷ Fila de chamados</button>
+                <button class="nav" data-page="people">◷ Horas por colaborador</button>
+                <button class="nav" data-page="guide">ⓘ Indicadores</button>
+            </aside>
+            <main>
+                <div class="head">
                     <div>
-                        <h1 class="font-bold text-lg leading-none">Arquem Sistemas</h1>
-                        <p class="text-xs text-slate-400">Plataforma de Auditoria & Qualidade de Chamados</p>
+                        <div class="eyebrow">QUALIDADE • OPERAÇÃO</div>
+                        <h1 id="title">Visão geral</h1>
+                        <div class="muted" id="subtitle">Acompanhe a fila e identifique onde concentrar a auditoria.</div>
+                    </div>
+                    <div class="tools">
+                        <button id="refresh" class="btn secondary">↻ Atualizar</button>
+                        <button id="export" class="btn primary">Exportar CSV</button>
                     </div>
                 </div>
-
-                <!-- Navegação por Abas -->
-                <nav class="flex space-x-2">
-                    <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="tab-btn px-3 py-2 rounded-md text-sm font-medium transition-colors bg-indigo-600 text-white">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-1"></i> Dashboard
-                    </button>
-                    <button onclick="switchTab('integrations')" id="tabBtn-integrations" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
-                        <i data-lucide="plug" class="w-4 h-4 inline mr-1"></i> Movidesk Integration
-                    </button>
-                    <button onclick="switchTab('queue')" id="tabBtn-queue" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors relative">
-                        <i data-lucide="list-todo" class="w-4 h-4 inline mr-1"></i> Fila Sincronizada
-                        <span id="queueBadge" class="ml-1 px-1.5 py-0.5 text-xs bg-indigo-500 text-white rounded-full">0</span>
-                    </button>
-                    <button onclick="switchTab('audit')" id="tabBtn-audit" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
-                        <i data-lucide="clipboard-check" class="w-4 h-4 inline mr-1"></i> Nova Auditoria
-                    </button>
-                    <button onclick="switchTab('history')" id="tabBtn-history" class="tab-btn px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
-                        <i data-lucide="history" class="w-4 h-4 inline mr-1"></i> Histórico
-                    </button>
-                </nav>
-            </div>
+                <div id="appNotice" class="notice"></div>
+                <section id="overviewPage">
+                    <div class="grid">
+                        <div class="metric">
+                            <label>Chamados pendentes</label>
+                            <div id="pendingN" class="value">—</div>
+                            <small>Exclui status de encerramento reconhecidos</small>
+                        </div>
+                        <div class="metric">
+                            <label>Com 7+ dias</label>
+                            <div id="oldN" class="value">—</div>
+                            <small>Desde a criação do chamado</small>
+                        </div>
+                        <div class="metric">
+                            <label>Sem horas apontadas</label>
+                            <div id="noHoursN" class="value">—</div>
+                            <small>Precisam de conferência</small>
+                        </div>
+                        <div class="metric">
+                            <label>Horas nos pendentes</label>
+                            <div id="hoursN" class="value">—</div>
+                            <small>Tempo acumulado</small>
+                        </div>
+                    </div>
+                    <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                        <div class="metric">
+                            <label>Sem atualização recente</label>
+                            <div id="staleN" class="value">—</div>
+                            <small>Sem data ou há mais de 7 dias</small>
+                        </div>
+                        <div class="metric">
+                            <label>Clientes prioritários</label>
+                            <div id="priorityN" class="value">—</div>
+                            <small>Lux, Cardeal e Dr. Óculos</small>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panelhead">
+                            <div>
+                                <h2>Chamados que merecem atenção</h2>
+                                <small>Clientes prioritários e chamados mais antigos.</small>
+                            </div>
+                            <button class="btn secondary" data-goto="tickets">Ver fila completa →</button>
+                        </div>
+                        <div class="tablewrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Chamado</th>
+                                        <th>Cliente</th>
+                                        <th>Status</th>
+                                        <th>Responsável</th>
+                                        <th>Horas</th>
+                                        <th>Idade</th>
+                                        <th>Atualização</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topRows"></tbody>
+                            </table>
+                        </div>
+                        <div id="topEmpty" class="empty hidden">Nenhum chamado disponível.</div>
+                    </div>
+                    <div class="panel">
+                        <div class="panelhead">
+                            <div>
+                                <h2>Esforço por colaborador</h2>
+                                <small>Horas registradas nos chamados pendentes.</small>
+                            </div>
+                            <button class="btn secondary" data-goto="people">Detalhar →</button>
+                        </div>
+                        <div id="bars" class="bars"></div>
+                    </div>
+                </section>
+                <section id="ticketsPage" class="hidden">
+                    <div class="panel">
+                        <div class="panelhead">
+                            <div>
+                                <h2>Fila de auditoria</h2>
+                                <small id="ticketCount"></small>
+                            </div>
+                            <div class="tools">
+                                <input class="field search" id="search" placeholder="Buscar ID, assunto, cliente, responsável">
+                                <select class="field" id="clientFilter">
+                                    <option value="all">Todos os clientes</option>
+                                    <option value="priority">Prioritários</option>
+                                    <option value="other">Demais</option>
+                                </select>
+                                <select class="field" id="hoursFilter">
+                                    <option value="all">Todas as horas</option>
+                                    <option value="none">Sem apontamentos</option>
+                                    <option value="with">Com apontamentos</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="tablewrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Assunto</th>
+                                        <th>Cliente</th>
+                                        <th>Status</th>
+                                        <th>Prioridade</th>
+                                        <th>Responsável</th>
+                                        <th>Horas</th>
+                                        <th>Idade</th>
+                                        <th>Dias sem atualização</th>
+                                        <th>Sincronizado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ticketRows"></tbody>
+                            </table>
+                        </div>
+                        <div id="ticketEmpty" class="empty hidden">Nenhum resultado para os filtros selecionados.</div>
+                    </div>
+                </section>
+                <section id="peoplePage" class="hidden">
+                    <div class="panel">
+                        <div class="panelhead">
+                            <div>
+                                <h2>Horas por colaborador</h2>
+                                <small>Apontamentos associados a chamados pendentes.</small>
+                            </div>
+                        </div>
+                        <div class="tablewrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Colaborador</th>
+                                        <th>Chamados</th>
+                                        <th>Apontamentos</th>
+                                        <th>Minutos</th>
+                                        <th>Horas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="peopleRows"></tbody>
+                            </table>
+                        </div>
+                        <div id="peopleEmpty" class="empty hidden">Nenhum apontamento encontrado.</div>
+                    </div>
+                </section>
+                <section id="guidePage" class="hidden">
+                    <div class="panel" style="padding:20px;line-height:1.8">
+                        <h2>Como interpretar os indicadores</h2>
+                        <p>
+                            <b>Pendentes:</b>
+                            usa a view <code>v_audit_pending_tickets</code>
+                            , que exclui status reconhecidos como encerrados, concluídos, resolvidos ou cancelados.
+                        </p>
+                        <p>
+                            <b>Antigos:</b>
+                            chamados com 7 dias ou mais desde a criação. Critério inicial ajustável.
+                        </p>
+                        <p>
+                            <b>Sem atualização:</b>
+                            sem data de atualização ou com mais de 7 dias desde a última.
+                        </p>
+                        <p>
+                            <b>Clientes prioritários:</b>
+                            correspondência textual de Lux, Cardeal e Dr. Óculos; valide os nomes da base.
+                        </p>
+                        <p>
+                            <b>Segurança:</b>
+                            o HTML usa chave publicável e autenticação Supabase. A proteção depende das políticas RLS. Nunca coloque chaves secretas ou token Movidesk no navegador.
+                        </p>
+                        <div class="notice info" style="display:block">Esta versão não inclui sincronização automática nem alertas em tempo real.</div>
+                    </div>
+                </section>
+                <div class="foot">
+                    Central de Auditoria • Dados do Supabase • Atualizado em <span id="lastRefresh">—</span>
+                </div>
+            </main>
         </div>
-    </header>
-
-    <!-- Conteúdo Principal -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-
-        <!-- ABAS -->
-
-        <!-- 1. DASHBOARD DE QUALIDADE -->
-        <section id="tab-dashboard" class="tab-content">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">Painel de Qualidade e Desempenho</h2>
-                    <p class="text-slate-500 text-sm">Métricas consolidadas baseadas nos critérios de auditoria da Arquem Sistemas</p>
-                </div>
-                <button onclick="loadMockData()" class="px-3 py-1.5 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md transition-colors flex items-center">
-                    <i data-lucide="database" class="w-3.5 h-3.5 mr-1"></i> Carregar Dados Demo
-                </button>
-            </div>
-
-            <!-- Cards de KPIs -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-semibold uppercase text-slate-400">Total Auditado</p>
-                            <h3 id="kpiTotalAudits" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
-                        </div>
-                        <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="files" class="w-5 h-5"></i></span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-semibold uppercase text-slate-400">Média Geral</p>
-                            <h3 id="kpiAvgScore" class="text-3xl font-extrabold text-slate-800 mt-1">0.0</h3>
-                        </div>
-                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="award" class="w-5 h-5"></i></span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-semibold uppercase text-slate-400">Conformidade</p>
-                            <h3 id="kpiConformityRate" class="text-3xl font-extrabold text-emerald-600 mt-1">0%</h3>
-                        </div>
-                        <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="check-circle-2" class="w-5 h-5"></i></span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-semibold uppercase text-slate-400">Total com Não Conformidade</p>
-                            <h3 id="kpiTotalNc" class="text-3xl font-extrabold text-red-600 mt-1">0</h3>
-                        </div>
-                        <span class="p-2 bg-red-50 text-red-600 rounded-lg"><i data-lucide="alert-triangle" class="w-5 h-5"></i></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gráficos -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 class="font-bold text-slate-800 mb-4 flex items-center">
-                        <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-indigo-600"></i> Não Conformidades por Critério (Seção 2)
-                    </h3>
-                    <div class="relative h-64">
-                        <canvas id="chartCriteriaNC"></canvas>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 class="font-bold text-slate-800 mb-4 flex items-center">
-                        <i data-lucide="pie-chart" class="w-4 h-4 mr-2 text-indigo-600"></i> Distribuição de Status
-                    </h3>
-                    <div class="relative h-64 flex items-center justify-center">
-                        <canvas id="chartStatusDist"></canvas>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 2. MÓDULO DE INTEGRAÇÃO MOVIDESK -->
-        <section id="tab-integrations" class="tab-content hidden">
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-6">
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-orange-100 text-orange-600 rounded-lg">
-                            <i data-lucide="cloud-cog" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-bold text-slate-800">Conector API Movidesk</h2>
-                            <p class="text-xs text-slate-500">Configure as credenciais de acesso para importar e sincronizar chamados em lote</p>
-                        </div>
-                    </div>
-                    <span id="apiStatusBadge" class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-600">Desconectado</span>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Chave da API Movidesk (Token)</label>
-                        <input type="password" id="movideskToken" placeholder="Insira o token gerado no Movidesk (Configurações > Pessoas / API)" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Usar Proxy CORS para Navegador</label>
-                        <select id="useCorsProxy" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                            <option value="true">Sim (Recomendado para uso no Browser)</option>
-                            <option value="false">Não (Apenas se servidor backend próprio)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex justify-end space-x-3">
-                    <button onclick="testMovideskConnection()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
-                        <i data-lucide="activity" class="w-4 h-4 mr-2"></i> Testar Conexão
-                    </button>
-                    <button onclick="saveApiSettings()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
-                        <i data-lucide="save" class="w-4 h-4 mr-2"></i> Salvar Configurações
-                    </button>
-                </div>
-            </div>
-
-            <!-- Módulo de Sincronização em Lote -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <h3 class="text-lg font-bold text-slate-800 mb-1 flex items-center">
-                    <i data-lucide="refresh-cw" class="w-5 h-5 mr-2 text-indigo-600"></i> Sincronizador de Chamados em Lote
-                </h3>
-                <p class="text-xs text-slate-500 mb-6">Busque uma lista de chamados recentes para alimentar a fila de auditoria da equipe</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Quantidade Máxima</label>
-                        <select id="syncLimit" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                            <option value="5">5 chamados</option>
-                            <option value="10" selected>10 chamados</option>
-                            <option value="20">20 chamados</option>
-                            <option value="50">50 chamados</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Filtrar por Status</label>
-                        <select id="syncStatusFilter" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                            <option value="all">Todos os Status</option>
-                            <option value="Resolved">Resolvidos / Finalizados</option>
-                            <option value="InService">Em Atendimento</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2 flex items-end">
-                        <button onclick="syncTicketsFromMovidesk()" class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center justify-center">
-                            <i data-lucide="download-cloud" class="w-4 h-4 mr-2"></i> Executar Sincronização Agora
-                        </button>
-                    </div>
-                </div>
-
-                <div id="syncLog" class="p-3 bg-slate-50 rounded-lg text-xs font-mono text-slate-600 max-h-32 overflow-y-auto border border-slate-200">
-                    Aguardando início da sincronização...
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. FILA DE CHAMADOS SINCRONIZADOS -->
-        <section id="tab-queue" class="tab-content hidden">
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">Fila de Chamados Importados</h2>
-                        <p class="text-xs text-slate-500">Selecione um chamado da lista para iniciar a auditoria completa</p>
-                    </div>
-                    <button onclick="clearQueue()" class="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 border border-red-200 rounded-md transition-colors flex items-center">
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5 mr-1"></i> Limpar Fila
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold">
-                            <tr>
-                                <th class="p-3">ID Chamado</th>
-                                <th class="p-3">Assunto</th>
-                                <th class="p-3">Solicitante / Cliente</th>
-                                <th class="p-3">Atendente</th>
-                                <th class="p-3">Status Auditoria</th>
-                                <th class="p-3 text-right">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="queueTableBody" class="divide-y divide-slate-200">
-                            <!-- Preenchido via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. NOA AUDITORIA / FORMULÁRIO COMPLETO -->
-        <section id="tab-audit" class="tab-content hidden">
-            <!-- Header do Formulário -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-200 mb-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-800">Formulário de Auditoria de Qualidade</h2>
-                        <p class="text-xs text-slate-500">Regulamento Oficial da Arquem Sistemas (13 Critérios de Avaliação)</p>
-                    </div>
-
-                    <!-- Configuração de IA API Key -->
-                    <div class="flex items-center space-x-2 w-full md:w-auto">
-                        <input type="password" id="geminiApiKey" placeholder="Chave Gemini API (Para Análise IA)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs w-full md:w-64 focus:outline-none">
-                        <button onclick="runAiAnalysis()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center whitespace-nowrap">
-                            <i data-lucide="sparkles" class="w-3.5 h-3.5 mr-1"></i> Análise IA
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Dados do Chamado -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">ID Chamado *</label>
-                        <input type="text" id="ticketId" placeholder="Ex: 10495" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Atendente / Responsável *</label>
-                        <input type="text" id="agentName" placeholder="Nome do Analista" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Cliente / Empresa *</label>
-                        <input type="text" id="clientName" placeholder="Nome do Cliente/Loja" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Auditor Responsável *</label>
-                        <input type="text" id="auditorName" placeholder="Seu Nome" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Assunto do Chamado *</label>
-                        <input type="text" id="ticketSubject" placeholder="Assunto completo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Tabulação / Categoria *</label>
-                        <input type="text" id="ticketCategory" placeholder="Ex: Dúvida / Suporte Técfnico" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Descrição Completa e Apontamentos do Chamado</label>
-                    <textarea id="ticketContent" rows="4" placeholder="Cole o histórico de interações do chamado aqui para análise da IA..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono text-xs"></textarea>
-                </div>
-            </div>
-
-            <!-- CHECKLIST DE REQUISITOS MÍNIMOS (SEÇÃO 3) -->
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6">
-                <h3 class="font-bold text-amber-900 text-sm mb-3 flex items-center">
-                    <i data-lucide="check-square" class="w-4 h-4 mr-2 text-amber-600"></i> Checklist de Requisitos Mínimos Antes do Encaminhamento (Seção 3)
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-amber-950">
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_1" class="rounded text-amber-600"> <span>Assunto corresponde e segue macro</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_2" class="rounded text-amber-600"> <span>ID da Base/Loja informado</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_3" class="rounded text-amber-600"> <span>Cadastro do solicitante atualizado</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_4" class="rounded text-amber-600"> <span>Descrição clara e com dados essenciais</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_5" class="rounded text-amber-600"> <span>Passo a passo e evidências anexadas</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_6" class="rounded text-amber-600"> <span>Melhorias possuem croqui/esboço</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_7" class="rounded text-amber-600"> <span>Tabulação e setor corretos</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_8" class="rounded text-amber-600"> <span>Previsão e apontamentos registrados</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-white/60 p-2 rounded border border-amber-200/50 cursor-pointer">
-                        <input type="checkbox" id="chk3_9" class="rounded text-amber-600"> <span>Tipo/Modalidade de chamado correto</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- TABELA DE CRITÉRIOS DE AUDITORIA (SEÇÃO 2) -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-                <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-800 text-sm">Avaliação dos 13 Critérios do Regulamento (Seção 2)</h3>
-                    <div class="text-xs text-slate-500">
-                        Total Calculado: <span id="calculatedScoreDisplay" class="font-extrabold text-indigo-600 text-sm">100 / 100</span>
-                    </div>
-                </div>
-
-                <div class="divide-y divide-slate-200" id="criteriaList">
-                    <!-- Gerado dinamicamente no JS com base nos 13 critérios -->
-                </div>
-            </div>
-
-            <!-- FEEDBACK E PLANO DE AÇÃO -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-                <h3 class="font-bold text-slate-800 text-sm mb-4">Parecer da Auditoria & Orientação ao Analista</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Pontos Positivos / Elogios</label>
-                        <textarea id="auditPositive" rows="3" placeholder="Boas práticas observadas no atendimento..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Plano de Ação / Orientação Corretiva</label>
-                        <textarea id="auditActionPlan" rows="3" placeholder="Ações necessárias para adequação ao regimento..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- BOTÃO DE SALVAR -->
-            <div class="flex justify-end">
-                <button onclick="saveAudit()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center text-sm">
-                    <i data-lucide="check-circle-2" class="w-5 h-5 mr-2"></i> Finalizar & Salvar Auditoria
-                </button>
-            </div>
-        </section>
-
-        <!-- 5. HISTÓRICO DE AUDITORIAS -->
-        <section id="tab-history" class="tab-content hidden">
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">Histórico de Auditorias Realizadas</h2>
-                        <p class="text-xs text-slate-500">Consulte laudos, imprima relatórios ou exporte a base completa</p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="exportToCsv()" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-colors flex items-center">
-                            <i data-lucide="download" class="w-3.5 h-3.5 mr-1"></i> Exportar CSV
-                        </button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold">
-                            <tr>
-                                <th class="p-3">Data</th>
-                                <th class="p-3">ID Chamado</th>
-                                <th class="p-3">Atendente</th>
-                                <th class="p-3">Cliente</th>
-                                <th class="p-3 text-center">Nota</th>
-                                <th class="p-3 text-center">Status</th>
-                                <th class="p-3 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyTableBody" class="divide-y divide-slate-200">
-                            <!-- Preenchido via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- MODAL DE VISUALIZAÇÃO DO LAUDO (IMPRESSÃO A4) -->
-    <div id="modalReport" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 relative">
-            <button onclick="closeModalReport()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 no-print">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div id="reportPrintArea">
-                <!-- Conteúdo do Laudo Fiel da Arquem Sistemas -->
-            </div>
-
-            <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3 no-print">
-                <button onclick="closeModalReport()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">Fechar</button>
-                <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold flex items-center">
-                    <i data-lucide="printer" class="w-4 h-4 mr-2"></i> Imprimir Laudo (A4)
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT DA APLICAÇÃO -->
-    <script>
-        // CRITÉRIOS DA SEÇÃO 2 DO REGIMENTO ARQUEM SISTEMAS
-        const AUDIT_CRITERIA = [
-            { id: "c2_1", title: "2.1. Assunto incompatível com a solicitação", weight: 8, desc: "Assunto genérico ou incompatível com a demanda." },
-            { id: "c2_2", title: "2.2. Macro ou padrão de assunto incorreto", weight: 5, desc: "Deixar de utilizar a macro definida ou selecionar macro incorreta." },
-            { id: "c2_3", title: "2.3. Identificação da base ausente ou incorreta", weight: 8, desc: "Falta do ID da base ao lado do assunto ou nome da loja no corpo para ACO." },
-            { id: "c2_4", title: "2.4. Dados do solicitante ausentes ou desatualizados", weight: 7, desc: "Ausência/desatualização de nome do cliente, e-mail e telefone." },
-            { id: "c2_5", title: "2.5. Descrição insuficiente ou incompreensível", weight: 10, desc: "Descrição obscura, contraditória ou sem dados para início de análise." },
-            { id: "c2_6", title: "2.6. Falta de informações para reproduzir ou analisar", weight: 10, desc: "Ausência de passo a passo, telas, mensagens de erro ou resultado esperado." },
-            { id: "c2_7", title: "2.7. Ausência de evidências necessárias", weight: 10, desc: "Falta de prints, vídeos ou documentos indispensáveis." },
-            { id: "c2_8", title: "2.8. Melhoria em ferramenta ou guia sem croqui", weight: 8, desc: "Solicitação de melhoria/funcionalidade sem esboço/croqui/representação visual." },
-            { id: "c2_9", title: "2.9. Tabulação incorreta", weight: 8, desc: "Classificação/tabulação não corresponde ao assunto ou tipo real." },
-            { id: "c2_10", title: "2.10. Encaminhamento para setor incorreto", weight: 10, desc: "Envio a setor não responsável, gerando retrabalho ou atrasos." },
-            { id: "c2_11", title: "2.11. Chamado sem previsão", weight: 8, desc: "Andamento sem registro/atualização de prazo/previsão de entrega." },
-            { id: "c2_12", title: "2.12. Chamado sem apontamentos", weight: 8, desc: "Ausência de registros de análises, testes, contatos ou atualizações." },
-            { id: "c2_13", title: "2.13. Abertura indevida de chamado como interno", weight: 10, desc: "Registrado como interno quando deveria estar vinculado ao cliente." }
-        ];
-
-        // ESTADO DA APLICAÇÃO
-        let appState = {
-            audits: JSON.parse(localStorage.getItem('arquem_audits') || '[]'),
-            syncedQueue: JSON.parse(localStorage.getItem('arquem_queue') || '[]'),
-            movideskToken: localStorage.getItem('arquem_movid_token') || '',
-            useCorsProxy: localStorage.getItem('arquem_cors') !== 'false'
-        };
-
-        let criteriaChartInstance = null;
-        let statusChartInstance = null;
-
-        // INICIALIZAÇÃO
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            document.getElementById('movideskToken').value = appState.movideskToken;
-            renderCriteriaForm();
-            updateQueueTable();
-            updateHistoryTable();
-            renderDashboard();
-        });
-
-        // NAVEGAÇÃO DE ABAS
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-600', 'text-white');
-                btn.classList.add('text-slate-300');
-            });
-
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`tabBtn-${tabId}`);
-            activeBtn.classList.add('bg-indigo-600', 'text-white');
-            activeBtn.classList.remove('text-slate-300');
-
-            if (tabId === 'dashboard') renderDashboard();
-        }
-
-        // RENDERIZAR FORMULÁRIO DE CRITÉRIOS
-        function renderCriteriaForm() {
-            const container = document.getElementById('criteriaList');
-            container.innerHTML = AUDIT_CRITERIA.map(c => `
-                <div class="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-bold text-slate-800 text-sm">${c.title}</span>
-                            <span class="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded font-semibold">Peso: ${c.weight} pts</span>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">${c.desc}</p>
-                    </div>
-                    <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                        <select id="select_${c.id}" onchange="calculateScore()" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
-                            <option value="CONFORME" class="text-emerald-600">✅ Conforme</option>
-                            <option value="NAO_CONFORME" class="text-red-600">❌ Não Conforme</option>
-                            <option value="NA" class="text-slate-400">⚪ N/A (Não Aplicável)</option>
-                        </select>
-                    </div>
-                </div>
-            `).join('');
-            calculateScore();
-        }
-
-        // CÁLCULO DINÂMICO DA PONTUAÇÃO DE AUDITORIA
-        function calculateScore() {
-            let maxScore = 0;
-            let earnedScore = 0;
-            let hasNC = false;
-
-            AUDIT_CRITERIA.forEach(c => {
-                const val = document.getElementById(`select_${c.id}`).value;
-                if (val !== 'NA') {
-                    maxScore += c.weight;
-                    if (val === 'CONFORME') {
-                        earnedScore += c.weight;
-                    } else if (val === 'NAO_CONFORME') {
-                        hasNC = true;
+        <script>
+            ( () => {
+                const $ = id => document.getElementById(id);
+                let sb = null
+                  , pending = []
+                  , people = []
+                  , summary = {}
+                  , page = "overview";
+                const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[c]));
+                const num = v => Number(v || 0).toLocaleString("pt-BR");
+                const hours = v => Number(v || 0).toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                const date = v => v ? (!Number.isNaN(new Date(v).getTime()) ? new Date(v).toLocaleDateString("pt-BR") : "—") : "—";
+                function notice(id, msg, type="error") {
+                    const e = $(id);
+                    e.textContent = msg;
+                    e.className = "notice " + type
+                }
+                function clearNotice(id) {
+                    $(id).className = "notice"
+                }
+                async function connect() {
+                    const url = $("projectUrl").value.trim().replace(/\/+$/, "")
+                      , key = $("publishableKey").value.trim();
+                    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url))
+                        throw Error("Informe uma Project URL válida, no formato https://seu-projeto.supabase.co.");
+                    if (!key.startsWith("sb_publishable_") && !key.startsWith("eyJ"))
+                        throw Error("Use a chave publicável do Supabase. Não use service_role ou secret key.");
+                    sb = window.supabase.createClient(url, key, {
+                        auth: {
+                            persistSession: false,
+                            autoRefreshToken: false,
+                            detectSessionInUrl: false
+                        }
+                    });
+                    $("loginView").classList.add("hidden");
+                    $("appView").classList.remove("hidden");
+                    $("status").textContent = "Conectado sem login";
+                    await load();
+                }
+                async function load() {
+                    clearNotice("appNotice");
+                    $("refresh").disabled = true;
+                    try {
+                        const [s,t,p] = await Promise.all([sb.from("v_audit_dashboard_summary").select("*").single(), sb.from("v_audit_pending_tickets").select("*").order("priority_client", {
+                            ascending: false
+                        }).order("age_days", {
+                            ascending: false,
+                            nullsFirst: false
+                        }).limit(1000), sb.from("v_audit_hours_by_collaborator").select("*").order("total_minutes", {
+                            ascending: false
+                        })]);
+                        const fail = [s, t, p].find(x => x.error);
+                        if (fail)
+                            throw fail.error;
+                        summary = s.data || {};
+                        pending = t.data || [];
+                        people = p.data || [];
+                        render();
+                        $("lastRefresh").textContent = new Date().toLocaleString("pt-BR");
+                    } catch (e) {
+                        notice("appNotice", "Não foi possível carregar as views. Verifique as permissões SELECT/RLS. Detalhe: " + (e.message || "erro desconhecido"))
+                    } finally {
+                        $("refresh").disabled = false
                     }
                 }
-            });
-
-            const finalPercent = maxScore > 0 ? Math.round((earnedScore / maxScore) * 100) : 100;
-            const displayEl = document.getElementById('calculatedScoreDisplay');
-            displayEl.innerText = `${finalPercent} / 100 pts (${hasNC ? 'COM NC' : 'CONFORME'})`;
-            displayEl.className = `font-extrabold text-sm ${hasNC ? 'text-red-600' : 'text-emerald-600'}`;
-
-            return { score: finalPercent, hasNC };
-        }
-
-        // CONEXÃO COM MOVIDESK API
-        function saveApiSettings() {
-            appState.movideskToken = document.getElementById('movideskToken').value.trim();
-            appState.useCorsProxy = document.getElementById('useCorsProxy').value === 'true';
-            localStorage.setItem('arquem_movid_token', appState.movideskToken);
-            localStorage.setItem('arquem_cors', appState.useCorsProxy);
-            alert('Configurações da API salvas com sucesso!');
-        }
-
-        async function testMovideskConnection() {
-            const token = document.getElementById('movideskToken').value.trim();
-            if (!token) return alert('Insira a chave Token da API Movidesk.');
-
-            const badge = document.getElementById('apiStatusBadge');
-            badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800";
-            badge.innerText = "Testando...";
-
-            const rawUrl = `https://api.movidesk.com/public/v1/tickets?token=${token}&$top=1`;
-            const proxyUrl = appState.useCorsProxy ? `https://corsproxy.io/?${encodeURIComponent(rawUrl)}` : rawUrl;
-
-            try {
-                const res = await fetch(proxyUrl);
-                if (res.ok) {
-                    badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800";
-                    badge.innerText = "Conectado ✅";
-                } else {
-                    throw new Error('Falha na autenticação');
+                function status(s) {
+                    let v = String(s || "Sem status")
+                      , c = /atras|urgente|cr[ií]tic|vencid/i.test(v) ? "pill bad" : /aberto|andamento|pendente|novo/i.test(v) ? "pill warn" : "pill";
+                    return `<span class="${c}">${esc(v)}</span>`
                 }
-            } catch (err) {
-                badge.className = "px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800";
-                badge.innerText = "Erro de Conexão ❌";
-            }
-        }
-
-        // SINCRONIZAÇÃO EM LOTE MOVIDESK
-        async function syncTicketsFromMovidesk() {
-            const token = document.getElementById('movideskToken').value.trim() || appState.movideskToken;
-            if (!token) return alert('Por favor, configure o Token da API do Movidesk primeiro.');
-
-            const limit = document.getElementById('syncLimit').value;
-            const logEl = document.getElementById('syncLog');
-            logEl.innerHTML = `[${new Date().toLocaleTimeString()}] Iniciando busca de ${limit} chamados no Movidesk...<br>`;
-
-            const rawUrl = `https://api.movidesk.com/public/v1/tickets?token=${token}&$top=${limit}&$orderby=id desc&$expand=owner,clients,actions`;
-            const proxyUrl = appState.useCorsProxy ? `https://corsproxy.io/?${encodeURIComponent(rawUrl)}` : rawUrl;
-
-            try {
-                const res = await fetch(proxyUrl);
-                if (!res.ok) throw new Error(`Erro na API (${res.status})`);
-                const tickets = await res.json();
-
-                logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ✅ ${tickets.length} chamados retornados.<br>`;
-
-                // Adiciona à fila local
-                tickets.forEach(t => {
-                    if (!appState.syncedQueue.some(q => q.id === String(t.id))) {
-                        appState.syncedQueue.push({
-                            id: String(t.id),
-                            subject: t.subject || 'Sem assunto',
-                            client: (t.clients && t.clients.length > 0) ? t.clients[0].businessName : 'N/I',
-                            agent: t.owner ? t.owner.businessName : 'Não Atribuído',
-                            category: t.category || 'Geral',
-                            content: formatTicketContent(t),
-                            status: 'PENDING'
-                        });
+                function ticketRow(t, compact=false) {
+                    const cli = t.priority_client ? `<span class="pill priority">${esc(t.client_name || "Prioritário")}</span>` : esc(t.client_name || "—");
+                    if (compact)
+                        return `<tr><td title="${esc(t.subject)}">#${esc(t.ticket_id)} · ${esc(t.subject || "Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name || "—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days == null ? "—" : num(t.age_days)}</td><td>${date(t.last_update_source)}</td></tr>`;
+                    return `<tr><td>${esc(t.ticket_id)}</td><td>${esc(t.subject || "—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority || "—")}</td><td>${esc(t.owner_name || "—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days == null ? "—" : num(t.age_days)}</td><td>${t.days_since_update == null ? "—" : num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`
+                }
+                function render() {
+                    $("pendingN").textContent = num(summary.pending_tickets);
+                    $("oldN").textContent = num(summary.tickets_7_days_or_older);
+                    $("noHoursN").textContent = num(summary.tickets_without_hours);
+                    $("hoursN").textContent = hours(summary.total_hours_pending) + " h";
+                    $("staleN").textContent = num(summary.tickets_without_recent_update);
+                    $("priorityN").textContent = num(summary.priority_client_tickets);
+                    const top = [...pending].sort( (a, b) => Number(b.priority_client) - Number(a.priority_client) || Number(b.age_days || 0) - Number(a.age_days || 0)).slice(0, 8);
+                    $("topRows").innerHTML = top.map(t => ticketRow(t, true)).join("");
+                    $("topEmpty").classList.toggle("hidden", top.length > 0);
+                    renderTickets();
+                    $("peopleRows").innerHTML = people.map(p => `<tr><td>${esc(p.collaborator_name || "Não identificado")}</td><td>${num(p.ticket_count)}</td><td>${num(p.appointment_count)}</td><td>${num(p.total_minutes)}</td><td><b>${hours(p.total_hours)}</b></td></tr>`).join("");
+                    $("peopleEmpty").classList.toggle("hidden", people.length > 0);
+                    if (!people.length)
+                        $("bars").innerHTML = '<div class="empty">Nenhum apontamento para chamados pendentes.</div>';
+                    else {
+                        let max = Math.max(1, ...people.map(p => Number(p.total_minutes) || 0));
+                        $("bars").innerHTML = people.slice(0, 8).map(p => `<div class="barrow"><div>${esc(p.collaborator_name || "Não identificado")}</div><div class="track"><div class="fill" style="width:${Math.min(100, Number(p.total_minutes || 0) / max * 100)}%;height:100%"></div></div><b>${hours(p.total_hours)} h</b></div>`).join("")
                     }
-                });
-
-                localStorage.setItem('arquem_queue', JSON.stringify(appState.syncedQueue));
-                updateQueueTable();
-                logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ✅ Fila atualizada com sucesso! Acesse a aba "Fila Sincronizada".<br>`;
-
-            } catch (err) {
-                logEl.innerHTML += `<span class="text-red-600">[${new Date().toLocaleTimeString()}] ❌ Erro ao sincronizar: ${err.message}</span><br>`;
+                }
+                function renderTickets() {
+                    const q = $("search").value.toLowerCase().trim()
+                      , cf = $("clientFilter").value
+                      , hf = $("hoursFilter").value;
+                    const rows = pending.filter(t => [t.ticket_id, t.subject, t.client_name, t.owner_name, t.status].join(" ").toLowerCase().includes(q) && (cf === "all" || (cf === "priority" ? t.priority_client : !t.priority_client)) && (hf === "all" || (hf === "none" ? Number(t.appointment_count) === 0 : Number(t.appointment_count) > 0)));
+                    $("ticketRows").innerHTML = rows.map(t => ticketRow(t)).join("");
+                    $("ticketCount").textContent = `${num(rows.length)} de ${num(pending.length)} chamados`;
+                    $("ticketEmpty").classList.toggle("hidden", rows.length > 0)
+                }
+                function switchPage(p) {
+                    page = p;
+                    ["overview", "tickets", "people", "guide"].forEach(x => $(x + "Page").classList.toggle("hidden", x !== p));
+                    document.querySelectorAll(".nav").forEach(b => b.classList.toggle("active", b.dataset.page === p));
+                    let m = {
+                        overview: ["Visão geral", "Acompanhe a fila e identifique onde concentrar a auditoria."],
+                        tickets: ["Fila de chamados", "Pesquise, filtre e priorize os chamados que precisam de atenção."],
+                        people: ["Horas por colaborador", "Compare o esforço registrado nos chamados pendentes."],
+                        guide: ["Indicadores", "Entenda os critérios e limitações desta versão."]
+                    }[p];
+                    $("title").textContent = m[0];
+                    $("subtitle").textContent = m[1];
+                    $("export").classList.toggle("hidden", p === "guide")
+                }
+                function exportCsv() {
+                    let headers, rows;
+                    if (page === "people") {
+                        headers = ["Colaborador", "Chamados", "Apontamentos", "Minutos", "Horas"];
+                        rows = people.map(p => [p.collaborator_name, p.ticket_count, p.appointment_count, p.total_minutes, p.total_hours])
+                    } else {
+                        headers = ["ID", "Assunto", "Cliente", "Status", "Prioridade", "Responsável", "Horas", "Idade dias", "Dias sem atualização", "Cliente prioritário", "Última atualização"];
+                        rows = pending.map(t => [t.ticket_id, t.subject, t.client_name, t.status, t.priority, t.owner_name, t.total_hours, t.age_days, t.days_since_update, t.priority_client, t.last_update_source])
+                    }
+                    const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`
+                      , csv = "\uFEFF" + [headers, ...rows].map(r => r.map(cell).join(";")).join("\r\n")
+                      , url = URL.createObjectURL(new Blob([csv],{
+                        type: "text/csv;charset=utf-8"
+                    }))
+                      , a = document.createElement("a");
+                    a.href = url;
+                    a.download = page === "people" ? "auditoria_horas.csv" : "auditoria_chamados.csv";
+                    a.click();
+                    URL.revokeObjectURL(url)
+                }
+                $("connect").addEventListener("click", async () => {
+                    try {
+                        clearNotice("loginNotice");
+                        await connect()
+                    } catch (e) {
+                        notice("loginNotice", e.message || "Falha ao conectar")
+                    }
+                }
+                );
+                $("logout").classList.add("hidden");
+                $("refresh").addEventListener("click", () => {
+                    if (!sb) {
+                        notice("appNotice", "Conecte o Supabase pela tela inicial para carregar dados reais.");
+                        return
+                    }
+                    load()
+                }
+                );
+                $("export").addEventListener("click", exportCsv);
+                ["search", "clientFilter", "hoursFilter"].forEach(id => $(id).addEventListener(id === "search" ? "input" : "change", renderTickets));
+                document.querySelectorAll(".nav").forEach(b => b.addEventListener("click", () => switchPage(b.dataset.page)));
+                document.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => switchPage(b.dataset.goto)));
             }
-        }
-
-        function formatTicketContent(ticket) {
-            let text = `ASSUNTO: ${ticket.subject || ''}\n\n`;
-            if (ticket.actions && ticket.actions.length > 0) {
-                text += "HISTÓRICO / APONTAMENTOS DO CHAMADO:\n";
-                ticket.actions.forEach((act, idx) => {
-                    text += `\n--- Apontamento #${idx + 1} --- \n${act.description || ''}\n`;
-                });
-            }
-            return text;
-        }
-
-        // GERENCIAMENTO DA FILA
-        function updateQueueTable() {
-            const tbody = document.getElementById('queueTableBody');
-            document.getElementById('queueBadge').innerText = appState.syncedQueue.length;
-
-            if (appState.syncedQueue.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Nenhum chamado na fila. Clique em "Movidesk Integration" para sincronizar.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = appState.syncedQueue.map((item, index) => `
-                <tr class="hover:bg-slate-50">
-                    <td class="p-3 font-bold text-slate-800">#${item.id}</td>
-                    <td class="p-3 font-medium text-slate-700">${item.subject}</td>
-                    <td class="p-3 text-slate-600">${item.client}</td>
-                    <td class="p-3 text-slate-600">${item.agent}</td>
-                    <td class="p-3">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'AUDITED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                            ${item.status === 'AUDITED' ? 'Auditado' : 'Pendente'}
-                        </span>
-                    </td>
-                    <td class="p-3 text-right">
-                        <button onclick="loadTicketToAudit(${index})" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-md transition-colors">
-                            Auditar Este
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function loadTicketToAudit(index) {
-            const ticket = appState.syncedQueue[index];
-            document.getElementById('ticketId').value = ticket.id;
-            document.getElementById('ticketSubject').value = ticket.subject;
-            document.getElementById('ticketCategory').value = ticket.category;
-            document.getElementById('agentName').value = ticket.agent;
-            document.getElementById('clientName').value = ticket.client;
-            document.getElementById('ticketContent').value = ticket.content;
-
-            switchTab('audit');
-        }
-
-        function clearQueue() {
-            if (confirm("Deseja realmente limpar a fila de chamados importados?")) {
-                appState.syncedQueue = [];
-                localStorage.setItem('arquem_queue', JSON.stringify([]));
-                updateQueueTable();
-            }
-        }
-
-        // ANÁLISE DE IA GEMINI COM O REGIMENTO ARQUEM
-        async function runAiAnalysis() {
-            const apiKey = document.getElementById('geminiApiKey').value.trim();
-            const content = document.getElementById('ticketContent').value;
-            const subject = document.getElementById('ticketSubject').value;
-
-            if (!content || !subject) return alert('Preencha o Assunto e o Conteúdo do chamado antes de executar a análise.');
-
-            if (!apiKey) {
-                // FALLBACK HEURÍSTICO LOCAL
-                alert("Nenhuma chave Gemini informada. Executando verificação heurística padrão...");
-                runLocalAnalysis(subject, content);
-                return;
-            }
-
-            const prompt = `
-            Você é um Auditor de Qualidade Sênior da Arquem Sistemas.
-            Analise o chamado abaixo com base no REGULAMENTO DE AUDITORIA DE CHAMADOS ARQUEM SISTEMAS (13 Critérios).
-
-            DADOS DO CHAMADO:
-            Assunto: ${subject}
-            Conteúdo / Histórico: ${content}
-
-            CRITÉRIOS DE AVALIAÇÃO:
-            2.1. Assunto incompatível com a solicitação
-            2.2. Macro ou padrão de assunto incorreto
-            2.3. Identificação da base ausente ou incorreta (ID da base ao lado do assunto ou nome da loja para ACO)
-            2.4. Dados do solicitante ausentes ou desatualizados (nome, e-mail, telefone)
-            2.5. Descrição insuficiente ou incompreensível
-            2.6. Falta de informações para reproduzir ou analisar o problema (passos, telas, erros)
-            2.7. Ausência de evidências necessárias (prints, vídeos)
-            2.8. Melhoria em ferramenta ou guia sem croqui (deve ter esboço/croqui visual)
-            2.9. Tabulação incorreta
-            2.10. Encaminhamento para setor incorreto
-            2.11. Chamado sem previsão (falta de prazo)
-            2.12. Chamado sem apontamentos (falta de histórico de testes/ações)
-            2.13. Abertura indevida de chamado como interno
-
-            Retorne APENAS um JSON no seguinte formato:
-            {
-                "criteria": {
-                    "c2_1": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_2": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_3": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_4": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_5": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_6": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_7": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_8": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_9": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_10": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_11": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_12": "CONFORME" | "NAO_CONFORME" | "NA",
-                    "c2_13": "CONFORME" | "NAO_CONFORME" | "NA"
-                },
-                "positive": "Pontos fortes do atendimento",
-                "actionPlan": "Plano de ação e correções para adequação ao regimento da Arquem"
-            }
-            `;
-
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-
-                const data = await res.json();
-                const jsonText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
-                const result = JSON.parse(jsonText);
-
-                // Aplicar resultados no formulário
-                Object.keys(result.criteria).forEach(cid => {
-                    const el = document.getElementById(`select_${cid}`);
-                    if (el) el.value = result.criteria[cid];
-                });
-
-                document.getElementById('auditPositive').value = result.positive || '';
-                document.getElementById('auditActionPlan').value = result.actionPlan || '';
-
-                calculateScore();
-                alert('✨ Análise de IA concluída com sucesso com base no Regimento da Arquem!');
-
-            } catch (err) {
-                console.error(err);
-                alert('Erro ao executar IA Gemini. Executando análise heurística local...');
-                runLocalAnalysis(subject, content);
-            }
-        }
-
-        // ANÁLISE HEURÍSTICA LOCAL
-        function runLocalAnalysis(subject, content) {
-            AUDIT_CRITERIA.forEach(c => {
-                document.getElementById(`select_${c.id}`).value = "CONFORME";
-            });
-
-            // Regras básicas
-            if (subject.length < 10 || subject.toLowerCase().includes('duvida')) document.getElementById('select_c2_1').value = "NAO_CONFORME";
-            if (!content.includes('http') && !content.toLowerCase().includes('anexo') && !content.toLowerCase().includes('print')) document.getElementById('select_c2_7').value = "NAO_CONFORME";
-            if (content.toLowerCase().includes('melhoria') && !content.toLowerCase().includes('croqui') && !content.toLowerCase().includes('layout')) document.getElementById('select_c2_8').value = "NAO_CONFORME";
-
-            document.getElementById('auditPositive').value = "Chamado com registros de interações salvas.";
-            document.getElementById('auditActionPlan').value = "Verificar inclusão de evidências visuais e detalhamento dos passos para reprodução conforme Seção 2 do Regimento.";
-
-            calculateScore();
-        }
-
-        // SALVAR AUDITORIA
-        function saveAudit() {
-            const ticketId = document.getElementById('ticketId').value.trim();
-            const agent = document.getElementById('agentName').value.trim();
-            const client = document.getElementById('clientName').value.trim();
-
-            if (!ticketId || !agent || !client) {
-                return alert('Preencha os campos obrigatórios: ID Chamado, Atendente e Cliente.');
-            }
-
-            const calc = calculateScore();
-            const auditData = {
-                id: 'AUD-' + Date.now(),
-                date: new Date().toLocaleDateString('pt-BR'),
-                ticketId,
-                agent,
-                client,
-                auditor: document.getElementById('auditorName').value || 'Auditor Qualidade',
-                subject: document.getElementById('ticketSubject').value,
-                category: document.getElementById('ticketCategory').value,
-                score: calc.score,
-                hasNC: calc.hasNC,
-                positive: document.getElementById('auditPositive').value,
-                actionPlan: document.getElementById('auditActionPlan').value,
-                criteria: {}
-            };
-
-            AUDIT_CRITERIA.forEach(c => {
-                auditData.criteria[c.id] = document.getElementById(`select_${c.id}`).value;
-            });
-
-            // Atualiza histórico
-            appState.audits.unshift(auditData);
-            localStorage.setItem('arquem_audits', JSON.stringify(appState.audits));
-
-            // Atualiza status na fila caso exista
-            const queueIndex = appState.syncedQueue.findIndex(q => q.id === ticketId);
-            if (queueIndex !== -1) {
-                appState.syncedQueue[queueIndex].status = 'AUDITED';
-                localStorage.setItem('arquem_queue', JSON.stringify(appState.syncedQueue));
-                updateQueueTable();
-            }
-
-            updateHistoryTable();
-            alert('✅ Auditoria salva com sucesso!');
-            switchTab('history');
-        }
-
-        // TABELA DE HISTÓRICO
-        function updateHistoryTable() {
-            const tbody = document.getElementById('historyTableBody');
-            if (appState.audits.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Nenhuma auditoria realizada ainda.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = appState.audits.map((a, idx) => `
-                <tr class="hover:bg-slate-50">
-                    <td class="p-3 text-slate-600">${a.date}</td>
-                    <td class="p-3 font-bold text-slate-800">#${a.ticketId}</td>
-                    <td class="p-3 font-medium text-slate-700">${a.agent}</td>
-                    <td class="p-3 text-slate-600">${a.client}</td>
-                    <td class="p-3 text-center font-bold ${a.hasNC ? 'text-red-600' : 'text-emerald-600'}">${a.score}%</td>
-                    <td class="p-3 text-center">
-                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${a.hasNC ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}">
-                            ${a.hasNC ? 'Com NC' : 'Conforme'}
-                        </span>
-                    </td>
-                    <td class="p-3 text-right">
-                        <button onclick="viewReport(${idx})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-900 text-white text-xs rounded transition-colors">
-                            Ver Laudo
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // LAUDO DE IMPRESSÃO A4
-        function viewReport(idx) {
-            const a = appState.audits[idx];
-            const area = document.getElementById('reportPrintArea');
-
-            area.innerHTML = `
-                <div class="border-b border-slate-200 pb-4 mb-6 flex justify-between items-center">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Arquem Sistemas</h2>
-                        <p class="text-xs text-slate-500">Laudo de Auditoria de Qualidade de Chamados</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs font-mono text-slate-400">Regulamento v2.0</span>
-                        <p class="text-xs text-slate-600">Data: ${a.date}</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg mb-6 text-xs">
-                    <div><strong>ID Chamado:</strong> #${a.ticketId}</div>
-                    <div><strong>Atendente:</strong> ${a.agent}</div>
-                    <div><strong>Cliente:</strong> ${a.client}</div>
-                    <div><strong>Auditor:</strong> ${a.auditor}</div>
-                    <div class="col-span-2"><strong>Assunto:</strong> ${a.subject}</div>
-                </div>
-
-                <div class="mb-6">
-                    <h3 class="font-bold text-sm text-slate-800 mb-2">Resultado da Avaliação</h3>
-                    <div class="p-4 rounded-lg border text-center ${a.hasNC ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}">
-                        <span class="text-2xl font-black">${a.score} / 100 pts</span>
-                        <p class="text-xs mt-1 font-semibold">${a.hasNC ? 'NÃO CONFORMIDADE IDENTIFICADA' : 'ATENDIMENTO EM CONFORMIDADE'}</p>
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <h3 class="font-bold text-sm text-slate-800 mb-2">Detalhamento dos Critérios (Seção 2)</h3>
-                    <div class="space-y-1.5 text-xs">
-                        ${AUDIT_CRITERIA.map(c => {
-                            const val = a.criteria[c.id] || 'CONFORME';
-                            return `
-                                <div class="flex justify-between items-center p-2 rounded ${val === 'NAO_CONFORME' ? 'bg-red-50 text-red-900' : 'bg-slate-50'}">
-                                    <span>${c.title}</span>
-                                    <span class="font-bold ${val === 'NAO_CONFORME' ? 'text-red-600' : 'text-slate-600'}">${val}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-
-                ${a.positive ? `<div class="mb-4"><strong>Elogios / Pontos Fortes:</strong><p class="text-xs text-slate-600 mt-1">${a.positive}</p></div>` : ''}
-                ${a.actionPlan ? `<div class="mb-4"><strong>Plano de Ação Corretiva:</strong><p class="text-xs text-slate-600 mt-1">${a.actionPlan}</p></div>` : ''}
-            `;
-
-            document.getElementById('modalReport').classList.remove('hidden');
-        }
-
-        function closeModalReport() {
-            document.getElementById('modalReport').classList.add('hidden');
-        }
-
-        // RENDERIZAR DASHBOARD & GRÁFICOS
-        function renderDashboard() {
-            const total = appState.audits.length;
-            const avgScore = total > 0 ? (appState.audits.reduce((acc, curr) => acc + curr.score, 0) / total).toFixed(1) : '0.0';
-            const ncCount = appState.audits.filter(a => a.hasNC).length;
-            const confRate = total > 0 ? Math.round(((total - ncCount) / total) * 100) : 0;
-
-            document.getElementById('kpiTotalAudits').innerText = total;
-            document.getElementById('kpiAvgScore').innerText = avgScore;
-            document.getElementById('kpiConformityRate').innerText = confRate + '%';
-            document.getElementById('kpiTotalNc').innerText = ncCount;
-
-            // Gráfico de NCs por Critério
-            const ncCountsByCriteria = AUDIT_CRITERIA.map(c => {
-                return appState.audits.filter(a => a.criteria && a.criteria[c.id] === 'NAO_CONFORME').length;
-            });
-
-            const ctx1 = document.getElementById('chartCriteriaNC').getContext('2d');
-            if (criteriaChartInstance) criteriaChartInstance.destroy();
-
-            criteriaChartInstance = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: AUDIT_CRITERIA.map(c => c.id.replace('c2_', 'Crit ')),
-                    datasets: [{
-                        label: 'Não Conformidades',
-                        data: ncCountsByCriteria,
-                        backgroundColor: '#ef4444'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            // Gráfico de Distribuição
-            const ctx2 = document.getElementById('chartStatusDist').getContext('2d');
-            if (statusChartInstance) statusChartInstance.destroy();
-
-            statusChartInstance = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Conforme', 'Com Não Conformidade'],
-                    datasets: [{
-                        data: [total - ncCount, ncCount],
-                        backgroundColor: ['#10b981', '#ef4444']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-
-        // CARREGAR DADOS DEMO
-        function loadMockData() {
-            appState.audits = [
-                { id: 'AUD-1', date: '22/10/2026', ticketId: '10294', agent: 'Carlos Silva', client: 'Mercado BomPreço', auditor: 'Mariana Qualidade', subject: 'Dúvida na nota fiscal', category: 'Fiscal', score: 82, hasNC: true, positive: 'Boa comunicação', actionPlan: 'Ajustar assunto conforme a macro', criteria: { c2_1: 'NAO_CONFORME', c2_2: 'CONFORME', c2_3: 'CONFORME', c2_4: 'CONFORME', c2_5: 'CONFORME', c2_6: 'CONFORME', c2_7: 'CONFORME', c2_8: 'NA', c2_9: 'CONFORME', c2_10: 'CONFORME', c2_11: 'CONFORME', c2_12: 'CONFORME', c2_13: 'CONFORME' } },
-                { id: 'AUD-2', date: '23/10/2026', ticketId: '10301', agent: 'Ana Souza', client: 'Farmácia Central', auditor: 'Mariana Qualidade', subject: 'ACO - Loja Centro - Erro ao emitir cupom', category: 'PDV', score: 100, hasNC: false, positive: 'Passo a passo perfeito', actionPlan: 'Nenhuma ação necessária', criteria: { c2_1: 'CONFORME', c2_2: 'CONFORME', c2_3: 'CONFORME', c2_4: 'CONFORME', c2_5: 'CONFORME', c2_6: 'CONFORME', c2_7: 'CONFORME', c2_8: 'NA', c2_9: 'CONFORME', c2_10: 'CONFORME', c2_11: 'CONFORME', c2_12: 'CONFORME', c2_13: 'CONFORME' } }
-            ];
-            localStorage.setItem('arquem_audits', JSON.stringify(appState.audits));
-            updateHistoryTable();
-            renderDashboard();
-            alert('Dados demonstrativos carregados!');
-        }
-
-        // EXPORTAR CSV
-        function exportToCsv() {
-            if (appState.audits.length === 0) return alert('Nenhum dado para exportar.');
-            let csv = "ID,Data,Chamado,Atendente,Cliente,Nota,Status\n";
-            appState.audits.forEach(a => {
-                csv += `"${a.id}","${a.date}","${a.ticketId}","${a.agent}","${a.client}","${a.score}","${a.hasNC ? 'Com NC' : 'Conforme'}"\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'relatorio_auditoria_arquem.csv');
-            a.click();
-        }
-    </script>
-</body>
+            )();
+        </script>
+    </body>
 </html>
