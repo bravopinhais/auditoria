@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Central de Auditoria | Ticket Manager & Consulta Inteligente</title>
+<title>Central de Auditoria | Ticket Manager & IA</title>
 <!-- Bibliotecas para Excel (.xlsx) e Gráficos Interativos (Chart.js) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -100,7 +100,6 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 }
 .pivot-controls div { flex: 1; min-width: 180px; }
 
-/* ESTILOS DA IA DE CONSULTA DINÂMICA */
 .ai-query-box {
   background: linear-gradient(135deg, #eff6ff, #f0f9ff);
   border: 1px solid var(--ai-border);
@@ -139,7 +138,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 @media(max-width:700px){.layout{display:block}aside{display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.nav{width:auto;white-space:nowrap}main{padding:14px}.head{display:block}.head .tools{margin-top:12px}.grid,.charts-grid{gap:8px}.metric{padding:12px}.value{font-size:23px}.search{min-width:100%;}.top{padding:0 14px}}
 </style></head>
 <body>
-<header class="top"><div class="brand"><span>✓</span>Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Ticket Manager & IA de Consulta</span></div><div><span class="status" id="status">Sistema Local Ativo</span></div></header>
+<header class="top"><div class="brand"><span>✓</span>Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Ticket Manager & IA</span></div><div><span class="status" id="status">Sistema Local Ativo</span></div></header>
 
 <div id="appView" class="layout"><aside>
   <button class="nav active" data-page="overview">▦ Visão geral</button>
@@ -155,7 +154,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 </aside>
 <main><div class="head"><div><div class="eyebrow">QUALIDADE • OPERAÇÃO</div><h1 id="title">Visão geral</h1><div class="muted" id="subtitle">Acompanhe a fila e identifique onde concentrar a auditoria.</div></div><div class="tools"><button id="refresh" class="btn secondary">↻ Atualizar</button><button id="export" class="btn primary">Exportar CSV</button></div></div><div id="appNotice" class="notice"></div>
 
-<!-- VISÃO GERAL COM GRÁFICOS DINÂMICOS -->
+<!-- VISÃO GERAL -->
 <section id="overviewPage">
 <div class="grid">
   <div class="metric"><label>Chamados pendentes</label><div id="pendingN" class="value">0</div><small>Exclui status de encerramento reconhecidos</small></div>
@@ -577,11 +576,7 @@ function loadData() {
   }));
 
   processPeopleData();
-  render();
-  renderCharts();
-  renderPivotTable();
-  renderExecutiveReport();
-  renderCrossAudit();
+  renderAllViews();
   $("lastRefresh").textContent = new Date().toLocaleString("pt-BR");
 }
 
@@ -614,7 +609,15 @@ function ticketRow(t,compact=false){
   return `<tr><td>${ticketBtn}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
 }
 
-function render(){
+function renderAllViews() {
+ renderOverview();
+ renderCharts();
+ renderPivotTable();
+ renderExecutiveReport();
+ renderCrossAudit();
+}
+
+function renderOverview(){
  const priorityTickets = pending.filter(t => t.priority_client);
  const totalHours = pending.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
  const oldTickets = pending.filter(t => (t.age_days || 0) >= 7).length;
@@ -642,23 +645,16 @@ function render(){
  $("peopleEmpty").classList.toggle("hidden",people.length>0);
 }
 
-// IA DE CONSULTA DINÂMICA POR EMPRESA OU COLABORADOR
 function runAIInteractiveSearch() {
   const query = $("aiQueryInput").value.trim().toLowerCase();
-  if (!query) {
-    alert("Por favor, digite o nome de uma empresa ou colaborador.");
-    return;
-  }
+  if (!query) return alert("Por favor, digite o nome de uma empresa ou colaborador.");
 
   const filtered = pending.filter(t => 
     String(t.client_name || "").toLowerCase().includes(query) ||
     String(t.owner_name || "").toLowerCase().includes(query)
   );
 
-  if (filtered.length === 0) {
-    alert(`Nenhum chamado encontrado para "${query}". Tente buscar por termos como: 40 Arquem, Lux, Dr Óculos, Felipe, Davi...`);
-    return;
-  }
+  if (filtered.length === 0) return alert(`Nenhum chamado encontrado para "${query}".`);
 
   const totalWorked = filtered.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
   const totalPromised = filtered.reduce((acc, t) => acc + Number(t.promised_hours || (Number(t.total_hours || 0) * 1.25)), 0);
@@ -674,9 +670,9 @@ function runAIInteractiveSearch() {
 
   let alertHtml = "";
   if (totalWorked > totalPromised) {
-    alertHtml += `<div class="ai-alert-item danger"><b>🚨 Alerta de Desvio de Horas:</b> O tempo trabalhado (${hours(totalWorked)}h) ultrapassou o tempo prometido/estimado (${hours(totalPromised)}h). Recomenda-se renegociação de escopo ou aditivo de contrato.</div>`;
+    alertHtml += `<div class="ai-alert-item danger"><b>🚨 Alerta de Desvio:</b> O tempo trabalhado (${hours(totalWorked)}h) ultrapassou o tempo prometido/estimado (${hours(totalPromised)}h).</div>`;
   } else {
-    alertHtml += `<div class="ai-alert-item info"><b>✅ Execução Dentro do Prazo:</b> A execução está consumindo ${execRatio}% da estimativa total alocada aos chamados de projetos.</div>`;
+    alertHtml += `<div class="ai-alert-item info"><b>✅ Execução Normal:</b> A execução está consumindo ${execRatio}% da estimativa total.</div>`;
   }
 
   $("aiQueryAlerts").innerHTML = alertHtml;
@@ -688,7 +684,6 @@ function runAIInteractiveSearch() {
     const promised = Number(t.promised_hours || (worked * 1.25));
     const diff = worked - promised;
     const diffClass = diff > 0 ? "pill bad" : "pill";
-    const diffText = diff > 0 ? `+${hours(diff)} h (Excedido)` : `${hours(diff)} h`;
 
     return `<tr>
       <td>${ticketBtn}</td>
@@ -698,7 +693,7 @@ function runAIInteractiveSearch() {
       <td>${status(t.status)}</td>
       <td><b>${hours(worked)} h</b></td>
       <td>${hours(promised)} h</td>
-      <td><span class="${diffClass}">${diffText}</span></td>
+      <td><span class="${diffClass}">${diff > 0 ? '+' : ''}${hours(diff)} h</span></td>
     </tr>`;
   }).join("");
 
@@ -717,12 +712,7 @@ function renderCharts() {
     type: 'bar',
     data: {
       labels: agentLabels,
-      datasets: [{
-        label: 'Horas Apontadas',
-        data: agentHours,
-        backgroundColor: '#2563eb',
-        borderRadius: 6
-      }]
+      datasets: [{ label: 'Horas Apontadas', data: agentHours, backgroundColor: '#2563eb', borderRadius: 6 }]
     },
     options: { responsive: true, plugins: { legend: { display: false } } }
   });
@@ -738,10 +728,7 @@ function renderCharts() {
     type: 'doughnut',
     data: {
       labels: Object.keys(statusMap),
-      datasets: [{
-        data: Object.values(statusMap),
-        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6']
-      }]
+      datasets: [{ data: Object.values(statusMap), backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6'] }]
     },
     options: { responsive: true }
   });
@@ -934,19 +921,63 @@ function runAIAuditAnalysis() {
 }
 
 function renderCrossAudit() {
-  $("crossAuditRows").innerHTML = pending.map(t => {
+  const tableRows = pending.map(t => {
     const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
     const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
     const rClass = String(t.risk||"").toLowerCase().includes("alto") ? "pill bad" : "pill warn";
 
-    return `<tr><td>${ticketBtn}</td><td>${esc(t.client_name)}</td><td>${esc(t.subject)}</td><td>${num(t.age_days)}</td><td>${status(t.status)}</td><td>${esc(t.owner_name)}</td><td>${hours(t.total_hours)} h</td><td>${hours(t.hours_worked || t.total_hours)} h</td><td><span class="${rClass}">${esc(t.risk || 'Atenção')}</span></td><td title="${esc(t.action)}">${esc(t.action || 'Acompanhar.')}</td></tr>`;
+    return `<tr>
+      <td>${ticketBtn}</td>
+      <td>${esc(t.client_name)}</td>
+      <td>${esc(t.subject)}</td>
+      <td>${num(t.age_days)}</td>
+      <td>${status(t.status)}</td>
+      <td>${esc(t.owner_name)}</td>
+      <td>${hours(t.total_hours)} h</td>
+      <td>${hours(t.hours_worked || t.total_hours)} h</td>
+      <td><span class="${rClass}">${esc(t.risk || 'Atenção')}</span></td>
+      <td title="${esc(t.action)}">${esc(t.action || 'Acompanhar.')}</td>
+    </tr>`;
   }).join("");
+
+  $("crossAuditRows").innerHTML = tableRows;
 }
 
+// SWITCH PAGE COM ATUALIZAÇÃO AUTOMÁTICA DOS TÍTULOS E TABELAS
 function switchPage(p){
  page=p;
- ["overview","aiAssistant","pivotTable","tickets","people","priority","executiveReport","crossAudit","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
- document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
+ const pageNames = ["overview","aiAssistant","pivotTable","tickets","people","priority","executiveReport","crossAudit","settings","guide"];
+ pageNames.forEach(x => {
+   const el = $(x + "Page");
+   if (el) el.classList.toggle("hidden", x !== p);
+ });
+
+ document.querySelectorAll(".nav").forEach(b => b.classList.toggle("active", b.dataset.page === p));
+
+ const titleMap = {
+   overview: ["Visão geral", "Acompanhe a fila e identifique onde concentrar a auditoria."],
+   aiAssistant: ["Consulta com IA", "Pesquise por empresa ou colaborador para analisar prazos e desvios."],
+   pivotTable: ["Tabela Dinâmica", "Cruze dimensões, filtre métricas e agregue dados dinamicamente."],
+   tickets: ["Fila de chamados", "Pesquise, filtre e priorize os chamados que precisam de atenção."],
+   people: ["Horas por colaborador", "Compare o esforço registrado nos chamados pendentes."],
+   priority: ["Clientes Prioritários", "Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
+   executiveReport: ["Relatório Executivo para Diretoria", "Diagnóstico global, produtividade, ofensores e plano de ação."],
+   crossAudit: ["Matriz de Auditoria Cruzada", "Cruzamento de apontamentos, idade, horas e nível de risco por chamado."],
+   settings: ["Gerenciador de Dados", "Atualize os dados por Excel (.xlsx) / CSV ou restaure a demonstração."],
+   guide: ["Indicadores", "Entenda os critérios e limitações desta versão."]
+ };
+
+ if (titleMap[p]) {
+   $("title").textContent = titleMap[p][0];
+   $("subtitle").textContent = titleMap[p][1];
+ }
+
+ // Garante a renderização quando a aba abre
+ if (p === "crossAudit") renderCrossAudit();
+ else if (p === "overview") renderCharts();
+ else if (p === "pivotTable") renderPivotTable();
+
+ $("export").classList.toggle("hidden", p === "guide" || p === "settings" || p === "executiveReport");
 }
 
 $("btnSaveDomain").addEventListener("click", () => {
