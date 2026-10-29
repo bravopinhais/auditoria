@@ -225,8 +225,8 @@ function loadStoredConfig(){
 
 async function init(){
  loadStoredConfig();
- const url = $("supabaseUrl").value;
- const key = $("supabaseKey").value;
+ const url = $("supabaseUrl").value.trim();
+ const key = $("supabaseKey").value.trim();
 
  if(!url || !key) {
    $("status").textContent = "Pendente de Configuração";
@@ -375,7 +375,6 @@ $("saveSettings").addEventListener("click", ()=>{
   init();
 });
 
-// Testar Conexão com a API do Movidesk (Corrigido para evitar Erro 400 Bad Request)
 $("testMovidesk").addEventListener("click", async ()=>{
   const token = $("movideskToken").value.trim();
   if(!token) return notice("settingsNotice", "Insira o token do Movidesk antes de testar.", "error");
@@ -420,8 +419,31 @@ function exportCsv(){
   const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
 
-$("refresh").addEventListener("click",()=>{if(!sb){notice("appNotice","Supabase não inicializado.");return}load()});
-$("export").addEventListener("click",exportCsv);
+// Botão de Atualizar com verificação de instância
+$("refresh").addEventListener("click", async () => {
+  if (!sb) {
+    const url = $("supabaseUrl").value.trim();
+    const key = $("supabaseKey").value.trim();
+
+    if (!url || !key) {
+      notice("appNotice", "Preencha a URL e a Key do Supabase no menu '⚙ Configurações API' antes de atualizar.", "error");
+      switchPage("settings");
+      return;
+    }
+
+    try {
+      sb = window.supabase.createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+      $("status").textContent = "Conectado";
+    } catch (e) {
+      notice("appNotice", "Erro ao conectar com o Supabase: " + (e.message || e), "error");
+      return;
+    }
+  }
+
+  await load();
+});
+
+$("export").addEventListener("click", exportCsv);
 ["search","clientFilter","hoursFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.goto)));
