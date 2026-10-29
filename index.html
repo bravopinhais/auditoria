@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Central de Auditoria | Movidesk</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--navy:#142943;--blue:#2563eb;--bg:#f3f6fb;--line:#e2e8f0;--muted:#64748b;--ink:#17243a;--success:#16a34a;--danger:#dc2626;--priority-bg:#fef3c7;--priority-text:#b45309;--priority-border:#fde68a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Segoe UI,Arial,sans-serif}
@@ -48,20 +49,21 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 .foot{font-size:11px;color:#8793a5;padding:6px 0 20px}
 .priority-tag-list{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;background:#fff8f0;border-bottom:1px solid var(--line)}
 .priority-tag{background:#fff;border:1px solid var(--priority-border);color:var(--priority-text);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
-.report-card{padding:20px;border-bottom:1px solid var(--line)}
-.report-card h3{margin:0 0 10px;font-size:16px;color:var(--navy)}
 
-.ticket-link {
+.report-card{padding:20px;border-bottom:1px solid var(--line)}
+.report-card h3{margin:0 0 10px;font-size:15px;color:var(--navy)}
+
+.ticket-btn {
+  background: transparent;
+  border: 0;
   color: var(--blue);
   font-weight: 700;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-.ticket-link:hover {
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
   text-decoration: underline;
 }
+.ticket-btn:hover { color: #1d4ed8; }
 
 .date-filter-group {
   display: flex;
@@ -72,16 +74,8 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   border-radius: 9px;
   border: 1px solid #d6dfeb;
 }
-.date-filter-group label {
-  margin: 0;
-  font-size: 11px;
-  color: var(--muted);
-}
-.date-filter-group input {
-  padding: 4px 8px;
-  width: auto;
-  font-size: 12px;
-}
+.date-filter-group label { margin: 0; font-size: 11px; color: var(--muted); }
+.date-filter-group input { padding: 4px 8px; width: auto; font-size: 12px; }
 
 @media print {
   body { background: white; }
@@ -102,7 +96,8 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   <button class="nav" data-page="tickets">☷ Fila de chamados</button>
   <button class="nav" data-page="people">◷ Horas por colaborador</button>
   <button class="nav" data-page="priority">★ Clientes Prioritários</button>
-  <button class="nav" data-page="meetingReport">📊 Relatório p/ Reunião</button>
+  <button class="nav" data-page="executiveReport">📋 Relatório Executivo (Diretoria)</button>
+  <button class="nav" data-page="crossAudit">🔍 Auditoria Cruzada (Fila & Riscos)</button>
   <button class="nav" data-page="settings">⚙ Gerenciar Dados</button>
   <button class="nav" data-page="guide">ⓘ Indicadores</button>
 </aside>
@@ -202,40 +197,86 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   </div>
 </section>
 
-<!-- RELATÓRIO DINÂMICO PARA REUNIÕES -->
-<section id="meetingReportPage" class="hidden">
+<!-- RELATÓRIO EXECUTIVO (PARECER PARA DIRETORIA) -->
+<section id="executiveReportPage" class="hidden">
   <div class="panel">
     <div class="panelhead">
       <div>
-        <h2>Relatório Executivo para Reuniões</h2>
-        <small>Pauta consolidada para reuniões de alinhamento e tomadas de decisão.</small>
+        <h2>Relatório de Auditoria Operacional (Parecer Executivo)</h2>
+        <small>Estrutura oficial consolidada para conselho e diretoria.</small>
       </div>
       <button class="btn primary" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
     </div>
 
+    <!-- SUMÁRIO EXECUTIVO E DIAGNÓSTICO GLOBAL -->
     <div class="report-card">
-      <h3>1. Resumo da Operação</h3>
-      <p>Atualmente existem <b id="rptTotalPending">0</b> chamados pendentes na fila, totalizando <b id="rptTotalHours">0 h</b> de esforço apontado. Do total de chamados, <b id="rptPriorityCount">0</b> pertencem ao grupo de clientes prioritários.</p>
+      <h3>Sumário Executivo & Diagnóstico Global</h3>
+      <p id="execSummaryText">No período auditado, a operação registrou o volume total de horas aplicadas e acompanhamento dos chamados operacionais.</p>
+      <div class="grid" style="margin-top:14px">
+        <div class="metric"><label>TOTAL HORAS AUDITADAS</label><div id="execTotalHours" class="value">459,55 h</div></div>
+        <div class="metric"><label>TICKETS TRABALHADOS</label><div id="execTotalTickets" class="value">281</div></div>
+        <div class="metric"><label>TAXA DE FECHAMENTO</label><div id="execClosureRate" class="value">78,9%</div></div>
+        <div class="metric"><label>CONCENTRAÇÃO MAIOR CLIENTE</label><div id="execMaxClientConc" class="value">35,1%</div></div>
+      </div>
     </div>
 
+    <!-- 1. DESEMPENHO E PRODUTIVIDADE POR AGENTE -->
     <div class="report-card">
-      <h3>2. Pauta: Clientes Prioritários Críticos</h3>
+      <h3>1. Desempenho e Produtividade por Agente</h3>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>Cliente</th><th>Pendentes</th><th>Críticos (7+ dias)</th><th>Sem Atualização</th><th>Horas</th></tr></thead>
-          <tbody id="rptPriorityRows"></tbody>
+          <thead><tr><th>Agente</th><th>Perfil Funcional</th><th>Horas Total</th><th>% Alocação</th><th>Apontamentos</th><th>Média h/Reg.</th><th>Tickets</th></tr></thead>
+          <tbody id="execAgentRows"></tbody>
         </table>
       </div>
     </div>
 
+    <!-- 2. SERVIÇOS E ATIVIDADES -->
     <div class="report-card">
-      <h3>3. Top 5 Chamados mais Antigos (Ação Imediata)</h3>
+      <h3>2. Detalhamento dos Serviços e Categorias</h3>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>ID</th><th>Cliente</th><th>Assunto</th><th>Responsável</th><th>Idade (dias)</th><th>Status</th></tr></thead>
-          <tbody id="rptOldestRows"></tbody>
+          <thead><tr><th>Categoria do Serviço</th><th>Horas Consumidas</th><th>% do Total</th><th>Natureza Predominante</th></tr></thead>
+          <tbody id="execServiceRows"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- 3. CHAMADOS CRÍTICOS (PROJETOS OFENSORES) -->
+    <div class="report-card">
+      <h3>3. Auditoria de Chamados Críticos (Projetos Ofensores)</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Ticket</th><th>Cliente</th><th>Descrição do Projeto</th><th>Horas</th><th>Status</th></tr></thead>
+          <tbody id="execCriticalRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. PLANO DE AÇÃO & RECOMENDAÇÕES -->
+    <div class="report-card">
+      <h3>4. Plano de Ação & Recomendações à Diretoria</h3>
+      <ol style="line-height:1.8;padding-left:20px;color:var(--ink)">
+        <li><b>Revisão de Franquia & Contratos:</b> Formalizar aditivo contratual com o maior cliente ofensor para compensar o impacto da alocação de capacidade técnica.</li>
+        <li><b>Matriz de Redundância (Shadowing):</b> Parear agentes juniores/trainees na arquitetura de legados para mitigar riscos de dependência única.</li>
+        <li><b>Mutirão de Homologação:</b> Executar rotina de cobrança semanal nos chamados parados em "Fila" para obter aceite final do cliente.</li>
+        <li><b>Padronização de Time Tracking:</b> Estabelecer piso mínimo de apontamentos para evitar micro-apontamentos dispersos.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- AUDITORIA CRUZADA (FILA & RISCOS) -->
+<section id="crossAuditPage" class="hidden">
+  <div class="panel">
+    <div class="panelhead">
+      <div><h2>Matriz de Auditoria Cruzada & Fila de Riscos</h2><small>Cruzamento de apontamentos, idade, horas e nível de risco por chamado.</small></div>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Número</th><th>Cliente</th><th>Assunto</th><th>Dias Aberto</th><th>Status</th><th>Responsável</th><th>Horas Apontadas</th><th>Horas Trabalhadas</th><th>Risco</th><th>Ação Recomendada</th></tr></thead>
+        <tbody id="crossAuditRows"></tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -251,7 +292,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     <div class="form-group">
       <label for="movideskDomain">Domínio / URL do seu Movidesk</label>
       <input type="text" id="movideskDomain" placeholder="https://suaempresa.movidesk.com">
-      <small>Usado para gerar os links diretos de clique nos chamados.</small>
+      <small>Exemplo: https://minhaempresa.movidesk.com</small>
     </div>
 
     <div style="display:flex;gap:10px;margin-bottom:24px">
@@ -261,9 +302,9 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
 
     <div class="form-group">
-      <label for="csvFileInput">Importar Arquivo CSV / Excel (Movidesk)</label>
-      <input type="file" id="csvFileInput" accept=".csv, .json, .txt">
-      <small>Colunas aceitas: Ticket ID, Client Name, Subject, Owner Name, Status, Hours, Age Days, Days Since Update, Date.</small>
+      <label for="fileInput">Importar Arquivo (CSV / XLSX do Movidesk ou Auditoria)</label>
+      <input type="file" id="fileInput" accept=".csv, .xlsx, .xls, .json">
+      <small>Aceita planilha em Excel com abas do relatório ou relatórios CSV nativos.</small>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px">
@@ -275,7 +316,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 <!-- GUIA -->
 <section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> exclui chamados com status reconhecidos como encerrados, concluídos, resolvidos ou cancelados.</p><p><b>Clientes prioritários:</b> lista cadastrada dos 10 clientes estratégicos (Dr Óculos, Ferri, Instituto, Paulo e Condah, Atacadão do Óculos, IMV, Paschoal LAB, Cardeal, Sr dos Óculos, Lux).</p><p><b>Operação Local:</b> os dados são salvos localmente no navegador (LocalStorage) sem dependência de APIs externas.</p></div></section>
 
-<div class="foot">Central de Auditoria • Dados em Memória • Atualizado em <span id="lastRefresh">—</span></div></main></div>
+<div class="foot">Central de Auditoria • Guardiões do Bravo • Atualizado em <span id="lastRefresh">—</span></div></main></div>
 
 <script>
 (() => {
@@ -293,13 +334,28 @@ const PRIORITY_CLIENTS = [
 ];
 
 const DEMO_TICKETS = [
-  { ticket_id: "1011", client_name: "Dr Óculos", subject: "Integração do sistema travada", owner_name: "Carlos Silva", status: "Em Andamento", total_hours: 4.5, age_days: 12, days_since_update: 8, synced_at: "2026-10-28" },
-  { ticket_id: "1012", client_name: "Cardeal", subject: "Ajuste na emissão de nota fiscal", owner_name: "Ana Costa", status: "Aberto", total_hours: 0, age_days: 9, days_since_update: 3, synced_at: "2026-10-29" },
-  { ticket_id: "1013", client_name: "Lux", subject: "Erro de permissão no usuário", owner_name: "Mariana Souza", status: "Pendente", total_hours: 2.0, age_days: 4, days_since_update: 1, synced_at: "2026-10-20" },
-  { ticket_id: "1014", client_name: "Atacadão do Óculos", subject: "Relatório de vendas divergente", owner_name: "Carlos Silva", status: "Aberto", total_hours: 1.5, age_days: 15, days_since_update: 10, synced_at: "2026-10-25" },
-  { ticket_id: "1015", client_name: "Cliente Exemplo A", subject: "Dúvida no cadastro de produtos", owner_name: "Pedro Lima", status: "Novo", total_hours: 0, age_days: 2, days_since_update: 2, synced_at: "2026-10-15" },
-  { ticket_id: "1016", client_name: "Ferri", subject: "Lentidão na consulta de estoque", owner_name: "Ana Costa", status: "Em Andamento", total_hours: 6.0, age_days: 8, days_since_update: 5, synced_at: "2026-10-27" },
-  { ticket_id: "1017", client_name: "Instituto", subject: "Backup automático falhou", owner_name: "Pedro Lima", status: "Urgente", total_hours: 3.2, age_days: 11, days_since_update: 9, synced_at: "2026-10-18" }
+  { ticket_id: "100465", client_name: "Arquem Sistemas", subject: "Transição WhatsApp / ZapWeb", owner_name: "Felipe Cavassin", status: "Fila", total_hours: 29.42, hours_worked: 29.42, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar justificativa." },
+  { ticket_id: "101191", client_name: "Arquem Sistemas", subject: "Projeto Inteligência Artificial RBIA", owner_name: "Felipe Cavassin", status: "Em Execução", total_hours: 26.78, hours_worked: 26.78, age_days: 8, days_since_update: 2, synced_at: "2026-10-29", risk: "Atenção", action: "Solicitar atualização objetiva e previsão de conclusão." },
+  { ticket_id: "97233", client_name: "EPS Embrapol", subject: "ACOLAB - Fase 2 Reforma Tributária", owner_name: "Guilherme G. Bonato", status: "Fila", total_hours: 16.78, hours_worked: 12.70, age_days: 77, days_since_update: 10, synced_at: "2026-10-20", risk: "Alto", action: "Cobrar justificativa da permanência na fila." },
+  { ticket_id: "97012", client_name: "Dr Óculos", subject: "RB - Acordo em Recebimento de Vendas", owner_name: "Cassiano Zanona", status: "Fila", total_hours: 0.68, hours_worked: 0.68, age_days: 80, days_since_update: 8, synced_at: "2026-10-22", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Cobrar justificativa da permanência na fila." },
+  { ticket_id: "99940", client_name: "Ótica Lux", subject: "Trava de desvinculo e edição de venda", owner_name: "Guilherme G. Bonato", status: "Em Execução", total_hours: 6.98, hours_worked: 6.17, age_days: 31, days_since_update: 3, synced_at: "2026-10-28", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Solicitar atualização e prazos." },
+  { ticket_id: "101127", client_name: "Óticas Cardeal", subject: "RB - Saldo de Estoque Negativo", owner_name: "Davi Vinicius", status: "Fila", total_hours: 2.62, hours_worked: 2.58, age_days: 10, days_since_update: 4, synced_at: "2026-10-26", risk: "Rotina", action: "CLIENTE PRIORITÁRIO — Conferir resultado das horas." }
+];
+
+const DEMO_AGENTS = [
+  { agent: "Felipe Cavassin", role: "Produção Pleno", hours: "166,07 h", alloc: "36,1%", appointments: 98, avg: "1,69 h", tickets: 48 },
+  { agent: "Davi Vinicius", role: "Produção Junior", hours: "127,85 h", alloc: "27,8%", appointments: 215, avg: "0,59 h", tickets: 112 },
+  { agent: "Guilherme G. Bonato", role: "Produção Trainee", hours: "124,45 h", alloc: "27,1%", appointments: 178, avg: "0,70 h", tickets: 94 },
+  { agent: "Cassiano Zanona", role: "Produção Senior", hours: "22,02 h", alloc: "4,8%", appointments: 144, avg: "0,15 h", tickets: 78 },
+  { agent: "Lucas Matheus", role: "Operação / Apoio", hours: "19,17 h", alloc: "4,2%", appointments: 40, avg: "0,48 h", tickets: 12 }
+];
+
+const DEMO_SERVICES = [
+  { name: "Produção - CPO", hours: "168,23 h", pct: "36,6%", nature: "Sustentação, Correções e Engenharia de Software" },
+  { name: "Inteligência » Implantação", hours: "80,58 h", pct: "17,5%", nature: "Migração de Legados e Configuração de Clientes" },
+  { name: "Operação COO", hours: "65,03 h", pct: "14,1%", nature: "Atendimento Operacional e Acompanhamento" },
+  { name: "Inteligência » Sucesso do Cliente", hours: "37,88 h", pct: "8,2%", nature: "Treinamentos, Onboarding e Engajamento" },
+  { name: "Suporte & Qualidade (QA)", hours: "58,87 h", pct: "12,8%", nature: "Atendimento de Dúvidas e Testes de Software" }
 ];
 
 function isPriorityClient(clientName) {
@@ -314,18 +370,25 @@ const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateString("pt-BR"):"—"):"—";
 
-function notice(id,msg,type="error"){const e=$(id);e.textContent=msg;e.className="notice "+type}
-function clearNotice(id){$(id).className="notice"}
-
-function getMovideskUrl(ticketId) {
+window.openMovidesk = function(rawTicketId) {
   let domain = localStorage.getItem("movidesk_domain") || "";
-  if (!domain) return "#";
+  if (!domain) {
+    alert("Por favor, configure o Domínio do seu Movidesk na aba '⚙ Gerenciar Dados' antes de abrir chamados.");
+    switchPage("settings");
+    return;
+  }
   if (!/^https?:\/\//i.test(domain)) {
     domain = "https://" + domain;
   }
   domain = domain.replace(/\/+$/, '');
-  return `${domain}/Ticket/Edit/${ticketId}`;
-}
+  
+  const cleanId = String(rawTicketId || "").replace(/[^0-9]/g, '');
+  if (!cleanId) {
+    alert("Número de ticket inválido.");
+    return;
+  }
+  window.open(`${domain}/Ticket/Edit?id=${cleanId}`, "_blank");
+};
 
 function loadData() {
   const savedDomain = localStorage.getItem("movidesk_domain") || "";
@@ -346,7 +409,8 @@ function loadData() {
 
   processPeopleData();
   render();
-  renderMeetingReport();
+  renderExecutiveReport();
+  renderCrossAudit();
   $("lastRefresh").textContent = new Date().toLocaleString("pt-BR");
 }
 
@@ -365,18 +429,15 @@ function processPeopleData() {
   people = Object.values(map).sort((a,b) => b.total_hours - a.total_hours);
 }
 
-function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
+function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo|fila/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
 
 function ticketRow(t,compact=false){
-  const url = getMovideskUrl(t.ticket_id);
-  const ticketLink = url !== "#" 
-    ? `<a href="${url}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a>`
-    : `<b>#${esc(t.ticket_id)}</b>`;
-
+  const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
+  const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
   const cli = t.priority_client ? `<span class="pill priority">★ ${esc(t.client_name||"Prioritário")}</span>` : esc(t.client_name||"—");
   
-  if(compact) return `<tr><td title="${esc(t.subject)}">${ticketLink} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.synced_at)}</td></tr>`;
-  return `<tr><td>${ticketLink}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
+  if(compact) return `<tr><td title="${esc(t.subject)}">${ticketBtn} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.synced_at)}</td></tr>`;
+  return `<tr><td>${ticketBtn}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
 }
 
 function render(){
@@ -474,64 +535,77 @@ function renderPrioritySection(priorityTickets) {
   }).join("");
 }
 
-function renderMeetingReport() {
-  const priorityTickets = pending.filter(t => t.priority_client);
-  const totalHours = pending.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
+function renderExecutiveReport() {
+  $("execAgentRows").innerHTML = DEMO_AGENTS.map(a => `<tr>
+    <td><b>${esc(a.agent)}</b></td>
+    <td>${esc(a.role)}</td>
+    <td><b>${esc(a.hours)}</b></td>
+    <td>${esc(a.alloc)}</td>
+    <td>${num(a.appointments)}</td>
+    <td>${esc(a.avg)}</td>
+    <td>${num(a.tickets)}</td>
+  </tr>`).join("");
 
-  $("rptTotalPending").textContent = num(pending.length);
-  $("rptTotalHours").textContent = hours(totalHours) + " h";
-  $("rptPriorityCount").textContent = num(priorityTickets.length);
+  $("execServiceRows").innerHTML = DEMO_SERVICES.map(s => `<tr>
+    <td><b>${esc(s.name)}</b></td>
+    <td>${esc(s.hours)}</td>
+    <td><b>${esc(s.pct)}</b></td>
+    <td>${esc(s.nature)}</td>
+  </tr>`).join("");
 
-  const displayList = ["Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", "Sr dos Óculos", "Lux"];
-  
-  $("rptPriorityRows").innerHTML = displayList.map(client => {
-    const tickets = pending.filter(t => isPriorityClient(t.client_name) && String(t.client_name).toLowerCase().includes(client.toLowerCase()));
-    const pOldCount = tickets.filter(t => (t.age_days || 0) >= 7).length;
-    const pStaleCount = tickets.filter(t => (t.days_since_update || 0) >= 7).length;
-    const pTotalHours = tickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
-
+  const critical = [...pending].sort((a,b) => Number(b.total_hours||0) - Number(a.total_hours||0)).slice(0, 6);
+  $("execCriticalRows").innerHTML = critical.map(t => {
+    const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
+    const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
     return `<tr>
-      <td><b>${client}</b></td>
-      <td>${num(tickets.length)}</td>
-      <td>${pOldCount > 0 ? `<span class="pill bad">${pOldCount}</span>` : '0'}</td>
-      <td>${pStaleCount > 0 ? `<span class="pill warn">${pStaleCount}</span>` : '0'}</td>
-      <td><b>${hours(pTotalHours)} h</b></td>
+      <td>${ticketBtn}</td>
+      <td><b>${esc(t.client_name)}</b></td>
+      <td>${esc(t.subject)}</td>
+      <td><b>${hours(t.total_hours)} h</b></td>
+      <td>${status(t.status)}</td>
     </tr>`;
   }).join("");
+}
 
-  const oldest = [...pending].sort((a,b) => Number(b.age_days || 0) - Number(a.age_days || 0)).slice(0, 5);
-  $("rptOldestRows").innerHTML = oldest.map(t => {
-    const url = getMovideskUrl(t.ticket_id);
-    const link = url !== "#" ? `<a href="${url}" target="_blank" class="ticket-link">#${esc(t.ticket_id)} ↗</a>` : `#${esc(t.ticket_id)}`;
+function renderCrossAudit() {
+  $("crossAuditRows").innerHTML = pending.map(t => {
+    const cleanId = String(t.ticket_id || "").replace(/[^0-9]/g, '');
+    const ticketBtn = `<button onclick="openMovidesk('${esc(cleanId)}')" class="ticket-btn">#${esc(cleanId)} ↗</button>`;
+    const rClass = String(t.risk||"").toLowerCase().includes("alto") ? "pill bad" : "pill warn";
+
     return `<tr>
-      <td>${link}</td>
-      <td>${esc(t.client_name || '—')}</td>
-      <td>${esc(t.subject || 'Sem assunto')}</td>
-      <td>${esc(t.owner_name || '—')}</td>
-      <td><b style="color:#dc2626">${num(t.age_days)} dias</b></td>
+      <td>${ticketBtn}</td>
+      <td>${esc(t.client_name)}</td>
+      <td>${esc(t.subject)}</td>
+      <td>${num(t.age_days)}</td>
       <td>${status(t.status)}</td>
+      <td>${esc(t.owner_name)}</td>
+      <td>${hours(t.total_hours)} h</td>
+      <td>${hours(t.hours_worked || t.total_hours)} h</td>
+      <td><span class="${rClass}">${esc(t.risk || 'Atenção')}</span></td>
+      <td>${esc(t.action || 'Verificar e acompanhar pendências.')}</td>
     </tr>`;
   }).join("");
 }
 
 function switchPage(p){
  page=p;
- ["overview","tickets","people","priority","meetingReport","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
+ ["overview","tickets","people","priority","executiveReport","crossAudit","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
  document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
  let m={
    overview:["Visão geral","Acompanhe a fila e identifique onde concentrar a auditoria."],
    tickets:["Fila de chamados","Pesquise, filtre e priorize os chamados que precisam de atenção."],
    people:["Horas por colaborador","Compare o esforço registrado nos chamados pendentes."],
    priority:["Clientes Prioritários","Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
-   meetingReport:["Relatório para Reuniões","Pauta estruturada e pronta para impressão ou exportação em PDF."],
-   settings:["Gerenciador de Dados","Atualize os dados do sistema por arquivo CSV ou restaure a demonstração."],
+   executiveReport:["Relatório Executivo para Diretoria","Diagnóstico global, produtividade, ofensores e plano de ação."],
+   crossAudit:["Matriz de Auditoria Cruzada","Acompanhamento individualizado por risco e recomendação."],
+   settings:["Gerenciador de Dados","Atualize os dados por Excel (.xlsx) / CSV ou restaure a demonstração."],
    guide:["Indicadores","Entenda os critérios e limitações desta versão."]
  }[p];
  $("title").textContent=m[0];$("subtitle").textContent=m[1];
- $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="meetingReport");
+ $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="executiveReport");
 }
 
-// AÇÃO DE SALVAR DOMÍNIO CORRIGIDA
 $("btnSaveDomain").addEventListener("click", () => {
   let domain = $("movideskDomain").value.trim();
   if (domain && !/^https?:\/\//i.test(domain)) {
@@ -543,57 +617,83 @@ $("btnSaveDomain").addEventListener("click", () => {
   loadData();
 });
 
-$("csvFileInput").addEventListener("change", (e) => {
+// SUPORTE A EXCEL (.XLSX) E CSV
+$("fileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = (evt) => {
-    try {
-      const content = evt.target.result;
-      if (file.name.endsWith(".json")) {
-        const parsed = JSON.parse(content);
-        if (Array.isArray(parsed)) {
-          localStorage.setItem("local_audit_tickets", JSON.stringify(parsed));
-          notice("settingsNotice", "Dados atualizados com sucesso via JSON!", "success");
-          loadData();
-          return;
-        }
-      }
-      
-      const lines = content.split(/\r\n|\n/);
-      if (lines.length < 2) throw new Error("O arquivo CSV selecionado está vazio.");
-      
-      const parsedTickets = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(";").map(c => c.replace(/^"|"$/g, '').trim());
-        if (cols.length >= 3 && cols[0]) {
-          parsedTickets.push({
-            ticket_id: cols[0],
-            subject: cols[1] || "Sem Assunto",
-            client_name: cols[2] || "—",
-            status: cols[3] || "Aberto",
-            owner_name: cols[4] || "—",
-            total_hours: parseFloat(cols[5] || 0) || 0,
-            age_days: parseInt(cols[6] || 0) || 0,
-            days_since_update: parseInt(cols[7] || 0) || 0,
-            synced_at: cols[8] || new Date().toISOString().split('T')[0]
-          });
-        }
-      }
+  
+  if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        let sheetName = workbook.SheetNames.find(n => n.includes("Matriz") || n.includes("Ranking") || n.includes("Fila") || n.includes("Lux")) || workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
 
-      if (parsedTickets.length > 0) {
-        localStorage.setItem("local_audit_tickets", JSON.stringify(parsedTickets));
-        notice("settingsNotice", `Importados ${parsedTickets.length} chamados com sucesso!`, "success");
-        loadData();
-      } else {
-        throw new Error("Não foi possível extrair chamados válidos do CSV.");
+        if (json.length > 0) {
+          const parsedTickets = json.map(r => ({
+            ticket_id: String(r["Número"] || r["Ticket"] || r["ID"] || ""),
+            client_name: r["Cliente"] || "—",
+            subject: r["Assunto"] || "Sem Assunto",
+            status: r["Status"] || "Aberto",
+            owner_name: r["Responsável atual"] || r["Responsável"] || "—",
+            total_hours: parseFloat(String(r["Horas apontadas"]||0).replace(/[^0-9.]/g, '')) || 0,
+            hours_worked: parseFloat(String(r["Horas trabalhadas"]||0).replace(/[^0-9.]/g, '')) || 0,
+            age_days: parseInt(r["Dias em aberto"] || r["Idade"] || 0) || 0,
+            days_since_update: 0,
+            synced_at: new Date().toISOString().split('T')[0],
+            risk: r["Risco de acompanhamento"] || "Rotina",
+            action: r["Ação recomendada"] || "Acompanhar"
+          })).filter(t => t.ticket_id);
+
+          localStorage.setItem("local_audit_tickets", JSON.stringify(parsedTickets));
+          notice("settingsNotice", `Importados ${parsedTickets.length} chamados da aba "${sheetName}" com sucesso!`, "success");
+          loadData();
+        } else {
+          throw new Error("Planilha vazia.");
+        }
+      } catch(err) {
+        notice("settingsNotice", "Erro ao ler Excel: " + err.message, "error");
       }
-    } catch(err) {
-      notice("settingsNotice", "Erro ao processar o arquivo: " + err.message, "error");
-    }
-  };
-  reader.readAsText(file);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.onload = (evt) => {
+      try {
+        const content = evt.target.result;
+        const lines = content.split(/\r\n|\n/);
+        const parsedTickets = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(";").map(c => c.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 3 && cols[0]) {
+            parsedTickets.push({
+              ticket_id: cols[0],
+              subject: cols[1] || "Sem Assunto",
+              client_name: cols[2] || "—",
+              status: cols[3] || "Aberto",
+              owner_name: cols[4] || "—",
+              total_hours: parseFloat(cols[5] || 0) || 0,
+              age_days: parseInt(cols[6] || 0) || 0,
+              days_since_update: parseInt(cols[7] || 0) || 0,
+              synced_at: cols[8] || new Date().toISOString().split('T')[0]
+            });
+          }
+        }
+        if (parsedTickets.length > 0) {
+          localStorage.setItem("local_audit_tickets", JSON.stringify(parsedTickets));
+          notice("settingsNotice", `Importados ${parsedTickets.length} chamados com sucesso!`, "success");
+          loadData();
+        }
+      } catch(err) {
+        notice("settingsNotice", "Erro ao importar CSV: " + err.message, "error");
+      }
+    };
+    reader.readAsText(file);
+  }
 });
 
 $("btnResetData").addEventListener("click", () => {
@@ -611,22 +711,9 @@ function exportCsv(){
   if(page==="people"){
     headers=["Colaborador","Chamados Total","Apontamentos","Minutos","Horas"];
     rows=people.map(p=>[p.collaborator_name,p.ticket_count,p.appointment_count,p.total_minutes,p.total_hours]);
-  } else if(page==="priority"){
-    headers=["Cliente Prioritário","Chamados Pendentes","Com 7+ dias","Sem Atualização Recentemente","Horas Apontadas"];
-    const displayList = ["Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", "Sr dos Óculos", "Lux"];
-    rows = displayList.map(client => {
-      const tickets = pending.filter(t => isPriorityClient(t.client_name) && String(t.client_name).toLowerCase().includes(client.toLowerCase()));
-      return [
-        client,
-        tickets.length,
-        tickets.filter(t => (t.age_days || 0) >= 7).length,
-        tickets.filter(t => (t.days_since_update || 0) >= 7).length,
-        tickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0)
-      ];
-    });
   } else {
-    headers=["ID","Assunto","Cliente","Status","Prioridade","Responsável","Horas","Idade dias","Dias sem atualização","Cliente prioritário","Data"];
-    rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.priority,t.owner_name,t.total_hours,t.age_days,t.days_since_update,t.priority_client ? "SIM" : "NÃO",t.synced_at]);
+    headers=["ID","Assunto","Cliente","Status","Responsável","Horas","Idade dias","Risco","Ação Recomendada"];
+    rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.owner_name,t.total_hours,t.age_days,t.risk||"Rotina",t.action||"Acompanhar"]);
   }
   const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
