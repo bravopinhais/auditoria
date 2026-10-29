@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Central de Auditoria | Movidesk</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--navy:#142943;--blue:#2563eb;--bg:#f3f6fb;--line:#e2e8f0;--muted:#64748b;--ink:#17243a;--success:#16a34a;--danger:#dc2626;--priority-bg:#fef3c7;--priority-text:#b45309;--priority-border:#fde68a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Segoe UI,Arial,sans-serif}
@@ -44,8 +43,8 @@ tr:hover td{background:#f8fbff}
 .notice.success{display:block;background:#f0fdf4;color:#166534}
 .hidden{display:none!important}
 label{display:block;font-size:12px;font-weight:650;margin:13px 0 6px}
-input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
-.form-group{margin-bottom:16px;max-width:500px}
+input, textarea{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px;font-family:inherit}
+.form-group{margin-bottom:16px;max-width:600px}
 .foot{font-size:11px;color:#8793a5;padding:6px 0 20px}
 .priority-tag-list{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;background:#fff8f0;border-bottom:1px solid var(--line)}
 .priority-tag{background:#fff;border:1px solid var(--priority-border);color:var(--priority-text);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
@@ -64,7 +63,7 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 @media(max-width:700px){.layout{display:block}aside{display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.nav{width:auto;white-space:nowrap}main{padding:14px}.head{display:block}.head .tools{margin-top:12px}.grid{gap:8px}.metric{padding:12px}.value{font-size:23px}.search{min-width:100%;}.top{padding:0 14px}}
 </style></head>
 <body>
-<header class="top"><div class="brand"><span>✓</span>Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Movidesk</span></div><div><span class="status" id="status">Conectando...</span></div></header>
+<header class="top"><div class="brand"><span>✓</span>Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Movidesk</span></div><div><span class="status" id="status">Sistema Local Ativo</span></div></header>
 
 <div id="appView" class="layout"><aside>
   <button class="nav active" data-page="overview">▦ Visão geral</button>
@@ -72,7 +71,7 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
   <button class="nav" data-page="people">◷ Horas por colaborador</button>
   <button class="nav" data-page="priority">★ Clientes Prioritários</button>
   <button class="nav" data-page="meetingReport">📊 Relatório p/ Reunião</button>
-  <button class="nav" data-page="settings">⚙ Configurações API</button>
+  <button class="nav" data-page="settings">⚙ Gerenciar Dados</button>
   <button class="nav" data-page="guide">ⓘ Indicadores</button>
 </aside>
 <main><div class="head"><div><div class="eyebrow">QUALIDADE • OPERAÇÃO</div><h1 id="title">Visão geral</h1><div class="muted" id="subtitle">Acompanhe a fila e identifique onde concentrar a auditoria.</div></div><div class="tools"><button id="refresh" class="btn secondary">↻ Atualizar</button><button id="export" class="btn primary">Exportar CSV</button></div></div><div id="appNotice" class="notice"></div>
@@ -80,14 +79,14 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 <!-- VISÃO GERAL -->
 <section id="overviewPage">
 <div class="grid">
-  <div class="metric"><label>Chamados pendentes</label><div id="pendingN" class="value">—</div><small>Exclui status de encerramento reconhecidos</small></div>
-  <div class="metric"><label>Com 7+ dias</label><div id="oldN" class="value">—</div><small>Desde a criação do chamado</small></div>
-  <div class="metric"><label>Sem horas apontadas</label><div id="noHoursN" class="value">—</div><small>Precisam de conferência</small></div>
-  <div class="metric"><label>Horas nos pendentes</label><div id="hoursN" class="value">—</div><small>Tempo acumulado</small></div>
+  <div class="metric"><label>Chamados pendentes</label><div id="pendingN" class="value">0</div><small>Exclui status de encerramento reconhecidos</small></div>
+  <div class="metric"><label>Com 7+ dias</label><div id="oldN" class="value">0</div><small>Desde a criação do chamado</small></div>
+  <div class="metric"><label>Sem horas apontadas</label><div id="noHoursN" class="value">0</div><small>Precisam de conferência</small></div>
+  <div class="metric"><label>Horas nos pendentes</label><div id="hoursN" class="value">0 h</div><small>Tempo acumulado</small></div>
 </div>
 <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-  <div class="metric"><label>Sem atualização recente</label><div id="staleN" class="value">—</div><small>Sem data ou há mais de 7 dias</small></div>
-  <div class="metric" style="border-left:4px solid #b45309"><label>Clientes Prioritários (10)</label><div id="priorityN" class="value">—</div><small>Dr Óculos, Ferri, Instituto, Lux, etc.</small></div>
+  <div class="metric"><label>Sem atualização recente</label><div id="staleN" class="value">0</div><small>Sem data ou há mais de 7 dias</small></div>
+  <div class="metric" style="border-left:4px solid #b45309"><label>Clientes Prioritários (10)</label><div id="priorityN" class="value">0</div><small>Dr Óculos, Ferri, Instituto, Lux, etc.</small></div>
 </div>
 <div class="panel">
   <div class="panelhead"><div><h2>Chamados prioritários e mais antigos</h2><small>Atenção especial para a lista dos 10 clientes prioritários.</small></div><button class="btn secondary" data-goto="tickets">Ver fila completa →</button></div>
@@ -116,7 +115,7 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
       </select>
     </div>
   </div>
-  <div class="tablewrap"><table><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Horas</th><th>Idade</th><th>Dias sem atualização</th><th>Sincronizado</th></tr></thead><tbody id="ticketRows"></tbody></table></div>
+  <div class="tablewrap"><table><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Horas</th><th>Idade (dias)</th><th>Sem Atualizar (dias)</th><th>Sincronizado</th></tr></thead><tbody id="ticketRows"></tbody></table></div>
   <div id="ticketEmpty" class="empty hidden">Nenhum resultado para os filtros selecionados.</div>
 </div>
 </section>
@@ -125,7 +124,7 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 <section id="peoplePage" class="hidden">
 <div class="panel">
   <div class="panelhead"><div><h2>Horas por colaborador</h2><small>Apontamentos associados a chamados pendentes.</small></div></div>
-  <div class="tablewrap"><table><thead><tr><th>Colaborador</th><th>Chamados Total</th><th>Chamados Prioritários</th><th>Apontamentos</th><th>Minutos</th><th>Horas</th></tr></thead><tbody id="peopleRows"></tbody></table></div>
+  <div class="tablewrap"><table><thead><tr><th>Colaborador</th><th>Chamados Total</th><th>Chamados Prioritários</th><th>Apontamentos</th><th>Minutos</th><th>Horas Total</th></tr></thead><tbody id="peopleRows"></tbody></table></div>
   <div id="peopleEmpty" class="empty hidden">Nenhum apontamento encontrado.</div>
 </div>
 </section>
@@ -149,10 +148,10 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
       <span class="priority-tag">Lux</span>
     </div>
     <div class="grid" style="padding:18px;margin:0">
-      <div class="metric"><label>Pendentes Prioritários</label><div id="pPendingN" class="value">—</div></div>
-      <div class="metric"><label>Com 7+ dias</label><div id="pOldN" class="value">—</div></div>
-      <div class="metric"><label>Sem atualização recente</label><div id="pStaleN" class="value">—</div></div>
-      <div class="metric"><label>Horas acumuladas</label><div id="pHoursN" class="value">—</div></div>
+      <div class="metric"><label>Pendentes Prioritários</label><div id="pPendingN" class="value">0</div></div>
+      <div class="metric"><label>Com 7+ dias</label><div id="pOldN" class="value">0</div></div>
+      <div class="metric"><label>Sem atualização recente</label><div id="pStaleN" class="value">0</div></div>
+      <div class="metric"><label>Horas acumuladas</label><div id="pHoursN" class="value">0 h</div></div>
     </div>
     <div class="tablewrap">
       <table>
@@ -183,7 +182,7 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
       <h3>2. Pauta: Clientes Prioritários Críticos</h3>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>Cliente</th><th>Pendentes</th><th>Criticos (7+ dias)</th><th>Sem Atualização</th><th>Horas</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Pendentes</th><th>Críticos (7+ dias)</th><th>Sem Atualização</th><th>Horas</th></tr></thead>
           <tbody id="rptPriorityRows"></tbody>
         </table>
       </div>
@@ -201,48 +200,34 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
   </div>
 </section>
 
-<!-- CONFIGURAÇÕES DA API MOVIDESK -->
+<!-- GERENCIAR DADOS LOCAIS -->
 <section id="settingsPage" class="hidden">
   <div class="panel" style="padding:24px">
-    <h2>Configuração das APIs</h2>
-    <p class="muted">Insira as credenciais do Supabase e do Movidesk para garantir a sincronização correta dos dados.</p>
+    <h2>Gerenciador de Dados do Sistema</h2>
+    <p class="muted">Carregue um arquivo CSV exportado do Movidesk ou cole o arquivo de dados para atualizar o painel.</p>
     
     <div id="settingsNotice" class="notice"></div>
 
     <div class="form-group">
-      <label for="supabaseUrl">Supabase Project URL</label>
-      <input type="text" id="supabaseUrl" placeholder="https://seu-projeto.supabase.co">
-    </div>
-
-    <div class="form-group">
-      <label for="supabaseKey">Supabase Publishable Key</label>
-      <input type="password" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
-    </div>
-
-    <div class="form-group">
-      <label for="movideskToken">Token da API Movidesk</label>
-      <input type="password" id="movideskToken" placeholder="Insira o token da API Movidesk">
-      <small>Obtenha este token no Movidesk em: Configurações > Integrações > API Web.</small>
+      <label for="csvFileInput">Importar Arquivo CSV / Excel (Movidesk)</label>
+      <input type="file" id="csvFileInput" accept=".csv, .json, .txt">
+      <small>Colunas aceitas: Ticket ID, Client Name, Subject, Owner Name, Status, Hours, Age Days, Days Since Update.</small>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px">
-      <button id="saveConfig" class="btn primary">Salvar e Reconectar</button>
-      <button id="testMovidesk" class="btn secondary">Testar Conexão Movidesk</button>
+      <button id="btnResetData" class="btn secondary">Restaurar Dados Demonstrativos</button>
     </div>
   </div>
 </section>
 
 <!-- GUIA -->
-<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> usa a view <code>v_audit_pending_tickets</code>, que exclui status reconhecidos como encerrados, concluídos, resolvidos ou cancelados.</p><p><b>Clientes prioritários:</b> lista cadastrada de 10 clientes (Dr Óculos, Ferri, Instituto, Paulo e Condah, Atacadão do Óculos, IMV, Paschoal LAB, Cardeal, Sr dos Óculos, Lux).</p><p><b>Segurança:</b> o HTML usa chave publicável e autenticação Supabase. Nunca coloque chaves secretas no navegador.</p></div></section>
+<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> exclui chamados com status reconhecidos como encerrados, concluídos, resolvidos ou cancelados.</p><p><b>Clientes prioritários:</b> lista cadastrada dos 10 clientes estratégicos (Dr Óculos, Ferri, Instituto, Paulo e Condah, Atacadão do Óculos, IMV, Paschoal LAB, Cardeal, Sr dos Óculos, Lux).</p><p><b>Operação Local:</b> os dados são salvos localmente no navegador (LocalStorage) sem dependência de APIs externas.</p></div></section>
 
-<div class="foot">Central de Auditoria • Dados do Supabase • Atualizado em <span id="lastRefresh">—</span></div></main></div>
+<div class="foot">Central de Auditoria • Dados em Memória • Atualizado em <span id="lastRefresh">—</span></div></main></div>
 
 <script>
 (() => {
-// Credenciais padrão do Supabase
-const DEFAULT_SUPABASE_URL = "https://yvsuevoekqvunnaesec.supabase.co";
-const DEFAULT_SUPABASE_KEY = ""; // Cole sua chave 'anon' ou 'publishable' real do Supabase aqui caso não queira salvar pelo formulário
-
+// LISTA DOS 10 CLIENTES PRIORITÁRIOS
 const PRIORITY_CLIENTS = [
   "dr óculos", "dr oculos",
   "ferri",
@@ -256,13 +241,24 @@ const PRIORITY_CLIENTS = [
   "lux"
 ];
 
+// DADOS DEMONSTRATIVOS INICIAIS
+const DEMO_TICKETS = [
+  { ticket_id: "1011", client_name: "Dr Óculos", subject: "Integração do sistema travada", owner_name: "Carlos Silva", status: "Em Andamento", total_hours: 4.5, age_days: 12, days_since_update: 8, synced_at: "2026-10-28" },
+  { ticket_id: "1012", client_name: "Cardeal", subject: "Ajuste na emissão de nota fiscal", owner_name: "Ana Costa", status: "Aberto", total_hours: 0, age_days: 9, days_since_update: 3, synced_at: "2026-10-29" },
+  { ticket_id: "1013", client_name: "Lux", subject: "Erro de permissão no usuário", owner_name: "Mariana Souza", status: "Pendente", total_hours: 2.0, age_days: 4, days_since_update: 1, synced_at: "2026-10-29" },
+  { ticket_id: "1014", client_name: "Atacadão do Óculos", subject: "Relatório de vendas divergente", owner_name: "Carlos Silva", status: "Aberto", total_hours: 1.5, age_days: 15, days_since_update: 10, synced_at: "2026-10-25" },
+  { ticket_id: "1015", client_name: "Cliente Exemplo A", subject: "Dúvida no cadastro de produtos", owner_name: "Pedro Lima", status: "Novo", total_hours: 0, age_days: 2, days_since_update: 2, synced_at: "2026-10-29" },
+  { ticket_id: "1016", client_name: "Ferri", subject: "Lentidão na consulta de estoque", owner_name: "Ana Costa", status: "Em Andamento", total_hours: 6.0, age_days: 8, days_since_update: 5, synced_at: "2026-10-27" },
+  { ticket_id: "1017", client_name: "Instituto", subject: "Backup automático falhou", owner_name: "Pedro Lima", status: "Urgente", total_hours: 3.2, age_days: 11, days_since_update: 9, synced_at: "2026-10-26" }
+];
+
 function isPriorityClient(clientName) {
   if(!clientName) return false;
   const name = String(clientName).toLowerCase();
   return PRIORITY_CLIENTS.some(p => name.includes(p));
 }
 
-const $=id=>document.getElementById(id); let sb=null,pending=[],people=[],summary={},page="overview";
+const $=id=>document.getElementById(id); let pending=[],people=[],page="overview";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -271,73 +267,61 @@ const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateSt
 function notice(id,msg,type="error"){const e=$(id);e.textContent=msg;e.className="notice "+type}
 function clearNotice(id){$(id).className="notice"}
 
-function loadStoredConfig(){
-  $("supabaseUrl").value = localStorage.getItem("supabase_url") || DEFAULT_SUPABASE_URL;
-  $("supabaseKey").value = localStorage.getItem("supabase_key") || DEFAULT_SUPABASE_KEY;
-  $("movideskToken").value = localStorage.getItem("movidesk_token") || "";
+function loadData() {
+  const stored = localStorage.getItem("local_audit_tickets");
+  if (stored) {
+    try { pending = JSON.parse(stored); } catch(e) { pending = DEMO_TICKETS; }
+  } else {
+    pending = DEMO_TICKETS;
+    localStorage.setItem("local_audit_tickets", JSON.stringify(pending));
+  }
+
+  pending = pending.map(ticket => ({
+    ...ticket,
+    priority_client: isPriorityClient(ticket.client_name)
+  }));
+
+  processPeopleData();
+  render();
+  renderMeetingReport();
+  $("lastRefresh").textContent = new Date().toLocaleString("pt-BR");
 }
 
-async function init(){
- loadStoredConfig();
- const url = $("supabaseUrl").value.trim();
- const key = $("supabaseKey").value.trim();
-
- if(!url || !key || key === "sb_publishable_sua_chave_aqui") {
-   $("status").textContent = "Pendente de Chave Supabase";
-   switchPage("settings");
-   notice("settingsNotice", "Atenção: É necessário informar a Publishable Key válida do Supabase nas configurações para carregar as views.", "info");
-   return;
- }
-
- try {
-   sb = window.supabase.createClient(url, key, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-   $("status").textContent = "Conectado";
-   await load();
- } catch(e) {
-   $("status").textContent = "Erro na conexão";
-   notice("appNotice", "Falha ao inicializar o Supabase: " + (e.message || e));
- }
-}
-
-async function load(){
- clearNotice("appNotice");$("refresh").disabled=true;
- try{
- const [s,t,p]=await Promise.all([
-   sb.from("v_audit_dashboard_summary").select("*").single(),
-   sb.from("v_audit_pending_tickets").select("*").order("age_days",{ascending:false,nullsFirst:false}).limit(1000),
-   sb.from("v_audit_hours_by_collaborator").select("*").order("total_minutes",{ascending:false})
- ]);
- const fail=[s,t,p].find(x=>x.error);if(fail)throw fail.error;
- summary=s.data||{};
- 
- pending=(t.data||[]).map(ticket => ({
-   ...ticket,
-   priority_client: isPriorityClient(ticket.client_name)
- }));
-
- people=p.data||[];
- render();
- renderMeetingReport();
- $("lastRefresh").textContent=new Date().toLocaleString("pt-BR");
- }catch(e){notice("appNotice","Não foi possível carregar as views. Verifique as permissões RLS e as credenciais. Detalhe: "+(e.message||"erro desconhecido"))}finally{$("refresh").disabled=false}
+function processPeopleData() {
+  const map = {};
+  pending.forEach(t => {
+    const name = t.owner_name || "Não identificado";
+    if (!map[name]) {
+      map[name] = { collaborator_name: name, ticket_count: 0, appointment_count: 0, total_minutes: 0, total_hours: 0 };
+    }
+    map[name].ticket_count++;
+    map[name].appointment_count += Number(t.total_hours || 0) > 0 ? 1 : 0;
+    map[name].total_hours += Number(t.total_hours || 0);
+    map[name].total_minutes += Number(t.total_hours || 0) * 60;
+  });
+  people = Object.values(map).sort((a,b) => b.total_hours - a.total_hours);
 }
 
 function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
 
 function ticketRow(t,compact=false){
   const cli = t.priority_client ? `<span class="pill priority">★ ${esc(t.client_name||"Prioritário")}</span>` : esc(t.client_name||"—");
-  if(compact) return `<tr><td title="${esc(t.subject)}">#${esc(t.ticket_id)} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.last_update_source)}</td></tr>`;
+  if(compact) return `<tr><td title="${esc(t.subject)}">#${esc(t.ticket_id)} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.synced_at)}</td></tr>`;
   return `<tr><td>${esc(t.ticket_id)}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
 }
 
 function render(){
  const priorityTickets = pending.filter(t => t.priority_client);
+ const totalHours = pending.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
+ const oldTickets = pending.filter(t => (t.age_days || 0) >= 7).length;
+ const noHoursTickets = pending.filter(t => Number(t.total_hours || 0) === 0).length;
+ const staleTickets = pending.filter(t => (t.days_since_update || 0) >= 7).length;
 
- $("pendingN").textContent=num(summary.pending_tickets);
- $("oldN").textContent=num(summary.tickets_7_days_or_older);
- $("noHoursN").textContent=num(summary.tickets_without_hours);
- $("hoursN").textContent=hours(summary.total_hours_pending)+" h";
- $("staleN").textContent=num(summary.tickets_without_recent_update);
+ $("pendingN").textContent=num(pending.length);
+ $("oldN").textContent=num(oldTickets);
+ $("noHoursN").textContent=num(noHoursTickets);
+ $("hoursN").textContent=hours(totalHours)+" h";
+ $("staleN").textContent=num(staleTickets);
  $("priorityN").textContent=num(priorityTickets.length);
 
  const top=[...pending].sort((a,b)=>Number(b.priority_client)-Number(a.priority_client)||Number(b.age_days||0)-Number(a.age_days||0)).slice(0,8);
@@ -362,7 +346,7 @@ function render(){
 
 function renderTickets(){
   const q=$("search").value.toLowerCase().trim(),cf=$("clientFilter").value,hf=$("hoursFilter").value;
-  const rows=pending.filter(t=>[t.ticket_id,t.subject,t.client_name,t.owner_name,t.status].join(" ").toLowerCase().includes(q)&&(cf==="all"||(cf==="priority"?t.priority_client:!t.priority_client))&&(hf==="all"||(hf==="none"?Number(t.appointment_count)===0:Number(t.appointment_count)>0)));
+  const rows=pending.filter(t=>[t.ticket_id,t.subject,t.client_name,t.owner_name,t.status].join(" ").toLowerCase().includes(q)&&(cf==="all"||(cf==="priority"?t.priority_client:!t.priority_client))&&(hf==="all"||(hf==="none"?Number(t.total_hours)===0:Number(t.total_hours)>0)));
   $("ticketRows").innerHTML=rows.map(t=>ticketRow(t)).join("");
   $("ticketCount").textContent=`${num(rows.length)} de ${num(pending.length)} chamados`;
   $("ticketEmpty").classList.toggle("hidden",rows.length>0);
@@ -399,9 +383,10 @@ function renderPrioritySection(priorityTickets) {
 
 function renderMeetingReport() {
   const priorityTickets = pending.filter(t => t.priority_client);
-  
-  $("rptTotalPending").textContent = num(summary.pending_tickets);
-  $("rptTotalHours").textContent = hours(summary.total_hours_pending) + " h";
+  const totalHours = pending.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
+
+  $("rptTotalPending").textContent = num(pending.length);
+  $("rptTotalHours").textContent = hours(totalHours) + " h";
   $("rptPriorityCount").textContent = num(priorityTickets.length);
 
   const displayList = ["Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", "Sr dos Óculos", "Lux"];
@@ -442,43 +427,77 @@ function switchPage(p){
    people:["Horas por colaborador","Compare o esforço registrado nos chamados pendentes."],
    priority:["Clientes Prioritários","Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
    meetingReport:["Relatório para Reuniões","Pauta estruturada e pronta para impressão ou exportação em PDF."],
-   settings:["Configurações das APIs","Gerencie as credenciais e conexões do Supabase e Movidesk."],
+   settings:["Gerenciador de Dados","Atualize os dados do sistema por arquivo CSV ou restaure a demonstração."],
    guide:["Indicadores","Entenda os critérios e limitações desta versão."]
  }[p];
  $("title").textContent=m[0];$("subtitle").textContent=m[1];
  $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="meetingReport");
 }
 
-$("saveConfig").addEventListener("click", ()=>{
-  const sUrl = $("supabaseUrl").value.trim();
-  const sKey = $("supabaseKey").value.trim();
-  const mToken = $("movideskToken").value.trim();
+// IMPORTAÇÃO DE ARQUIVO CSV / JSON LOCAL
+$("csvFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  localStorage.setItem("supabase_url", sUrl);
-  localStorage.setItem("supabase_key", sKey);
-  localStorage.setItem("movidesk_token", mToken);
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const content = evt.target.result;
+      if (file.name.endsWith(".json")) {
+        const parsed = JSON.parse(content);
+        if (Array.isArray(parsed)) {
+          localStorage.setItem("local_audit_tickets", JSON.stringify(parsed));
+          notice("settingsNotice", "Dados atualizados com sucesso via JSON!", "success");
+          loadData();
+          return;
+        }
+      }
+      
+      // PROCESSAMENTO SIMPLES DE CSV
+      const lines = content.split(/\r\n|\n/);
+      if (lines.length < 2) throw new Error("O arquivo CSV selecionado está vazio.");
+      
+      const parsedTickets = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(";").map(c => c.replace(/^"|"$/g, '').trim());
+        if (cols.length >= 3 && cols[0]) {
+          parsedTickets.push({
+            ticket_id: cols[0],
+            subject: cols[1] || "Sem Assunto",
+            client_name: cols[2] || "—",
+            status: cols[3] || "Aberto",
+            owner_name: cols[4] || "—",
+            total_hours: parseFloat(cols[5] || 0) || 0,
+            age_days: parseInt(cols[6] || 0) || 0,
+            days_since_update: parseInt(cols[7] || 0) || 0,
+            synced_at: new Date().toISOString().split('T')[0]
+          });
+        }
+      }
 
-  notice("settingsNotice", "Configurações salvas com sucesso! Reconectando...", "success");
-  init();
+      if (parsedTickets.length > 0) {
+        localStorage.setItem("local_audit_tickets", JSON.stringify(parsedTickets));
+        notice("settingsNotice", `Importados ${parsedTickets.length} chamados com sucesso!`, "success");
+        loadData();
+      } else {
+        throw new Error("Não foi possível extrair chamados válidos do CSV.");
+      }
+    } catch(err) {
+      notice("settingsNotice", "Erro ao processar o arquivo: " + err.message, "error");
+    }
+  };
+  reader.readAsText(file);
 });
 
-$("testMovidesk").addEventListener("click", async ()=>{
-  const token = $("movideskToken").value.trim();
-  if(!token) return notice("settingsNotice", "Insira o token do Movidesk antes de testar.", "error");
+$("btnResetData").addEventListener("click", () => {
+  localStorage.setItem("local_audit_tickets", JSON.stringify(DEMO_TICKETS));
+  notice("settingsNotice", "Dados demonstrativos restaurados com sucesso!", "success");
+  loadData();
+});
 
-  notice("settingsNotice", "Testando conexão com o Movidesk...", "info");
-
-  try {
-    const url = `https://api.movidesk.com/public/v1/tickets?token=${encodeURIComponent(token)}&$select=id&$top=1`;
-    const res = await fetch(url);
-    if(res.ok) {
-      notice("settingsNotice", "Conexão com a API do Movidesk estabelecida com sucesso!", "success");
-    } else {
-      notice("settingsNotice", `Erro na API Movidesk: Status ${res.status}. Verifique se o token inserido é válido.`, "error");
-    }
-  } catch(e) {
-    notice("settingsNotice", "Erro de rede (CORS) ou ao conectar com a API Movidesk.", "error");
-  }
+// REFRESH LOCAL DA TELA
+$("refresh").addEventListener("click", () => {
+  loadData();
 });
 
 function exportCsv(){
@@ -501,20 +520,17 @@ function exportCsv(){
     });
   } else {
     headers=["ID","Assunto","Cliente","Status","Prioridade","Responsável","Horas","Idade dias","Dias sem atualização","Cliente prioritário","Última atualização"];
-    rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.priority,t.owner_name,t.total_hours,t.age_days,t.days_since_update,t.priority_client ? "SIM" : "NÃO",t.last_update_source]);
+    rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.priority,t.owner_name,t.total_hours,t.age_days,t.days_since_update,t.priority_client ? "SIM" : "NÃO",t.synced_at]);
   }
   const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
-
-$("refresh").addEventListener("click", async () => {
-  await init();
-});
 
 $("export").addEventListener("click", exportCsv);
 ["search","clientFilter","hoursFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.goto)));
 
-init();
+// INICIALIZAÇÃO LOCAL
+loadData();
 })();
 </script></body></html>
