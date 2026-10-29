@@ -189,7 +189,6 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 
 <script>
 (() => {
-// Lista dos 10 clientes prioritários
 const PRIORITY_CLIENTS = [
   "dr óculos", "dr oculos",
   "ferri",
@@ -257,7 +256,6 @@ async function load(){
  const fail=[s,t,p].find(x=>x.error);if(fail)throw fail.error;
  summary=s.data||{};
  
- // Mapeia flag de cliente prioritário com base na nossa lista de 10 clientes
  pending=(t.data||[]).map(ticket => ({
    ...ticket,
    priority_client: isPriorityClient(ticket.client_name)
@@ -377,6 +375,7 @@ $("saveSettings").addEventListener("click", ()=>{
   init();
 });
 
+// Testar Conexão com a API do Movidesk (Corrigido para evitar Erro 400 Bad Request)
 $("testMovidesk").addEventListener("click", async ()=>{
   const token = $("movideskToken").value.trim();
   if(!token) return notice("settingsNotice", "Insira o token do Movidesk antes de testar.", "error");
@@ -384,11 +383,12 @@ $("testMovidesk").addEventListener("click", async ()=>{
   notice("settingsNotice", "Testando conexão com o Movidesk...", "info");
 
   try {
-    const res = await fetch(`https://api.movidesk.com/public/v1/tickets?token=${token}&$top=1`);
+    const url = `https://api.movidesk.com/public/v1/tickets?token=${encodeURIComponent(token)}&$select=id&$top=1`;
+    const res = await fetch(url);
     if(res.ok) {
       notice("settingsNotice", "Conexão com a API do Movidesk estabelecida com sucesso!", "success");
     } else {
-      notice("settingsNotice", `Erro na API Movidesk: Status ${res.status}. Verifique se o token está correto.`, "error");
+      notice("settingsNotice", `Erro na API Movidesk: Status ${res.status}. Verifique se o token inserido é válido.`, "error");
     }
   } catch(e) {
     notice("settingsNotice", "Erro de rede (CORS) ou ao conectar com a API Movidesk. A sincronização final deve ser processada no backend.", "error");
