@@ -31,7 +31,7 @@ main{padding:26px;min-width:0}
 .search{min-width:230px}
 .tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
 th{background:#f8fafd;color:#66758b;text-transform:uppercase;font-size:10px;letter-spacing:.5px;text-align:left}
-th,td{padding:12px 14px;border-bottom:1px solid #edf1f6;max-width:300px;overflow:hidden;text-overflow:ellipsis}
+th,td{padding:12px 14px;border-bottom:1px solid #edf1f6;max-width:350px;overflow:hidden;text-overflow:ellipsis}
 tr:hover td{background:#f8fbff}
 .pill{display:inline-flex;align-items:center;gap:4px;background:#edf2f8;color:#4b5b72;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:600}
 .pill.priority{background:var(--priority-bg);color:var(--priority-text);border:1px solid var(--priority-border)}
@@ -211,7 +211,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     <!-- SUMÁRIO EXECUTIVO E DIAGNÓSTICO GLOBAL -->
     <div class="report-card">
       <h3>Sumário Executivo & Diagnóstico Global</h3>
-      <p id="execSummaryText">No período auditado, a operação registrou o volume total de horas aplicadas e acompanhamento dos chamados operacionais.</p>
+      <p id="execSummaryText">No período de 01 a 29 de outubro de 2026, a auditoria registrou um volume total de 459,55 horas aplicadas em 675 apontamentos operacionais, cobrindo 281 chamados únicos de 67 clientes. A operação manteve uma sólida taxa de resolução de 78,9% dos tickets trabalhados. Contudo, identifica-se alta concentração de capacidade técnica em um único cliente e gargalo severo em perfis seniores.</p>
       <div class="grid" style="margin-top:14px">
         <div class="metric"><label>TOTAL HORAS AUDITADAS</label><div id="execTotalHours" class="value">459,55 h</div></div>
         <div class="metric"><label>TICKETS TRABALHADOS</label><div id="execTotalTickets" class="value">281</div></div>
@@ -257,10 +257,10 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
     <div class="report-card">
       <h3>4. Plano de Ação & Recomendações à Diretoria</h3>
       <ol style="line-height:1.8;padding-left:20px;color:var(--ink)">
-        <li><b>Revisão de Franquia & Contratos:</b> Formalizar aditivo contratual com o maior cliente ofensor para compensar o impacto da alocação de capacidade técnica.</li>
-        <li><b>Matriz de Redundância (Shadowing):</b> Parear agentes juniores/trainees na arquitetura de legados para mitigar riscos de dependência única.</li>
-        <li><b>Mutirão de Homologação:</b> Executar rotina de cobrança semanal nos chamados parados em "Fila" para obter aceite final do cliente.</li>
-        <li><b>Padronização de Time Tracking:</b> Estabelecer piso mínimo de apontamentos para evitar micro-apontamentos dispersos.</li>
+        <li><b>Revisão de Franquia & Contratos:</b> Formalizar aditivo contratual com o cliente 40 Arquem Sistemas para prever franquia dedicada, compensando o impacto de 35,1% na alocação da equipe.</li>
+        <li><b>Matriz de Redundância (Shadowing):</b> Parear os colaboradores Davi Vinicius e Guilherme Bonato na arquitetura de legados para eliminar a dependência crítica do agente Felipe Cavassin.</li>
+        <li><b>Mutirão de Homologação:</b> Executar rotina de cobrança semanal nos chamados estagnados no status "Fila" para obter aceite final do cliente e faturar/encerrar as horas aplicadas.</li>
+        <li><b>Padronização de Time Tracking:</b> Estabelecer um piso mínimo de 15 minutos para apontamentos no sistema, consolidação de micro-suportes em blocos diários de apoio.</li>
       </ol>
     </div>
   </div>
@@ -333,13 +333,19 @@ const PRIORITY_CLIENTS = [
   "lux"
 ];
 
-const DEMO_TICKETS = [
-  { ticket_id: "100465", client_name: "Arquem Sistemas", subject: "Transição WhatsApp / ZapWeb", owner_name: "Felipe Cavassin", status: "Fila", total_hours: 29.42, hours_worked: 29.42, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar justificativa." },
-  { ticket_id: "101191", client_name: "Arquem Sistemas", subject: "Projeto Inteligência Artificial RBIA", owner_name: "Felipe Cavassin", status: "Em Execução", total_hours: 26.78, hours_worked: 26.78, age_days: 8, days_since_update: 2, synced_at: "2026-10-29", risk: "Atenção", action: "Solicitar atualização objetiva e previsão de conclusão." },
-  { ticket_id: "97233", client_name: "EPS Embrapol", subject: "ACOLAB - Fase 2 Reforma Tributária", owner_name: "Guilherme G. Bonato", status: "Fila", total_hours: 16.78, hours_worked: 12.70, age_days: 77, days_since_update: 10, synced_at: "2026-10-20", risk: "Alto", action: "Cobrar justificativa da permanência na fila." },
-  { ticket_id: "97012", client_name: "Dr Óculos", subject: "RB - Acordo em Recebimento de Vendas", owner_name: "Cassiano Zanona", status: "Fila", total_hours: 0.68, hours_worked: 0.68, age_days: 80, days_since_update: 8, synced_at: "2026-10-22", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Cobrar justificativa da permanência na fila." },
-  { ticket_id: "99940", client_name: "Ótica Lux", subject: "Trava de desvinculo e edição de venda", owner_name: "Guilherme G. Bonato", status: "Em Execução", total_hours: 6.98, hours_worked: 6.17, age_days: 31, days_since_update: 3, synced_at: "2026-10-28", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Solicitar atualização e prazos." },
-  { ticket_id: "101127", client_name: "Óticas Cardeal", subject: "RB - Saldo de Estoque Negativo", owner_name: "Davi Vinicius", status: "Fila", total_hours: 2.62, hours_worked: 2.58, age_days: 10, days_since_update: 4, synced_at: "2026-10-26", risk: "Rotina", action: "CLIENTE PRIORITÁRIO — Conferir resultado das horas." }
+// DADOS REAIS AUDITADOS DA PLANILHA
+const REAL_AUDIT_TICKETS = [
+  { ticket_id: "77901", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - MELHORIA AUDITORIA DE TURNO", owner_name: "Produção - CPO", status: "Fila", total_hours: 0.0, hours_worked: 0.0, age_days: 413, days_since_update: 15, synced_at: "2026-10-28", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
+  { ticket_id: "96081", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "RB - NOVOS RECURSOS REFORMA TRIBUTÁRIA", owner_name: "Inteligência", status: "Fila", total_hours: 0.0, hours_worked: 0.0, age_days: 94, days_since_update: 12, synced_at: "2026-10-25", risk: "Alto", action: "Verificar histórico/última movimentação; solicitar responsável, justificativa e previsão." },
+  { ticket_id: "97012", client_name: "1684 DR. OCULOS", subject: "RB - ACORDO EM RECEBIMENTO DE VENDAS", owner_name: "Produção - CPO", status: "Fila", total_hours: 0.68, hours_worked: 0.68, age_days: 80, days_since_update: 8, synced_at: "2026-10-22", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
+  { ticket_id: "97233", client_name: "001 EPS - EMBRAPOL,246 DIGITOP", subject: "ACOLAB - Fase 2 Reforma Tributária - Antecipação", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 16.78, hours_worked: 12.70, age_days: 77, days_since_update: 10, synced_at: "2026-10-20", risk: "Alto", action: "Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
+  { ticket_id: "97610", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "ACO - RECURSOS REFORMA TRIBUTÁRIA - ANTECIPACAO/JUROS E MULTA", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 4.52, hours_worked: 4.52, age_days: 71, days_since_update: 9, synced_at: "2026-10-21", risk: "Alto", action: "Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
+  { ticket_id: "97702", client_name: "1272 INSTITUTO + VISAO - Matriz LJ 01", subject: "IMPLANTAÇÃO PAGAMENTOS MAIS VISÃO: 716", owner_name: "Guilherme Gustavo Bonato", status: "Fila", total_hours: 7.88, hours_worked: 7.82, age_days: 70, days_since_update: 7, synced_at: "2026-10-23", risk: "Alto", action: "Cobrar justificativa da permanência na fila, última ação e prazo de conclusão." },
+  { ticket_id: "98533", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA", owner_name: "Cassiano Zanona", status: "Em Execução", total_hours: 0.50, hours_worked: 0.25, age_days: 57, days_since_update: 3, synced_at: "2026-10-27", risk: "Atenção", action: "Solicitar atualização objetiva, pendências restantes e previsão." },
+  { ticket_id: "99332", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "IA BENTO COBRANCAS - Boleto API", owner_name: "Lucas Matheus", status: "Em Execução", total_hours: 1.43, hours_worked: 1.43, age_days: 42, days_since_update: 2, synced_at: "2026-10-28", risk: "Atenção", action: "Solicitar atualização objetiva, pendências restantes e previsão." },
+  { ticket_id: "99940", client_name: "3028 OTICA LUX LTDA loja 01", subject: "Trava para que desvinculo seja feito uma única vez e edição de venda", owner_name: "Guilherme Gustavo Bonato", status: "Em Execução", total_hours: 6.98, hours_worked: 6.17, age_days: 31, days_since_update: 1, synced_at: "2026-10-29", risk: "Alto", action: "CLIENTE PRIORITÁRIO — Solicitar atualização objetiva, pendências restantes e previsão." },
+  { ticket_id: "100951", client_name: "3028 OTICA LUX LTDA loja 01", subject: "RB - MELHORIA - CLASSIFICAR TITULOS DE RECEBIMENTO", owner_name: "Davi Vinicius", status: "Liberar Atualização", total_hours: 2.87, hours_worked: 2.83, age_days: 14, days_since_update: 2, synced_at: "2026-10-28", risk: "Acompanhar", action: "CLIENTE PRIORITÁRIO — Confirmar quem deve liberar/aplicar a atualização e data prevista." },
+  { ticket_id: "101191", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS DE INFORMÁTICA LTDA", subject: "Projeto RBIA", owner_name: "Felipe Cavassin", status: "Em Execução", total_hours: 26.78, hours_worked: 26.78, age_days: 8, days_since_update: 0, synced_at: "2026-10-29", risk: "Atenção", action: "Solicitar atualização objetiva, pendências restantes e previsão." }
 ];
 
 const DEMO_AGENTS = [
@@ -396,9 +402,9 @@ function loadData() {
 
   const stored = localStorage.getItem("local_audit_tickets");
   if (stored) {
-    try { pending = JSON.parse(stored); } catch(e) { pending = DEMO_TICKETS; }
+    try { pending = JSON.parse(stored); } catch(e) { pending = REAL_AUDIT_TICKETS; }
   } else {
-    pending = DEMO_TICKETS;
+    pending = REAL_AUDIT_TICKETS;
     localStorage.setItem("local_audit_tickets", JSON.stringify(pending));
   }
 
@@ -583,7 +589,7 @@ function renderCrossAudit() {
       <td>${hours(t.total_hours)} h</td>
       <td>${hours(t.hours_worked || t.total_hours)} h</td>
       <td><span class="${rClass}">${esc(t.risk || 'Atenção')}</span></td>
-      <td>${esc(t.action || 'Verificar e acompanhar pendências.')}</td>
+      <td title="${esc(t.action)}">${esc(t.action || 'Verificar e acompanhar pendências.')}</td>
     </tr>`;
   }).join("");
 }
@@ -697,8 +703,8 @@ $("fileInput").addEventListener("change", (e) => {
 });
 
 $("btnResetData").addEventListener("click", () => {
-  localStorage.setItem("local_audit_tickets", JSON.stringify(DEMO_TICKETS));
-  notice("settingsNotice", "Dados demonstrativos restaurados com sucesso!", "success");
+  localStorage.setItem("local_audit_tickets", JSON.stringify(REAL_AUDIT_TICKETS));
+  notice("settingsNotice", "Dados reais auditados restaurados com sucesso!", "success");
   loadData();
 });
 
@@ -715,7 +721,7 @@ function exportCsv(){
     headers=["ID","Assunto","Cliente","Status","Responsável","Horas","Idade dias","Risco","Ação Recomendada"];
     rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.owner_name,t.total_hours,t.age_days,t.risk||"Rotina",t.action||"Acompanhar"]);
   }
-  const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
+  const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
 
 $("export").addEventListener("click", exportCsv);
