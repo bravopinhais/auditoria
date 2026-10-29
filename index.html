@@ -5,42 +5,239 @@
 <title>Central de Auditoria | Movidesk</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--navy:#142943;--blue:#2563eb;--bg:#f3f6fb;--line:#e2e8f0;--muted:#64748b;--ink:#17243a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Segoe UI,Arial,sans-serif}.top{height:68px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px}.brand{font-size:18px;font-weight:750}.brand span{background:#2f6ce5;padding:9px 11px;border-radius:10px;margin-right:10px}.status{font-size:12px;color:#dbeafe}.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:650;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#edf2f8;color:var(--ink);border:1px solid var(--line)}.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 68px)}aside{background:white;border-right:1px solid var(--line);padding:20px 12px}.nav{display:block;width:100%;text-align:left;border:0;background:transparent;padding:12px;border-radius:9px;color:#526178;margin:3px 0;cursor:pointer}.nav.active,.nav:hover{background:#eaf1ff;color:#1749ad}main{padding:26px;min-width:0}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:1.4px;color:var(--blue);font-weight:700}.head h1{font-size:27px;margin:4px 0}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.metric,.panel{background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 22px #1429430b}.metric{padding:17px}.metric label{color:var(--muted);font-size:12px}.value{font-size:28px;font-weight:800;margin:12px 0 4px}.panel{overflow:hidden;margin-bottom:18px}.panelhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.panelhead h2{font-size:15px;margin:0}.tools{display:flex;gap:8px;flex-wrap:wrap}.field{padding:10px;border:1px solid #d6dfeb;border-radius:9px;background:#fff;min-width:130px}.search{min-width:230px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th{background:#f8fafd;color:#66758b;text-transform:uppercase;font-size:10px;letter-spacing:.5px;text-align:left}th,td{padding:12px 14px;border-bottom:1px solid #edf1f6;max-width:300px;overflow:hidden;text-overflow:ellipsis}tr:hover td{background:#f8fbff}.pill{display:inline-block;background:#edf2f8;color:#4b5b72;padding:4px 8px;border-radius:20px;font-size:10px}.priority{background:#e7edff;color:#244ec4}.empty{padding:28px;text-align:center;color:var(--muted)}.notice{padding:12px;border-radius:9px;margin-bottom:14px;display:none;white-space:pre-wrap}.notice.error{display:block;background:#fff0ef;color:#9f2018}.notice.info{display:block;background:#edf5ff;color:#1d4e89}.hidden{display:none!important}label{display:block;font-size:12px;font-weight:650;margin:13px 0 6px}input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}details{margin-top:20px;border-top:1px solid var(--line);padding-top:15px}summary{cursor:pointer;color:var(--muted);font-size:12px}small{display:block;color:var(--muted);margin-top:8px}.bars{padding:14px 18px}.barrow{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;margin:12px 0}.track{height:9px;background:#edf1f7;border-radius:20px;overflow:hidden}.fill{height:100%;background:#3478eb;border-radius:20px}.foot{font-size:11px;color:#8793a5;padding:6px 0 20px}@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.layout{display:block}aside{display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.nav{width:auto;white-space:nowrap}main{padding:14px}.head{display:block}.head .tools{margin-top:12px}.grid{gap:8px}.metric{padding:12px}.value{font-size:23px}.search{min-width:100%;}.top{padding:0 14px}}
+:root{--navy:#142943;--blue:#2563eb;--bg:#f3f6fb;--line:#e2e8f0;--muted:#64748b;--ink:#17243a;--success:#16a34a;--danger:#dc2626;--priority-bg:#fef3c7;--priority-text:#b45309;--priority-border:#fde68a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Segoe UI,Arial,sans-serif}
+.top{height:68px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.brand{font-size:18px;font-weight:750}.brand span{background:#2f6ce5;padding:9px 11px;border-radius:10px;margin-right:10px}
+.status{font-size:12px;color:#dbeafe}
+.btn{border:0;border-radius:9px;padding:10px 14px;font-weight:650;cursor:pointer}
+.primary{background:var(--blue);color:#fff}.secondary{background:#edf2f8;color:var(--ink);border:1px solid var(--line)}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 68px)}
+aside{background:white;border-right:1px solid var(--line);padding:20px 12px}
+.nav{display:block;width:100%;text-align:left;border:0;background:transparent;padding:12px;border-radius:9px;color:#526178;margin:3px 0;cursor:pointer}
+.nav.active,.nav:hover{background:#eaf1ff;color:#1749ad}
+main{padding:26px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+.eyebrow{font-size:11px;letter-spacing:1.4px;color:var(--blue);font-weight:700}.head h1{font-size:27px;margin:4px 0}
+.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.metric,.panel{background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 22px #1429430b}
+.metric{padding:17px}.metric label{color:var(--muted);font-size:12px}.value{font-size:28px;font-weight:800;margin:12px 0 4px}
+.panel{overflow:hidden;margin-bottom:18px}
+.panelhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.panelhead h2{font-size:15px;margin:0}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.field{padding:10px;border:1px solid #d6dfeb;border-radius:9px;background:#fff;min-width:130px}
+.search{min-width:230px}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
+th{background:#f8fafd;color:#66758b;text-transform:uppercase;font-size:10px;letter-spacing:.5px;text-align:left}
+th,td{padding:12px 14px;border-bottom:1px solid #edf1f6;max-width:300px;overflow:hidden;text-overflow:ellipsis}
+tr:hover td{background:#f8fbff}
+.pill{display:inline-flex;align-items:center;gap:4px;background:#edf2f8;color:#4b5b72;padding:4px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.pill.priority{background:var(--priority-bg);color:var(--priority-text);border:1px solid var(--priority-border)}
+.pill.bad{background:#fee2e2;color:#991b1b}
+.pill.warn{background:#fef3c7;color:#92400e}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.notice{padding:12px;border-radius:9px;margin-bottom:14px;display:none;white-space:pre-wrap}
+.notice.error{display:block;background:#fff0ef;color:#9f2018}
+.notice.info{display:block;background:#edf5ff;color:#1d4e89}
+.notice.success{display:block;background:#f0fdf4;color:#166534}
+.hidden{display:none!important}
+label{display:block;font-size:12px;font-weight:650;margin:13px 0 6px}
+input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
+.form-group{margin-bottom:16px;max-width:500px}
+.foot{font-size:11px;color:#8793a5;padding:6px 0 20px}
+.priority-tag-list{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;background:#fff8f0;border-bottom:1px solid var(--line)}
+.priority-tag{background:#fff;border:1px solid var(--priority-border);color:var(--priority-text);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+@media(max-width:950px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.layout{display:block}aside{display:flex;overflow:auto;padding:8px;border-right:0;border-bottom:1px solid var(--line)}.nav{width:auto;white-space:nowrap}main{padding:14px}.head{display:block}.head .tools{margin-top:12px}.grid{gap:8px}.metric{padding:12px}.value{font-size:23px}.search{min-width:100%;}.top{padding:0 14px}}
 </style></head>
 <body>
 <header class="top"><div class="brand"><span>✓</span>Central de Auditoria <span style="background:none;font-weight:400;color:#c4d3e9;padding:0">/ Movidesk</span></div><div><span class="status" id="status">Conectando...</span></div></header>
 
-<div id="appView" class="layout"><aside><button class="nav active" data-page="overview">▦ Visão geral</button><button class="nav" data-page="tickets">☷ Fila de chamados</button><button class="nav" data-page="people">◷ Horas por colaborador</button><button class="nav" data-page="guide">ⓘ Indicadores</button></aside>
+<div id="appView" class="layout"><aside>
+  <button class="nav active" data-page="overview">▦ Visão geral</button>
+  <button class="nav" data-page="tickets">☷ Fila de chamados</button>
+  <button class="nav" data-page="people">◷ Horas por colaborador</button>
+  <button class="nav" data-page="priority">★ Clientes Prioritários</button>
+  <button class="nav" data-page="settings">⚙ Configurações API</button>
+  <button class="nav" data-page="guide">ⓘ Indicadores</button>
+</aside>
 <main><div class="head"><div><div class="eyebrow">QUALIDADE • OPERAÇÃO</div><h1 id="title">Visão geral</h1><div class="muted" id="subtitle">Acompanhe a fila e identifique onde concentrar a auditoria.</div></div><div class="tools"><button id="refresh" class="btn secondary">↻ Atualizar</button><button id="export" class="btn primary">Exportar CSV</button></div></div><div id="appNotice" class="notice"></div>
-<section id="overviewPage"><div class="grid">
-<div class="metric"><label>Chamados pendentes</label><div id="pendingN" class="value">—</div><small>Exclui status de encerramento reconhecidos</small></div>
-<div class="metric"><label>Com 7+ dias</label><div id="oldN" class="value">—</div><small>Desde a criação do chamado</small></div>
-<div class="metric"><label>Sem horas apontadas</label><div id="noHoursN" class="value">—</div><small>Precisam de conferência</small></div>
-<div class="metric"><label>Horas nos pendentes</label><div id="hoursN" class="value">—</div><small>Tempo acumulado</small></div></div>
-<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="metric"><label>Sem atualização recente</label><div id="staleN" class="value">—</div><small>Sem data ou há mais de 7 dias</small></div><div class="metric"><label>Clientes prioritários</label><div id="priorityN" class="value">—</div><small>Lux, Cardeal e Dr. Óculos</small></div></div>
-<div class="panel"><div class="panelhead"><div><h2>Chamados que merecem atenção</h2><small>Clientes prioritários e chamados mais antigos.</small></div><button class="btn secondary" data-goto="tickets">Ver fila completa →</button></div><div class="tablewrap"><table><thead><tr><th>Chamado</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Horas</th><th>Idade</th><th>Atualização</th></tr></thead><tbody id="topRows"></tbody></table></div><div id="topEmpty" class="empty hidden">Nenhum chamado disponível.</div></div>
-<div class="panel"><div class="panelhead"><div><h2>Esforço por colaborador</h2><small>Horas registradas nos chamados pendentes.</small></div><button class="btn secondary" data-goto="people">Detalhar →</button></div><div id="bars" class="bars"></div></div></section>
-<section id="ticketsPage" class="hidden"><div class="panel"><div class="panelhead"><div><h2>Fila de auditoria</h2><small id="ticketCount"></small></div><div class="tools"><input class="field search" id="search" placeholder="Buscar ID, assunto, cliente, responsável"><select class="field" id="clientFilter"><option value="all">Todos os clientes</option><option value="priority">Prioritários</option><option value="other">Demais</option></select><select class="field" id="hoursFilter"><option value="all">Todas as horas</option><option value="none">Sem apontamentos</option><option value="with">Com apontamentos</option></select></div></div><div class="tablewrap"><table><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Horas</th><th>Idade</th><th>Dias sem atualização</th><th>Sincronizado</th></tr></thead><tbody id="ticketRows"></tbody></table></div><div id="ticketEmpty" class="empty hidden">Nenhum resultado para os filtros selecionados.</div></div></section>
-<section id="peoplePage" class="hidden"><div class="panel"><div class="panelhead"><div><h2>Horas por colaborador</h2><small>Apontamentos associados a chamados pendentes.</small></div></div><div class="tablewrap"><table><thead><tr><th>Colaborador</th><th>Chamados</th><th>Apontamentos</th><th>Minutos</th><th>Horas</th></tr></thead><tbody id="peopleRows"></tbody></table></div><div id="peopleEmpty" class="empty hidden">Nenhum apontamento encontrado.</div></div></section>
-<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> usa a view <code>v_audit_pending_tickets</code>, que exclui status reconhecidos como encerrados, concluídos, resolvidos ou cancelados.</p><p><b>Antigos:</b> chamados com 7 dias ou mais desde a criação. Critério inicial ajustável.</p><p><b>Sem atualização:</b> sem data de atualização ou com mais de 7 dias desde a última.</p><p><b>Clientes prioritários:</b> correspondência textual de Lux, Cardeal e Dr. Óculos; valide os nomes da base.</p><p><b>Segurança:</b> o HTML usa chave publicável e autenticação Supabase. A proteção depende das políticas RLS. Nunca coloque chaves secretas ou token Movidesk no navegador.</p><div class="notice info" style="display:block">Esta versão não inclui sincronização automática nem alertas em tempo real.</div></div></section>
+
+<!-- VISÃO GERAL -->
+<section id="overviewPage">
+<div class="grid">
+  <div class="metric"><label>Chamados pendentes</label><div id="pendingN" class="value">—</div><small>Exclui status de encerramento reconhecidos</small></div>
+  <div class="metric"><label>Com 7+ dias</label><div id="oldN" class="value">—</div><small>Desde a criação do chamado</small></div>
+  <div class="metric"><label>Sem horas apontadas</label><div id="noHoursN" class="value">—</div><small>Precisam de conferência</small></div>
+  <div class="metric"><label>Horas nos pendentes</label><div id="hoursN" class="value">—</div><small>Tempo acumulado</small></div>
+</div>
+<div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+  <div class="metric"><label>Sem atualização recente</label><div id="staleN" class="value">—</div><small>Sem data ou há mais de 7 dias</small></div>
+  <div class="metric" style="border-left:4px solid #b45309"><label>Clientes Prioritários (10)</label><div id="priorityN" class="value">—</div><small>Dr Óculos, Ferri, Instituto, Lux, etc.</small></div>
+</div>
+<div class="panel">
+  <div class="panelhead"><div><h2>Chamados prioritários e mais antigos</h2><small>Atenção especial para a lista dos 10 clientes prioritários.</small></div><button class="btn secondary" data-goto="tickets">Ver fila completa →</button></div>
+  <div class="tablewrap"><table><thead><tr><th>Chamado</th><th>Cliente</th><th>Status</th><th>Responsável</th><th>Horas</th><th>Idade</th><th>Atualização</th></tr></thead><tbody id="topRows"></tbody></table></div>
+  <div id="topEmpty" class="empty hidden">Nenhum chamado disponível.</div>
+</div>
+<div class="panel"><div class="panelhead"><div><h2>Esforço por colaborador</h2><small>Horas registradas nos chamados pendentes.</small></div><button class="btn secondary" data-goto="people">Detalhar →</button></div><div id="bars" class="bars"></div></div>
+</section>
+
+<!-- TICKETS -->
+<section id="ticketsPage" class="hidden">
+<div class="panel">
+  <div class="panelhead">
+    <div><h2>Fila de auditoria</h2><small id="ticketCount"></small></div>
+    <div class="tools">
+      <input class="field search" id="search" placeholder="Buscar ID, assunto, cliente, responsável">
+      <select class="field" id="clientFilter">
+        <option value="all">Todos os clientes</option>
+        <option value="priority">★ Somente Prioritários (10)</option>
+        <option value="other">Demais clientes</option>
+      </select>
+      <select class="field" id="hoursFilter">
+        <option value="all">Todas as horas</option>
+        <option value="none">Sem apontamentos</option>
+        <option value="with">Com apontamentos</option>
+      </select>
+    </div>
+  </div>
+  <div class="tablewrap"><table><thead><tr><th>ID</th><th>Assunto</th><th>Cliente</th><th>Status</th><th>Prioridade</th><th>Responsável</th><th>Horas</th><th>Idade</th><th>Dias sem atualização</th><th>Sincronizado</th></tr></thead><tbody id="ticketRows"></tbody></table></div>
+  <div id="ticketEmpty" class="empty hidden">Nenhum resultado para os filtros selecionados.</div>
+</div>
+</section>
+
+<!-- PEOPLE -->
+<section id="peoplePage" class="hidden">
+<div class="panel">
+  <div class="panelhead"><div><h2>Horas por colaborador</h2><small>Apontamentos associados a chamados pendentes.</small></div></div>
+  <div class="tablewrap"><table><thead><tr><th>Colaborador</th><th>Chamados Total</th><th>Chamados Prioritários</th><th>Apontamentos</th><th>Minutos</th><th>Horas</th></tr></thead><tbody id="peopleRows"></tbody></table></div>
+  <div id="peopleEmpty" class="empty hidden">Nenhum apontamento encontrado.</div>
+</div>
+</section>
+
+<!-- RELATÓRIO CLIENTES PRIORITÁRIOS -->
+<section id="priorityPage" class="hidden">
+  <div class="panel">
+    <div class="panelhead">
+      <div><h2>Relatório dos 10 Clientes Prioritários</h2><small>Indicadores focados nos clientes monitorados.</small></div>
+    </div>
+    <div class="priority-tag-list">
+      <span class="priority-tag">Dr Óculos</span>
+      <span class="priority-tag">Ferri</span>
+      <span class="priority-tag">Instituto</span>
+      <span class="priority-tag">Paulo e Condah</span>
+      <span class="priority-tag">Atacadão do Óculos</span>
+      <span class="priority-tag">IMV</span>
+      <span class="priority-tag">Paschoal LAB</span>
+      <span class="priority-tag">Cardeal</span>
+      <span class="priority-tag">Sr dos Óculos</span>
+      <span class="priority-tag">Lux</span>
+    </div>
+    <div class="grid" style="padding:18px;margin:0">
+      <div class="metric"><label>Pendentes Prioritários</label><div id="pPendingN" class="value">—</div></div>
+      <div class="metric"><label>Com 7+ dias</label><div id="pOldN" class="value">—</div></div>
+      <div class="metric"><label>Sem atualização recente</label><div id="pStaleN" class="value">—</div></div>
+      <div class="metric"><label>Horas acumuladas</label><div id="pHoursN" class="value">—</div></div>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Cliente Prioritário</th><th>Pendentes</th><th>Com 7+ dias</th><th>Sem atualização</th><th>Horas Apontadas</th></tr></thead>
+        <tbody id="priorityClientRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CONFIGURAÇÕES DA API MOVIDESK -->
+<section id="settingsPage" class="hidden">
+  <div class="panel" style="padding:24px">
+    <h2>Configuração da API Movidesk</h2>
+    <p class="muted">Insira o seu token da API do Movidesk para permitir a sincronização com o banco de dados.</p>
+    
+    <div id="settingsNotice" class="notice"></div>
+
+    <div class="form-group">
+      <label for="movideskToken">Token da API Movidesk</label>
+      <input type="password" id="movideskToken" placeholder="Insira o seu token do Movidesk">
+      <small>Obtenha este token no Movidesk em: Configurações > Integrações > API Web.</small>
+    </div>
+
+    <div class="form-group">
+      <label for="supabaseUrl">Supabase URL</label>
+      <input type="text" id="supabaseUrl" placeholder="https://seu-projeto.supabase.co">
+    </div>
+
+    <div class="form-group">
+      <label for="supabaseKey">Supabase Publishable Key</label>
+      <input type="password" id="supabaseKey" placeholder="sb_publishable_...">
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button id="saveSettings" class="btn primary">Salvar Configurações</button>
+      <button id="testMovidesk" class="btn secondary">Testar Conexão Movidesk</button>
+    </div>
+  </div>
+</section>
+
+<!-- GUIA -->
+<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Pendentes:</b> usa a view <code>v_audit_pending_tickets</code>, que exclui status reconhecidos como encerrados, concluídos, resolvidos ou cancelados.</p><p><b>Clientes prioritários:</b> lista cadastrada de 10 clientes (Dr Óculos, Ferri, Instituto, Paulo e Condah, Atacadão do Óculos, IMV, Paschoal LAB, Cardeal, Sr dos Óculos, Lux).</p><p><b>Segurança:</b> o HTML usa chave publicável e autenticação Supabase. Nunca coloque chaves secretas no navegador.</p></div></section>
+
 <div class="foot">Central de Auditoria • Dados do Supabase • Atualizado em <span id="lastRefresh">—</span></div></main></div>
+
 <script>
 (() => {
-// CONFIGURAÇÕES DO SUPABASE (Substitua pelos seus dados)
-const SUPABASE_URL = "https://seu-projeto.supabase.co";
-const SUPABASE_KEY = "sb_publishable_sua_chave_aqui";
+// Lista dos 10 clientes prioritários
+const PRIORITY_CLIENTS = [
+  "dr óculos", "dr oculos",
+  "ferri",
+  "instituto",
+  "paulo e condah", "paulo & condah",
+  "atacadão do óculos", "atacadao do oculos", "atacadão do oculos",
+  "imv",
+  "paschoal lab", "paschoallab",
+  "cardeal",
+  "sr dos óculos", "sr dos oculos",
+  "lux"
+];
+
+function isPriorityClient(clientName) {
+  if(!clientName) return false;
+  const name = String(clientName).toLowerCase();
+  return PRIORITY_CLIENTS.some(p => name.includes(p));
+}
 
 const $=id=>document.getElementById(id); let sb=null,pending=[],people=[],summary={},page="overview";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateString("pt-BR"):"—"):"—";
+
 function notice(id,msg,type="error"){const e=$(id);e.textContent=msg;e.className="notice "+type}
 function clearNotice(id){$(id).className="notice"}
 
+function loadStoredConfig(){
+  $("movideskToken").value = localStorage.getItem("movidesk_token") || "";
+  $("supabaseUrl").value = localStorage.getItem("supabase_url") || "";
+  $("supabaseKey").value = localStorage.getItem("supabase_key") || "";
+}
+
 async function init(){
+ loadStoredConfig();
+ const url = $("supabaseUrl").value;
+ const key = $("supabaseKey").value;
+
+ if(!url || !key) {
+   $("status").textContent = "Pendente de Configuração";
+   switchPage("settings");
+   notice("settingsNotice", "Por favor, configure as chaves do Supabase e o Token do Movidesk para continuar.", "info");
+   return;
+ }
+
  try {
-   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+   sb = window.supabase.createClient(url, key, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
    $("status").textContent = "Conectado";
    await load();
  } catch(e) {
@@ -52,26 +249,183 @@ async function init(){
 async function load(){
  clearNotice("appNotice");$("refresh").disabled=true;
  try{
- const [s,t,p]=await Promise.all([sb.from("v_audit_dashboard_summary").select("*").single(),sb.from("v_audit_pending_tickets").select("*").order("priority_client",{ascending:false}).order("age_days",{ascending:false,nullsFirst:false}).limit(1000),sb.from("v_audit_hours_by_collaborator").select("*").order("total_minutes",{ascending:false})]);
+ const [s,t,p]=await Promise.all([
+   sb.from("v_audit_dashboard_summary").select("*").single(),
+   sb.from("v_audit_pending_tickets").select("*").order("age_days",{ascending:false,nullsFirst:false}).limit(1000),
+   sb.from("v_audit_hours_by_collaborator").select("*").order("total_minutes",{ascending:false})
+ ]);
  const fail=[s,t,p].find(x=>x.error);if(fail)throw fail.error;
- summary=s.data||{};pending=t.data||[];people=p.data||[];render();$("lastRefresh").textContent=new Date().toLocaleString("pt-BR");
- }catch(e){notice("appNotice","Não foi possível carregar as views. Verifique as permissões SELECT/RLS e as credenciais. Detalhe: "+(e.message||"erro desconhecido"))}finally{$("refresh").disabled=false}
+ summary=s.data||{};
+ 
+ // Mapeia flag de cliente prioritário com base na nossa lista de 10 clientes
+ pending=(t.data||[]).map(ticket => ({
+   ...ticket,
+   priority_client: isPriorityClient(ticket.client_name)
+ }));
+
+ people=p.data||[];
+ render();
+ $("lastRefresh").textContent=new Date().toLocaleString("pt-BR");
+ }catch(e){notice("appNotice","Não foi possível carregar as views. Verifique as permissões RLS e as credenciais. Detalhe: "+(e.message||"erro desconhecido"))}finally{$("refresh").disabled=false}
 }
+
 function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
-function ticketRow(t,compact=false){const cli=t.priority_client?`<span class="pill priority">${esc(t.client_name||"Prioritário")}</span>`:esc(t.client_name||"—");if(compact)return `<tr><td title="${esc(t.subject)}">#${esc(t.ticket_id)} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.last_update_source)}</td></tr>`;return `<tr><td>${esc(t.ticket_id)}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`}
-function render(){
- $("pendingN").textContent=num(summary.pending_tickets);$("oldN").textContent=num(summary.tickets_7_days_or_older);$("noHoursN").textContent=num(summary.tickets_without_hours);$("hoursN").textContent=hours(summary.total_hours_pending)+" h";$("staleN").textContent=num(summary.tickets_without_recent_update);$("priorityN").textContent=num(summary.priority_client_tickets);
- const top=[...pending].sort((a,b)=>Number(b.priority_client)-Number(a.priority_client)||Number(b.age_days||0)-Number(a.age_days||0)).slice(0,8);$("topRows").innerHTML=top.map(t=>ticketRow(t,true)).join("");$("topEmpty").classList.toggle("hidden",top.length>0);
- renderTickets();$("peopleRows").innerHTML=people.map(p=>`<tr><td>${esc(p.collaborator_name||"Não identificado")}</td><td>${num(p.ticket_count)}</td><td>${num(p.appointment_count)}</td><td>${num(p.total_minutes)}</td><td><b>${hours(p.total_hours)}</b></td></tr>`).join("");$("peopleEmpty").classList.toggle("hidden",people.length>0);
- if(!people.length)$("bars").innerHTML='<div class="empty">Nenhum apontamento para chamados pendentes.</div>';else{let max=Math.max(1,...people.map(p=>Number(p.total_minutes)||0));$("bars").innerHTML=people.slice(0,8).map(p=>`<div class="barrow"><div>${esc(p.collaborator_name||"Não identificado")}</div><div class="track"><div class="fill" style="width:${Math.min(100,Number(p.total_minutes||0)/max*100)}%;height:100%"></div></div><b>${hours(p.total_hours)} h</b></div>`).join("")}
+
+function ticketRow(t,compact=false){
+  const cli = t.priority_client ? `<span class="pill priority">★ ${esc(t.client_name||"Prioritário")}</span>` : esc(t.client_name||"—");
+  if(compact) return `<tr><td title="${esc(t.subject)}">#${esc(t.ticket_id)} · ${esc(t.subject||"Sem assunto")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)} h</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${date(t.last_update_source)}</td></tr>`;
+  return `<tr><td>${esc(t.ticket_id)}</td><td>${esc(t.subject||"—")}</td><td>${cli}</td><td>${status(t.status)}</td><td>${esc(t.priority||"—")}</td><td>${esc(t.owner_name||"—")}</td><td>${hours(t.total_hours)}</td><td>${t.age_days==null?"—":num(t.age_days)}</td><td>${t.days_since_update==null?"—":num(t.days_since_update)}</td><td>${date(t.synced_at)}</td></tr>`;
 }
-function renderTickets(){const q=$("search").value.toLowerCase().trim(),cf=$("clientFilter").value,hf=$("hoursFilter").value;const rows=pending.filter(t=>[t.ticket_id,t.subject,t.client_name,t.owner_name,t.status].join(" ").toLowerCase().includes(q)&&(cf==="all"||(cf==="priority"?t.priority_client:!t.priority_client))&&(hf==="all"||(hf==="none"?Number(t.appointment_count)===0:Number(t.appointment_count)>0)));$("ticketRows").innerHTML=rows.map(t=>ticketRow(t)).join("");$("ticketCount").textContent=`${num(rows.length)} de ${num(pending.length)} chamados`;$("ticketEmpty").classList.toggle("hidden",rows.length>0)}
-function switchPage(p){page=p;["overview","tickets","people","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===p));let m={overview:["Visão geral","Acompanhe a fila e identifique onde concentrar a auditoria."],tickets:["Fila de chamados","Pesquise, filtre e priorize os chamados que precisam de atenção."],people:["Horas por colaborador","Compare o esforço registrado nos chamados pendentes."],guide:["Indicadores","Entenda os critérios e limitações desta versão."]}[p];$("title").textContent=m[0];$("subtitle").textContent=m[1];$("export").classList.toggle("hidden",p==="guide")}
-function exportCsv(){let headers,rows;if(page==="people"){headers=["Colaborador","Chamados","Apontamentos","Minutos","Horas"];rows=people.map(p=>[p.collaborator_name,p.ticket_count,p.appointment_count,p.total_minutes,p.total_hours])}else{headers=["ID","Assunto","Cliente","Status","Prioridade","Responsável","Horas","Idade dias","Dias sem atualização","Cliente prioritário","Última atualização"];rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.priority,t.owner_name,t.total_hours,t.age_days,t.days_since_update,t.priority_client,t.last_update_source])}const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=page==="people"?"auditoria_horas.csv":"auditoria_chamados.csv";a.click();URL.revokeObjectURL(url)}
 
-$("refresh").addEventListener("click",()=>{if(!sb){notice("appNotice","Supabase não inicializado.");return}load()});$("export").addEventListener("click",exportCsv);["search","clientFilter","hoursFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.goto)));
+function render(){
+ const priorityTickets = pending.filter(t => t.priority_client);
 
-// Inicializa a conexão automaticamente
+ $("pendingN").textContent=num(summary.pending_tickets);
+ $("oldN").textContent=num(summary.tickets_7_days_or_older);
+ $("noHoursN").textContent=num(summary.tickets_without_hours);
+ $("hoursN").textContent=hours(summary.total_hours_pending)+" h";
+ $("staleN").textContent=num(summary.tickets_without_recent_update);
+ $("priorityN").textContent=num(priorityTickets.length);
+
+ const top=[...pending].sort((a,b)=>Number(b.priority_client)-Number(a.priority_client)||Number(b.age_days||0)-Number(a.age_days||0)).slice(0,8);
+ $("topRows").innerHTML=top.map(t=>ticketRow(t,true)).join("");
+ $("topEmpty").classList.toggle("hidden",top.length>0);
+
+ renderTickets();
+ renderPrioritySection(priorityTickets);
+
+ $("peopleRows").innerHTML=people.map(p=>{
+   const colabPriorityCount = pending.filter(t => t.priority_client && t.owner_name === p.collaborator_name).length;
+   return `<tr><td>${esc(p.collaborator_name||"Não identificado")}</td><td>${num(p.ticket_count)}</td><td>${colabPriorityCount > 0 ? `<b style="color:#b45309">★ ${colabPriorityCount}</b>` : '0'}</td><td>${num(p.appointment_count)}</td><td>${num(p.total_minutes)}</td><td><b>${hours(p.total_hours)}</b></td></tr>`;
+ }).join("");
+ $("peopleEmpty").classList.toggle("hidden",people.length>0);
+
+ if(!people.length)$("bars").innerHTML='<div class="empty">Nenhum apontamento para chamados pendentes.</div>';
+ else{
+   let max=Math.max(1,...people.map(p=>Number(p.total_minutes)||0));
+   $("bars").innerHTML=people.slice(0,8).map(p=>`<div class="barrow"><div>${esc(p.collaborator_name||"Não identificado")}</div><div class="track"><div class="fill" style="width:${Math.min(100,Number(p.total_minutes||0)/max*100)}%;height:100%"></div></div><b>${hours(p.total_hours)} h</b></div>`).join("")
+ }
+}
+
+function renderTickets(){
+  const q=$("search").value.toLowerCase().trim(),cf=$("clientFilter").value,hf=$("hoursFilter").value;
+  const rows=pending.filter(t=>[t.ticket_id,t.subject,t.client_name,t.owner_name,t.status].join(" ").toLowerCase().includes(q)&&(cf==="all"||(cf==="priority"?t.priority_client:!t.priority_client))&&(hf==="all"||(hf==="none"?Number(t.appointment_count)===0:Number(t.appointment_count)>0)));
+  $("ticketRows").innerHTML=rows.map(t=>ticketRow(t)).join("");
+  $("ticketCount").textContent=`${num(rows.length)} de ${num(pending.length)} chamados`;
+  $("ticketEmpty").classList.toggle("hidden",rows.length>0);
+}
+
+function renderPrioritySection(priorityTickets) {
+  const pOld = priorityTickets.filter(t => (t.age_days || 0) >= 7).length;
+  const pStale = priorityTickets.filter(t => (t.days_since_update || 0) >= 7).length;
+  const pHours = priorityTickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
+
+  $("pPendingN").textContent = num(priorityTickets.length);
+  $("pOldN").textContent = num(pOld);
+  $("pStaleN").textContent = num(pStale);
+  $("pHoursN").textContent = hours(pHours) + " h";
+
+  const displayList = [
+    "Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", 
+    "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", 
+    "Sr dos Óculos", "Lux"
+  ];
+
+  $("priorityClientRows").innerHTML = displayList.map(client => {
+    const tickets = pending.filter(t => isPriorityClient(t.client_name) && String(t.client_name).toLowerCase().includes(client.toLowerCase()));
+    const pCount = tickets.length;
+    const pOldCount = tickets.filter(t => (t.age_days || 0) >= 7).length;
+    const pStaleCount = tickets.filter(t => (t.days_since_update || 0) >= 7).length;
+    const pTotalHours = tickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0);
+
+    return `<tr>
+      <td><b>${client}</b></td>
+      <td>${num(pCount)}</td>
+      <td>${pOldCount > 0 ? `<span class="pill bad">${pOldCount}</span>` : '0'}</td>
+      <td>${pStaleCount > 0 ? `<span class="pill warn">${pStaleCount}</span>` : '0'}</td>
+      <td><b>${hours(pTotalHours)} h</b></td>
+    </tr>`;
+  }).join("");
+}
+
+function switchPage(p){
+ page=p;
+ ["overview","tickets","people","priority","settings","guide"].forEach(x=>$(x+"Page").classList.toggle("hidden",x!==p));
+ document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
+ let m={
+   overview:["Visão geral","Acompanhe a fila e identifique onde concentrar a auditoria."],
+   tickets:["Fila de chamados","Pesquise, filtre e priorize os chamados que precisam de atenção."],
+   people:["Horas por colaborador","Compare o esforço registrado nos chamados pendentes."],
+   priority:["Clientes Prioritários","Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
+   settings:["Configurações da API","Defina os tokens de acesso do Movidesk e Supabase."],
+   guide:["Indicadores","Entenda os critérios e limitações desta versão."]
+ }[p];
+ $("title").textContent=m[0];$("subtitle").textContent=m[1];
+ $("export").classList.toggle("hidden",p==="guide"||p==="settings");
+}
+
+$("saveSettings").addEventListener("click", ()=>{
+  const mToken = $("movideskToken").value.trim();
+  const sUrl = $("supabaseUrl").value.trim();
+  const sKey = $("supabaseKey").value.trim();
+
+  localStorage.setItem("movidesk_token", mToken);
+  localStorage.setItem("supabase_url", sUrl);
+  localStorage.setItem("supabase_key", sKey);
+
+  notice("settingsNotice", "Configurações salvas com sucesso!", "success");
+  init();
+});
+
+$("testMovidesk").addEventListener("click", async ()=>{
+  const token = $("movideskToken").value.trim();
+  if(!token) return notice("settingsNotice", "Insira o token do Movidesk antes de testar.", "error");
+
+  notice("settingsNotice", "Testando conexão com o Movidesk...", "info");
+
+  try {
+    const res = await fetch(`https://api.movidesk.com/public/v1/tickets?token=${token}&$top=1`);
+    if(res.ok) {
+      notice("settingsNotice", "Conexão com a API do Movidesk estabelecida com sucesso!", "success");
+    } else {
+      notice("settingsNotice", `Erro na API Movidesk: Status ${res.status}. Verifique se o token está correto.`, "error");
+    }
+  } catch(e) {
+    notice("settingsNotice", "Erro de rede (CORS) ou ao conectar com a API Movidesk. A sincronização final deve ser processada no backend.", "error");
+  }
+});
+
+function exportCsv(){
+  let headers,rows;
+  if(page==="people"){
+    headers=["Colaborador","Chamados Total","Apontamentos","Minutos","Horas"];
+    rows=people.map(p=>[p.collaborator_name,p.ticket_count,p.appointment_count,p.total_minutes,p.total_hours]);
+  } else if(page==="priority"){
+    headers=["Cliente Prioritário","Chamados Pendentes","Com 7+ dias","Sem Atualização Recentemente","Horas Apontadas"];
+    const displayList = ["Dr Óculos", "Ferri", "Instituto", "Paulo e Condah", "Atacadão do Óculos", "IMV", "Paschoal LAB", "Cardeal", "Sr dos Óculos", "Lux"];
+    rows = displayList.map(client => {
+      const tickets = pending.filter(t => isPriorityClient(t.client_name) && String(t.client_name).toLowerCase().includes(client.toLowerCase()));
+      return [
+        client,
+        tickets.length,
+        tickets.filter(t => (t.age_days || 0) >= 7).length,
+        tickets.filter(t => (t.days_since_update || 0) >= 7).length,
+        tickets.reduce((acc, t) => acc + Number(t.total_hours || 0), 0)
+      ];
+    });
+  } else {
+    headers=["ID","Assunto","Cliente","Status","Prioridade","Responsável","Horas","Idade dias","Dias sem atualização","Cliente prioritário","Última atualização"];
+    rows=pending.map(t=>[t.ticket_id,t.subject,t.client_name,t.status,t.priority,t.owner_name,t.total_hours,t.age_days,t.days_since_update,t.priority_client ? "SIM" : "NÃO",t.last_update_source]);
+  }
+  const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
+}
+
+$("refresh").addEventListener("click",()=>{if(!sb){notice("appNotice","Supabase não inicializado.");return}load()});
+$("export").addEventListener("click",exportCsv);
+["search","clientFilter","hoursFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",renderTickets));
+document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.goto)));
+
 init();
 })();
 </script></body></html>
