@@ -163,7 +163,7 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
   </div>
 </section>
 
-<!-- NOVO: RELATÓRIO DINÂMICO PARA REUNIÕES -->
+<!-- RELATÓRIO DINÂMICO PARA REUNIÕES -->
 <section id="meetingReportPage" class="hidden">
   <div class="panel">
     <div class="panelhead">
@@ -204,19 +204,29 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 <!-- CONFIGURAÇÕES DA API MOVIDESK -->
 <section id="settingsPage" class="hidden">
   <div class="panel" style="padding:24px">
-    <h2>Configuração da API Movidesk</h2>
-    <p class="muted">Insira o seu token da API do Movidesk para testar a conexão.</p>
+    <h2>Configuração das APIs</h2>
+    <p class="muted">Insira as credenciais do Supabase e do Movidesk para garantir a sincronização correta dos dados.</p>
     
     <div id="settingsNotice" class="notice"></div>
 
     <div class="form-group">
+      <label for="supabaseUrl">Supabase Project URL</label>
+      <input type="text" id="supabaseUrl" placeholder="https://seu-projeto.supabase.co">
+    </div>
+
+    <div class="form-group">
+      <label for="supabaseKey">Supabase Publishable Key</label>
+      <input type="password" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+    </div>
+
+    <div class="form-group">
       <label for="movideskToken">Token da API Movidesk</label>
-      <input type="password" id="movideskToken" placeholder="Insira o seu token do Movidesk">
+      <input type="password" id="movideskToken" placeholder="Insira o token da API Movidesk">
       <small>Obtenha este token no Movidesk em: Configurações > Integrações > API Web.</small>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px">
-      <button id="saveToken" class="btn primary">Salvar Token</button>
+      <button id="saveConfig" class="btn primary">Salvar e Reconectar</button>
       <button id="testMovidesk" class="btn secondary">Testar Conexão Movidesk</button>
     </div>
   </div>
@@ -229,8 +239,9 @@ input{width:100%;padding:12px;border:1px solid #d6dfeb;border-radius:9px}
 
 <script>
 (() => {
+// Credenciais padrão do Supabase
 const DEFAULT_SUPABASE_URL = "https://yvsuevoekqvunnaesec.supabase.co";
-const DEFAULT_SUPABASE_KEY = "sb_publishable_sua_chave_aqui";
+const DEFAULT_SUPABASE_KEY = ""; // Cole sua chave 'anon' ou 'publishable' real do Supabase aqui caso não queira salvar pelo formulário
 
 const PRIORITY_CLIENTS = [
   "dr óculos", "dr oculos",
@@ -261,13 +272,25 @@ function notice(id,msg,type="error"){const e=$(id);e.textContent=msg;e.className
 function clearNotice(id){$(id).className="notice"}
 
 function loadStoredConfig(){
+  $("supabaseUrl").value = localStorage.getItem("supabase_url") || DEFAULT_SUPABASE_URL;
+  $("supabaseKey").value = localStorage.getItem("supabase_key") || DEFAULT_SUPABASE_KEY;
   $("movideskToken").value = localStorage.getItem("movidesk_token") || "";
 }
 
 async function init(){
  loadStoredConfig();
+ const url = $("supabaseUrl").value.trim();
+ const key = $("supabaseKey").value.trim();
+
+ if(!url || !key || key === "sb_publishable_sua_chave_aqui") {
+   $("status").textContent = "Pendente de Chave Supabase";
+   switchPage("settings");
+   notice("settingsNotice", "Atenção: É necessário informar a Publishable Key válida do Supabase nas configurações para carregar as views.", "info");
+   return;
+ }
+
  try {
-   sb = window.supabase.createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+   sb = window.supabase.createClient(url, key, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
    $("status").textContent = "Conectado";
    await load();
  } catch(e) {
@@ -296,7 +319,7 @@ async function load(){
  render();
  renderMeetingReport();
  $("lastRefresh").textContent=new Date().toLocaleString("pt-BR");
- }catch(e){notice("appNotice","Não foi possível carregar as views. Verifique as permissões RLS. Detalhe: "+(e.message||"erro desconhecido"))}finally{$("refresh").disabled=false}
+ }catch(e){notice("appNotice","Não foi possível carregar as views. Verifique as permissões RLS e as credenciais. Detalhe: "+(e.message||"erro desconhecido"))}finally{$("refresh").disabled=false}
 }
 
 function status(s){let v=String(s||"Sem status"),c=/atras|urgente|cr[ií]tic|vencid/i.test(v)?"pill bad":/aberto|andamento|pendente|novo/i.test(v)?"pill warn":"pill";return `<span class="${c}">${esc(v)}</span>`}
@@ -374,7 +397,6 @@ function renderPrioritySection(priorityTickets) {
   }).join("");
 }
 
-// RENDERIZAR NOVO RELATÓRIO P/ REUNIÃO
 function renderMeetingReport() {
   const priorityTickets = pending.filter(t => t.priority_client);
   
@@ -420,17 +442,24 @@ function switchPage(p){
    people:["Horas por colaborador","Compare o esforço registrado nos chamados pendentes."],
    priority:["Clientes Prioritários","Painel exclusivo para o acompanhamento dos 10 clientes prioritários."],
    meetingReport:["Relatório para Reuniões","Pauta estruturada e pronta para impressão ou exportação em PDF."],
-   settings:["Configurações da API","Gerencie o token de acesso da API do Movidesk."],
+   settings:["Configurações das APIs","Gerencie as credenciais e conexões do Supabase e Movidesk."],
    guide:["Indicadores","Entenda os critérios e limitações desta versão."]
  }[p];
  $("title").textContent=m[0];$("subtitle").textContent=m[1];
  $("export").classList.toggle("hidden",p==="guide"||p==="settings"||p==="meetingReport");
 }
 
-$("saveToken").addEventListener("click", ()=>{
+$("saveConfig").addEventListener("click", ()=>{
+  const sUrl = $("supabaseUrl").value.trim();
+  const sKey = $("supabaseKey").value.trim();
   const mToken = $("movideskToken").value.trim();
+
+  localStorage.setItem("supabase_url", sUrl);
+  localStorage.setItem("supabase_key", sKey);
   localStorage.setItem("movidesk_token", mToken);
-  notice("settingsNotice", "Token do Movidesk salvo com sucesso!", "success");
+
+  notice("settingsNotice", "Configurações salvas com sucesso! Reconectando...", "success");
+  init();
 });
 
 $("testMovidesk").addEventListener("click", async ()=>{
@@ -477,19 +506,8 @@ function exportCsv(){
   const cell=v=>`"${String(v??"").replace(/"/g,'""')}"`,csv="\uFEFF"+[headers,...rows].map(r=>r.map(cell).join(";")).join("\r\n"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");a.href=url;a.download=`auditoria_${page}.csv`;a.click();URL.revokeObjectURL(url);
 }
 
-// BOTÃO DE ATUALIZAR REESCRITO E GARANTIDO
 $("refresh").addEventListener("click", async () => {
-  if (!sb) {
-    try {
-      sb = window.supabase.createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-      $("status").textContent = "Conectado";
-    } catch (e) {
-      notice("appNotice", "Erro ao inicializar conexão: " + (e.message || e), "error");
-      return;
-    }
-  }
-
-  await load();
+  await init();
 });
 
 $("export").addEventListener("click", exportCsv);
