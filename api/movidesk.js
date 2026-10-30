@@ -1,4 +1,7 @@
+// Arquivo: api/movidesk.js (Corrigido para API v1 do Movidesk)
+
 export default async function handler(req, res) {
+  // Configura cabeçalhos de CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -24,8 +27,8 @@ export default async function handler(req, res) {
   }
   formattedDomain = formattedDomain.replace(/\/+$/, '');
 
-  // Garante o endpoint oficial v1 de tickets do Movidesk
-  const targetUrl = `${formattedDomain}/api/v1/tickets?token=${encodeURIComponent(token)}&$top=${top}&$skip=${skip}&$expand=clients,owner,ownerTeam,actions($expand=createdBy)`;
+  // URL OData com sintaxe $expand 100% compatível com a API v1 do Movidesk
+  const targetUrl = `${formattedDomain}/api/v1/tickets?token=${encodeURIComponent(token)}&$top=${top}&$skip=${skip}&$expand=clients,owner,ownerTeam,actions`;
 
   try {
     const response = await fetch(targetUrl, {
@@ -44,7 +47,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Tenta analisar o JSON retornado pelo Movidesk
     const data = JSON.parse(responseText);
     return res.status(200).json(data);
 
