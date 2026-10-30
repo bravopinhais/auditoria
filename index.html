@@ -405,7 +405,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   <div class="panelhead">
     <div>
       <h2>Horas e Alocação por Colaborador & Setor</h2>
-      <small>Jornada base de <b>09:00 às 18:00 (8h/dia)</b>. Abrangendo Suporte, Inteligência (Implantação, CS, Qualidade, Treinamento), Financeiro, RH, Diretoria e Operações.</small>
+      <small>Jornada base de <b>09:00 às 18:00 (8h/dia)</b>. Abrangendo Suporte, Inteligência, Financeiro, RH, Diretoria e Operações.</small>
     </div>
   </div>
   <div class="tablewrap">
@@ -543,15 +543,15 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 <!-- GERENCIAR DADOS E API MOVIDESK -->
 <section id="settingsPage" class="hidden">
   <div class="panel" style="padding:24px">
-    <h2>Gerenciador de Conexão com API do Movidesk</h2>
-    <p class="muted">Insira a URL e a Chave de API (Token) do seu Movidesk para baixar automaticamente todos os chamados, apontamentos e equipes da empresa.</p>
+    <h2>Gerenciador de Conexão com API do Movidesk (Via Proxy Vercel)</h2>
+    <p class="muted">Insira a URL e a Chave de API (Token) do seu Movidesk para baixar automaticamente todos os chamados, apontamentos e equipes da empresa sem erros de CORS.</p>
     
     <div id="settingsNotice" class="notice"></div>
 
     <div class="form-group">
       <label for="movideskDomain">Domínio / URL do Movidesk</label>
       <input type="text" id="movideskDomain" placeholder="https://suaempresa.movidesk.com">
-      <small>Exemplo: https://minhaempresa.movidesk.com</small>
+      <small>Exemplo: https://arquem.movidesk.com</small>
     </div>
 
     <div class="form-group">
@@ -562,7 +562,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
 
     <div style="display:flex;gap:10px;margin-bottom:24px">
       <button id="btnSaveDomain" class="btn primary">Salvar Configurações da API</button>
-      <button id="btnSettingsSync" class="ai-btn">🔄 Sincronizar Agora via API</button>
+      <button id="btnSettingsSync" class="ai-btn">🔄 Sincronizar Agora via API (Proxy)</button>
     </div>
 
     <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
@@ -578,7 +578,7 @@ input, textarea, select{width:100%;padding:10px;border:1px solid #d6dfeb;border-
   </div>
 </section>
 
-<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Busca Unificada OData Movidesk:</b> Extrai todos os chamados, equipes (`ownerTeam`), serviços (`serviceFirstLevel`) e apontadores de horas (`actions.createdBy`).</p><p><b>Regra de 80% (6,4h):</b> Considera a margem de tolerância para pausas e reuniões.</p></div></section>
+<section id="guidePage" class="hidden"><div class="panel" style="padding:20px;line-height:1.8"><h2>Como interpretar os indicadores</h2><p><b>Busca Unificada OData Movidesk (Proxy Vercel):</b> Extrai todos os chamados, equipes, serviços e apontadores de horas sem barreiras de CORS.</p><p><b>Regra de 80% (6,4h):</b> Considera a margem de tolerância para pausas e reuniões.</p></div></section>
 
 <div class="foot">Central de Auditoria • Guardiões do Bravo • Atualizado em <span id="lastRefresh">—</span></div></main></div>
 
@@ -589,7 +589,6 @@ const PRIORITY_CLIENTS = [
   "atacadão do óculos", "atacadao do oculos", "imv", "paschoal lab", "cardeal", "sr dos óculos", "lux"
 ];
 
-// MOCK LOCAL PARA CASO DE AUSÊNCIA DE TOKEN DA API
 const REAL_AUDIT_TICKETS = [
   { 
     ticket_id: "77901", client_name: "40 ARQUEM SISTEMAS E EQUIPAMENTOS", subject: "RB - MELHORIA AUDITORIA DE TURNO", owner_name: "Produção - CPO", status: "Fila", sector: "Suporte Técnico", 
@@ -675,7 +674,7 @@ const num=v=>Number(v||0).toLocaleString("pt-BR");
 const hours=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const date=v=>v?(!Number.isNaN(new Date(v).getTime())?new Date(v).toLocaleDateString("pt-BR"):"—"):"—";
 
-// FUNÇÃO COMPLETA DE SINCRONIZAÇÃO OData COM O MOVIDESK (EXPANSÃO DE AÇÕES & AUTORES + PAGINAÇÃO)
+// FUNÇÃO ATUALIZADA QUE CHAMA O PROXY NA VERCEL PARA EVITAR CORS
 async function syncMovideskAPI() {
   let domain = localStorage.getItem("movidesk_domain") || $("movideskDomain").value.trim();
   let token = localStorage.getItem("movidesk_token") || $("movideskToken").value.trim();
@@ -689,26 +688,27 @@ async function syncMovideskAPI() {
   if (!/^https?:\/\//i.test(domain)) domain = "https://" + domain;
   domain = domain.replace(/\/+$/, '');
 
-  $("status").textContent = "🔄 Sincronizando com Movidesk...";
-  alert("Iniciando varredura completa da API do Movidesk. Isso lerá todos os setores, equipes e colaboradores...");
+  $("status").textContent = "🔄 Sincronizando com Movidesk (via Proxy)...";
+  alert("Iniciando varredura completa da API do Movidesk através da rota proxy da Vercel...");
 
   let allApiTickets = [];
   let skip = 0;
-  const top = 50; // limite padrão por página OData
+  const top = 50; 
   let hasMore = true;
 
   try {
     while (hasMore) {
-      // EXPANSÃO COMPLETA OData: clients, owner, ownerTeam, e actions com createdBy para pegar os interceptadores reais
-      const endpoint = `${domain}/api/v1/tickets?token=${token}&$top=${top}&$skip=${skip}&$expand=clients,owner,ownerTeam,actions($expand=createdBy)`;
+      // Chama o endpoint serverless /api/movidesk para evitar bloqueio de CORS
+      const proxyEndpoint = `/api/movidesk?domain=${encodeURIComponent(domain)}&token=${encodeURIComponent(token)}&top=${top}&skip=${skip}`;
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(proxyEndpoint, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
 
       if (!response.ok) {
-        throw new Error(`Erro na resposta da API Movidesk: ${response.status} - ${response.statusText}`);
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || `Erro HTTP: ${response.status} - ${response.statusText}`);
       }
 
       const ticketsBatch = await response.json();
@@ -718,7 +718,7 @@ async function syncMovideskAPI() {
       } else {
         allApiTickets = allApiTickets.concat(ticketsBatch);
         skip += top;
-        if (ticketsBatch.length < top) hasMore = false; // Última página
+        if (ticketsBatch.length < top) hasMore = false;
       }
     }
 
@@ -728,13 +728,10 @@ async function syncMovideskAPI() {
       return;
     }
 
-    // MAPEAMENTO DINÂMICO E COMPLETO DOS TICKETS, SETORES E INTERCEPTADORES
     const formattedTickets = allApiTickets.map(t => {
-      // Pega o setor/equipe do chamado ou da equipe do proprietário
       let sectorName = t.serviceFirstLevel || (t.ownerTeam ? t.ownerTeam.name : "Operação & Suporte");
       let ownerName = t.owner ? t.owner.name : (t.ownerTeam ? t.ownerTeam.name : "Não Atribuído");
 
-      // Varre as ações (apontamentos) para extrair horas e interceptadores/criadores reais de cada lançamento
       let calculatedTotalHours = 0;
       let extractedAppointments = [];
 
@@ -781,20 +778,20 @@ async function syncMovideskAPI() {
         days_since_update: t.lastUpdate ? Math.floor((new Date() - new Date(t.lastUpdate)) / (1000 * 60 * 60 * 24)) : 0,
         synced_at: new Date().toISOString().split('T')[0],
         risk: t.urgency || "Rotina",
-        action: "Sincronizado via API Movidesk",
+        action: "Sincronizado via API Proxy Movidesk",
         appointments: extractedAppointments
       };
     });
 
     localStorage.setItem("local_audit_tickets", JSON.stringify(formattedTickets));
     $("status").textContent = `API Conectada (${formattedTickets.length} chamados)`;
-    alert(`Sucesso! ${formattedTickets.length} chamados e todos os seus colaboradores/interceptadores foram importados do Movidesk.`);
+    alert(`Sucesso! ${formattedTickets.length} chamados e todos os colaboradores/interceptadores foram importados via Proxy.`);
     
     loadData();
 
   } catch (err) {
-    console.error("Erro na sincronização OData Movidesk:", err);
-    alert("Falha na sincronização: " + err.message);
+    console.error("Erro na sincronização proxy:", err);
+    alert("Falha na sincronização via Proxy: " + err.message);
     $("status").textContent = "Erro de Conexão API";
   }
 }
@@ -814,7 +811,6 @@ window.openMovidesk = function(rawTicketId) {
   window.open(`${domain}/Ticket/Edit?id=${cleanId}`, "_blank");
 };
 
-// POPULA OS DROPDOWNS DINAMICAMENTE COM TODOS OS COLABORADORES E SETORES ENCONTRADOS
 function populateDynamicDropdowns() {
   const colabSet = new Set();
   const sectorSet = new Set();
@@ -950,7 +946,6 @@ function processPeopleData() {
   people = Object.values(map).sort((a,b) => b.total_hours - a.total_hours);
 }
 
-// AUDITORIA DE JORNADA COM A REGRA DOS 80% (6,4h/DIA) E INTERCEPTADORES REAIS
 function renderCapacityAuditSection() {
   const dailyMap = {};
 
@@ -1351,7 +1346,7 @@ function renderExecutiveReport() {
 }
 
 function runAIAuditAnalysis() {
-  $("aiContent").innerHTML = `<div class="ai-alert-item info"><b>🧠 Diagnóstico Completo da Empresa:</b> Todos os setores, equipes e colaboradores capturados da API Movidesk foram auditados.</div>`;
+  $("aiContent").innerHTML = `<div class="ai-alert-item info"><b>🧠 Diagnóstico Completo da Empresa:</b> Todos os setores, equipes e colaboradores capturados da API Movidesk via Proxy foram auditados.</div>`;
   $("aiAnalysisResult").classList.remove("hidden");
 }
 
@@ -1374,12 +1369,10 @@ function renderCrossAudit() {
   }).join("");
 }
 
-// EXPORTAÇÃO EXCEL COMPLETA COM ABAS POR SETOR E JORNADA
 function exportFullAuditToExcel() {
   if (typeof XLSX === 'undefined') return alert("SheetJS não carregado.");
   const wb = XLSX.utils.book_new();
 
-  // 1. Resumo
   const execData = [
     ["CENTRAL DE AUDITORIA - EMPRESA INTEIRA"],
     ["Data da Exportação", new Date().toLocaleString("pt-BR")],
@@ -1388,7 +1381,6 @@ function exportFullAuditToExcel() {
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(execData), "Resumo");
 
-  // 2. Fila Completa com Setores
   const ticketRowsExcel = [
     ["ID Ticket", "Cliente", "Assunto", "Setor / Equipe", "Status", "Responsável / Interceptador", "Horas Apontadas", "Nível de Risco"]
   ];
