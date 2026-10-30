@@ -1,8 +1,6 @@
-// Arquivo: api/movidesk.js (Corrigido para API v1 do Movidesk)
-
 export default async function handler(req, res) {
-  // Configura cabeçalhos de CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // Configuração universal de cabeçalhos CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
@@ -11,8 +9,7 @@ export default async function handler(req, res) {
   );
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   const { token, domain, top = 50, skip = 0 } = req.query;
@@ -21,21 +18,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Parâmetros token e domain são obrigatórios.' });
   }
 
-  let formattedDomain = domain.trim();
-  if (!/^https?:\/\//i.test(formattedDomain)) {
-    formattedDomain = 'https://' + formattedDomain;
+  // Tratamento do domínio
+  let cleanDomain = domain.trim();
+  if (!/^https?:\/\//i.test(cleanDomain)) {
+    cleanDomain = 'https://' + cleanDomain;
   }
-  formattedDomain = formattedDomain.replace(/\/+$/, '');
+  cleanDomain = cleanDomain.replace(/\/+$/, '');
 
-  // URL OData com sintaxe $expand 100% compatível com a API v1 do Movidesk
-  const targetUrl = `${formattedDomain}/api/v1/tickets?token=${encodeURIComponent(token)}&$top=${top}&$skip=${skip}&$expand=clients,owner,ownerTeam,actions`;
+  // URL direta da API v1 do Movidesk sem expansões instáveis
+  const targetUrl = `${cleanDomain}/api/v1/tickets?token=${encodeURIComponent(token)}&$top=${top}&$skip=${skip}`;
 
   try {
     const response = await fetch(targetUrl, {
       method: 'GET',
-      headers: { 
+      headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json' 
+        'Content-Type': 'application/json'
       }
     });
 
@@ -43,7 +41,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       return res.status(response.status).json({ 
-        error: `Movidesk retornou erro (Status ${response.status}): ${responseText.substring(0, 200)}` 
+        error: `Movidesk recusou (Status ${response.status}): ${responseText.substring(0, 150)}` 
       });
     }
 
